@@ -9,6 +9,10 @@
         window.location = '/viewer'
     }
 
+    function goHelp() {
+        window.location = 'https://google.ca'
+    }
+
 </script>
 
 <nav id="navbar">
@@ -25,7 +29,7 @@
         <button class="navItem" on:click|preventDefault={goAtlasHome}>Atlas Home</button>
     </div>
     <div class="col5">
-        <button class="navItem">Help</button>
+        <button class="navItem"on:click|preventDefault={goHelp}>Help</button>
     </div>
     <div class="col6">
         <LoginButton />
