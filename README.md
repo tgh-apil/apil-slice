@@ -1,4 +1,4 @@
-stack:
+Stack:
 - svelte
 - firebase
 
