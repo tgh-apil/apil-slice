@@ -6,15 +6,12 @@
     import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
     import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
     import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
-    
+    import { titleBox, descriptionBox } from '../stores.js'; 
 
     // -----------------START GLOBAL VARIABLES---------------
     let scene, renderer;
     let orbitControls, teeMouseControls, transformControls;
     let splitView = false;
-    // controls html element width size depending on splitView
-    // start with 80% of the screen as the width
-    let viewWidth = '100%';
     let loader, dracoLoader;
 
     // FOR USER PERMISSIONS
@@ -111,8 +108,7 @@
 
     let modeParams = {
         activate_ultrasound: false,
-        showInstruction: false,
-        showDescription: true,
+        showDescription: $descriptionBox,
     }
 
     // empty object
@@ -1081,13 +1077,6 @@
             console.log('regenerating ultrasound tube');
         }
     }
-    
-    // CODE HERE ONLY TO CHANGE (1) GUI ELEMENTS and (2) HTML ELEMENTS
-    // AFFECTING ANHTNING ELSE --> CALL AN EXTERNAL FUNCTION!
-    function handleInstructions() {
-        gui.open();
-        modeParams.showInstruction = false;
-    }
 
     // folder contents change if model is or is not heart
     // call it outside the main GUI function AFTER all models have been loaded
@@ -1137,12 +1126,15 @@
             })
 
             if (v) {
-                viewWidth = '50%';
                 controlFolder.open();
-                // }
+                if (isAdmin) {
+                    adminFolder.close()
+                }
             } else {
-                viewWidth = '100%';
                 controlFolder.close();
+                if (isAdmin) {
+                    adminFolder.open()
+                }
             }
 
             if (!ultrasoundTube) {
@@ -1159,13 +1151,10 @@
             activateUltrasound.enable(false);
         }
 
-        gui.add(modeParams, 'showInstruction').name('Show Instructions').onChange(v => {
-            modeParams.showInstruction = v;
-            gui.close();
-        }).listen();
-
         gui.add(modeParams, 'showDescription').name('Show Description').onChange(v => {
-            modeParams.showDescription = v;
+            descriptionBox.set(v);
+            titleBox.set(v);
+            modeParams.showDescription = $descriptionBox;
         });
 
         // deals with all probe control options
@@ -1472,189 +1461,3 @@
     init();
     animate();
 </script>
-
-<main>
-    <div id="titleBox" style="--view-width: {viewWidth}">
-        <div id="titleBoxInner" hidden={!modeParams.showDescription}>
-            <h1>
-                Normal Heart
-            </h1>
-            <h3>
-                Posted by: APIL
-            </h3>
-        </div>
-    </div>
-
-    <div id="descriptionBox" style="--view-width: {viewWidth}">
-        <div id="descriptionBoxInner" hidden={!modeParams.showDescription}>
-            <p>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque interdum congue lorem vel commodo. Curabitur eget lacus sit amet metus bibendum blandit sit amet ut neque. Morbi porttitor tortor nulla, in gravida sem accumsan ac. Proin libero purus, vehicula eget pharetra et, pretium ac nisl. Vivamus eget vehicula turpis. Sed vulputate felis eu mi pharetra, lobortis bibendum enim consequat. Vestibulum suscipit neque non urna mollis fringilla. Sed fringilla risus est. Integer sit amet facilisis erat. Donec dignissim massa ac nulla varius ultrices. Nulla luctus sollicitudin erat, vel consectetur enim sagittis non. Phasellus luctus risus quis nunc eleifend, id cursus nunc auctor.
-            </p>
-            <p>
-                Donec at erat sollicitudin, aliquam nisl ut, aliquet est. In condimentum neque ac lobortis dapibus. Maecenas mi quam, pulvinar id vehicula pharetra, finibus scelerisque neque. Maecenas ac odio nisi. Phasellus tincidunt quis elit in vehicula. Nunc in tristique nibh, eu interdum est. Curabitur eu neque nisi. Aenean sollicitudin ultricies fermentum. Pellentesque in sem est. Nullam tempor dui eu quam auctor tempor nec et neque. Vivamus posuere consequat dolor eget luctus. Nulla velit erat, ultrices at aliquam finibus, gravida ut libero. Nunc sed tellus dictum, fermentum libero sit amet, efficitur risus. Nullam nunc augue, tristique vitae malesuada ut, consectetur quis diam.
-            </p>
-        </div>
-    </div>
-
-    <div id="instructionBox" hidden={!modeParams.showInstruction}>
-        <div id="instructionBoxInner">
-            <h1>
-                INSTRUCTIONS
-            </h1>
-            <h3>Model Navigation</h3>
-            <table>
-                <tr>
-                    <th>Action</th>
-                    <th>Mouse Button</th>
-                </tr>
-                <tr>
-                    <td>Rotate</td>
-                    <td>Left Click</td>
-                </tr>
-                <tr>
-                    <td>Pan</td>
-                    <td>Right Click</td>
-                </tr>
-                <tr>
-                    <td>Zoom in</td>
-                    <td>Mouse wheel up</td>
-                </tr>
-                <tr>
-                    <td>Zoom out</td>
-                    <td>Mouse wheel down</td>
-                </tr>
-                <tr>
-                    <td>Quick zoom in</td>
-                    <td>Middle mouse button & push mouse forward</td>
-                </tr>
-                <tr>
-                    <td>Quick zoom out</td>
-                    <td>Middle mouse button & pull mouse backward</td>
-                </tr>
-            </table>
-            <h3>TEE Controls</h3>
-            <table>
-                <tr>
-                    <th>Action</th>
-                    <th>Keyboard</th>
-                    <th>Mouse Box</th>
-                    <th>High-fidelity</th>
-                </tr>
-
-                <tr>
-                    <td>Advance</td>
-                    <td>W</td>
-                    <td>Push forward</td>
-                    <td>Push forward</td>
-                </tr>
-                <tr>
-                    <td>Retract</td>
-                    <td>S</td>
-                    <td>Pull backward</td>
-                    <td>Pull backward</td>
-                </tr>
-                <tr>
-                    <td>Twist Left</td>
-                    <td>A</td>
-                    <td>Turn handle left</td>
-                    <td>Turn handle left</td>
-                </tr>
-                <tr>
-                    <td>Twist Right</td>
-                    <td>D</td>
-                    <td>Turn handle right</td>
-                    <td>Turn handle right</td>
-                </tr>
-                <tr>
-                    <td>Omniplane Counter-clockwise</td>
-                    <td>Q</td>
-                    <td>Left mouse button</td>
-                    <td>Button 1</td>
-                </tr>
-                <tr>
-                    <td>Omniplane Clockwise</td>
-                    <td>E</td>
-                    <td>Right mouse button</td>
-                    <td>Button 2</td>
-                </tr>
-                <tr>
-                    <td>Anteflex</td>
-                    <td>Arrow up</td>
-                    <td>Mousewheel forward</td>
-                    <td>Wheel up</td>
-                </tr>
-                <tr>
-                    <td>Probe Head Left</td>
-                    <td>Arrow left</td>
-                    <td>Unbound</td>
-                    <td>Unbound</td>
-                </tr>
-                <tr>
-                    <td>Probe Head Right</td>
-                    <td>Arrow right</td>
-                    <td>Unbound</td>
-                    <td>Unbound</td>
-                </tr>
-            </table>
-            <br>
-            <button id="instructionsCloseBtn" on:click={() => handleInstructions()}>
-                CLOSE
-            </button>
-        </div>
-    </div>
-</main>
-
-<style>
-    th, td {
-        padding-top: 0.25rem;
-        padding-bottom: 0.25rem;
-        padding-right: 1rem;
-    }
-
-    #titleBox {
-        position: absolute;
-        bottom: 15%;
-        height: 20%;
-        text-align: left;
-        z-index: 100;
-        overflow: auto;
-        width: var(--view-width);
-    }
-    
-    #titleBoxInner {
-        width: 100%;
-        margin: 0 auto;
-    }
-
-    #descriptionBox {
-        position: absolute;
-        bottom: 5%;
-        height: 15%;
-        text-align: left;
-        z-index: 100;
-        width: var(--view-width);
-        overflow: auto;
-    }
-    
-    #descriptionBoxInner {
-        width: 100%;
-        margin: 0 auto;
-    }
-
-    #instructionBox {
-        background-color: rgba(0, 0, 0, 0.8);
-        position: absolute;
-        top: 0%;
-        width: 100%;
-        height: 100%;
-        text-align: left;
-        z-index: 100;
-    }
-
-    #instructionBoxInner {
-        height: auto;
-        width: 100%;
-        height: 100%;
-        margin: 0 auto;
-    }
-</style>
