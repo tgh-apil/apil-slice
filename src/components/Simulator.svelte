@@ -6,7 +6,7 @@
     import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
     import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
     import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
-    import { titleBox, descriptionBox, viewWidth } from '../stores.js'; 
+    import { viewWidth, descriptionBox, descriptionBoxMax, titleBoxPosition, btnBoxSize } from '../stores.js'; 
 
     // -----------------START GLOBAL VARIABLES---------------
     let scene, renderer;
@@ -1183,7 +1183,7 @@
                 controlFolder.open();
                 bookmarkFolder.open();
                 viewWidth.set('half-less');
-                
+
                 if (isAdmin) {
                     adminFolder.close()
                 }
@@ -1191,11 +1191,17 @@
                 controlFolder.close();
                 bookmarkFolder.close();
                 viewWidth.set('full-less');
-
+                
                 if (isAdmin) {
                     adminFolder.open()
                 }
             }
+
+            // to control the elements of the description box
+            descriptionBoxMax.set(false);
+            descriptionBox.set(true);
+            btnBoxSize.set('btn-box-min');
+            titleBoxPosition.set('titleBox-min-description')
 
             if (!ultrasoundTube) {
                 spawnUltrasoundTube();

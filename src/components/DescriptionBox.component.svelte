@@ -1,17 +1,13 @@
     <script>
-        import { descriptionBox, viewWidth, titleBoxPosition } from '../stores.js';
-
-        let descriptionBoxMax = false;
-
-        let sizeBtnBoxClass = 'btn-box-min';
+        import { descriptionBox, descriptionBoxMax, viewWidth, titleBoxPosition, btnBoxSize } from '../stores.js';
 
         function changeDescriptionBoxSize() {
-            descriptionBoxMax = !descriptionBoxMax;
+            descriptionBoxMax.set(!$descriptionBoxMax);
             descriptionBox.set(true);
 
             // holy shit ew
-            if (descriptionBoxMax) {
-                sizeBtnBoxClass = 'btn-box-max';
+            if ($descriptionBoxMax) {
+                btnBoxSize.set('btn-box-max');
 
                 if ($viewWidth.includes('full')) {
                     viewWidth.set('full-more')
@@ -21,7 +17,7 @@
 
                 titleBoxPosition.set('titleBox-max-description');
             } else {
-                sizeBtnBoxClass = 'btn-box-min';
+                btnBoxSize.set('btn-box-min');
 
                 if ($viewWidth.includes('full')) {
                     viewWidth.set('full-less')
@@ -38,8 +34,8 @@
             descriptionBox.set(!$descriptionBox);
 
             if ($descriptionBox) {
-                descriptionBoxMax = false;
-                sizeBtnBoxClass = 'btn-box-min'
+                descriptionBoxMax.set(false);
+                btnBoxSize.set('btn-box-min');
 
                 if ($viewWidth.includes('full')) {
                     viewWidth.set('full-less')
@@ -49,15 +45,15 @@
 
                 titleBoxPosition.set('titleBox-min-description');
             } else {
-                sizeBtnBoxClass = 'btn-box-hide';
+                btnBoxSize.set('btn-box-hide');
                 titleBoxPosition.set('titleBox-hidden-description');
             }
         }
     </script>
     
-    <div id={sizeBtnBoxClass}>
+    <div id={$btnBoxSize}>
         <button class="col1" on:click={() => changeDescriptionBoxSize()}>
-            {#if descriptionBoxMax}
+            {#if $descriptionBoxMax}
                 Show Less
             {:else}
                 Show More
