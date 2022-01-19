@@ -9,12 +9,6 @@
 
 <div>
     <Simulator />
-
-    {#if $titleBox}
-        <TitleBox />
-    {/if}
-
-    {#if $descriptionBox}
-        <DescriptionBox />
-    {/if}
+    <TitleBox />
+    <DescriptionBox />
 </div>

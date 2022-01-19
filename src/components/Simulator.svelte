@@ -6,7 +6,7 @@
     import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
     import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
     import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
-    import { titleBox, descriptionBox } from '../stores.js'; 
+    import { titleBox, descriptionBox, viewWidth } from '../stores.js'; 
 
     // -----------------START GLOBAL VARIABLES---------------
     let scene, renderer;
@@ -18,7 +18,7 @@
     // TODO: This flag will be handled by firebase if the logged in user is/is not an admin
     let isAdmin = true;
 
-    // TODO: read off of firestore to get anatomy type for loading necessary assets
+    // TODO: firestore to get anatomy type for loading necessary assets
     let modelType = 'heart';
 
     // FOR ITEM SELECTION
@@ -28,6 +28,8 @@
     // FOR MESH DATA
     let model, myocardium, myocardiumNoClip, humanViewCube;
     let modelParts = [];
+
+    // TODO: firestore
     let annotationList = [];
 
     // FOR SPLINE EDITING
@@ -108,7 +110,6 @@
 
     let modeParams = {
         activate_ultrasound: false,
-        showDescription: $descriptionBox,
     }
 
     // empty object
@@ -154,6 +155,37 @@
 
         save_sphere_position: function() {
             saveControlSpherePosition();
+        },
+    }
+
+    // TODO: Firestore
+    let userBookmarks = {
+        'Apical Four Chamber': {
+            retroAnteflex: -30,
+            leftRightFlex: 0,
+            leftRightTwist: 13,
+            omniplaneRot: 0,
+            advanceRetract: 23, 
+        },
+
+        'Parasternal Long Axis': {
+            retroAnteflex: -22,
+            leftRightFlex: 1,
+            leftRightTwist: 13,
+            omniplaneRot: -47,
+            advanceRetract: 23, 
+        },
+    };
+    
+    let bookmarkParams = {
+        bookmarks: 'Saved Bookmarks',
+
+        save_bookmark: function() {
+            saveBookmark();
+        },
+
+        delete_bookmark: function() {
+            deleteBookmark();
         },
     }
 
@@ -1078,6 +1110,24 @@
         }
     }
 
+    function saveBookmark() {
+        let bookmarkName = 'test';
+
+        userBookmarks[bookmarkName] = {
+            retroAnteflex: controlParams.anteflex,
+            leftRightFlex: controlParams.rightLeftFlex,
+            leftRightTwist: controlParams.twist,
+            omniplaneRot: controlParams.omniplane,
+            advanceRetract: controlParams.advance, 
+        }
+
+        console.log(userBookmarks);
+    }
+
+    function deleteBookmark() {
+        console.log('bookmark deleted!');
+    }
+
     // folder contents change if model is or is not heart
     // call it outside the main GUI function AFTER all models have been loaded
     // so it doesn't have to be async
@@ -1125,13 +1175,23 @@
                 option.enable(v);
             })
 
+            bookmarkOptions.forEach(option => {
+                option.enable(v);
+            })
+
             if (v) {
                 controlFolder.open();
+                bookmarkFolder.open();
+                viewWidth.set('half-less');
+                
                 if (isAdmin) {
                     adminFolder.close()
                 }
             } else {
                 controlFolder.close();
+                bookmarkFolder.close();
+                viewWidth.set('full-less');
+
                 if (isAdmin) {
                     adminFolder.open()
                 }
@@ -1150,12 +1210,6 @@
         } else {
             activateUltrasound.enable(false);
         }
-
-        gui.add(modeParams, 'showDescription').name('Show Description').onChange(v => {
-            descriptionBox.set(v);
-            titleBox.set(v);
-            modeParams.showDescription = $descriptionBox;
-        });
 
         // deals with all probe control options
         let controlFolder = gui.addFolder('TEE Probe Controls');
@@ -1225,6 +1279,40 @@
                 saveControlSpherePos,
             ]
         }
+
+        let bookmarkFolder = gui.addFolder('User Bookmarks');
+        
+        let userBookmarkGui = bookmarkFolder.add(bookmarkParams, 'bookmarks', userBookmarks).enable(false).onChange(v => {
+            // update the gui object for the controls (controlParams)
+            // then move the actual probe (probeControls)
+            
+            controlParams.anteflex = v.retroAnteflex;
+            probeControls.anteflex(controlParams.anteflex);
+
+            controlParams.rightLeftFlex = v.leftRightFlex;
+            probeControls.rightLeftFlex(controlParams.rightLeftFlex);
+
+            controlParams.twist = v.leftRightTwist;
+            probeControls.twist(controlParams.twist);
+
+            controlParams.omniplane = v.omniplaneRot;
+            probeControls.omniplane(controlParams.omniplane);
+
+            controlParams.advance = v.advanceRetract;
+            probeControls.advance(controlParams.advance);
+
+        });
+
+        let saveBookmarkGui = bookmarkFolder.add(bookmarkParams, 'save_bookmark').name('Save Bookmark').enable(false);
+        let deleteBookmarkGui = bookmarkFolder.add(bookmarkParams, 'delete_bookmark').name('Delete Bookmark').enable(false);
+        
+        let bookmarkOptions = [
+            userBookmarkGui,
+            // saveBookmarkGui,
+            // deleteBookmarkGui
+        ]
+
+        bookmarkFolder.close();
     }
     // -----------------END DISPLAY AND UI HELPER FUNCTIONS-----------------
 

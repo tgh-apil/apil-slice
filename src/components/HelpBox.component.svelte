@@ -134,7 +134,7 @@
 
     #instructionBoxInner {
         height: auto;
-        width: 50%;
+        width: 70%;
         height: 100%;
         margin: 0 auto;
     }

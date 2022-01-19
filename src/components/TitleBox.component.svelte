@@ -1,8 +1,8 @@
 <script>
-    import { titleBox } from '../stores.js';
+    import { titleBox, titleBoxPosition } from '../stores.js';
 </script>
 
-<div id="titleBox">
+<div id="{$titleBoxPosition}">
     <div id="titleBoxInner" hidden={!$titleBox}>
         <h1>
             Normal Heart
@@ -14,16 +14,36 @@
 </div>
 
 <style>
-    #titleBox {
+    #titleBox-max-description {
         position: absolute;
-        bottom: 15%;
+        bottom: 40%;
         height: 20%;
         text-align: left;
         z-index: 100;
         overflow: auto;
         width: 100%;
     }
-    
+
+    #titleBox-min-description {
+        position: absolute;
+        bottom: 20%;
+        height: 20%;
+        text-align: left;
+        z-index: 100;
+        overflow: auto;
+        width: 100%;
+    }
+
+    #titleBox-hidden-description {
+        position: absolute;
+        bottom: 5%;
+        height: 20%;
+        text-align: left;
+        z-index: 100;
+        overflow: auto;
+        width: 100%;
+    }
+
     #titleBoxInner {
         width: 100%;
         margin: 0 auto;
