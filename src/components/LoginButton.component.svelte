@@ -29,3 +29,22 @@
 {:else}               
     <button class=login-btn on:click|preventDefault={signin}>Sign In</button>
 {/if}
+
+<style>
+    /* apply the same style to the other nav bar buttons */
+    button {
+        background: none;
+        color: #fff;
+        border-style: none;
+        z-index: 100%;
+        width: 100%;
+        height: 100%;
+        text-decoration: none;
+        font-weight: lighter;
+        transition: color 0.05s ease-in;
+    }
+
+    button:hover {
+        color: #00acac;
+    }
+</style>

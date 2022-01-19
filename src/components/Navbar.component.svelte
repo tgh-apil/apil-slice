@@ -1,17 +1,15 @@
 <script>
     import LoginButton from './LoginButton.component.svelte';
-    import { replace } from 'svelte-spa-router';
-    import { titleBox, descriptionBox, helpBox } from '../stores.js';
+    import { currentView, descriptionBoxGroupShow, helpBox } from '../stores.js';
 
 
     function goViewer() {
-        replace('/');
+        console.log('going to 3D mode')
     }
 
     function goAtlasHome() {
-        // can't call replace and reload the window...
-        // maybe model browser should just be a popup window and the main element is the viewer
-        window.location = '/#/atlas';
+        // can't call replace and reload the window...have to do it like this
+        window.location = '/#';
 
         // best way to dump the 3js scene when switching away??
         location.reload();
@@ -19,28 +17,34 @@
 
     function goHelp() {
         helpBox.set(true);
-        descriptionBox.set(false);
-        titleBox.set(false);
+        descriptionBoxGroupShow.set(false);
     }
 
 </script>
 
 <nav id="navbar">
     <div class="col1">
-        <a class="logo" href="https://apil-slice.web.app/">APIL Slice</a>
+        <button class="logo" on:click={goAtlasHome}>APIL SLICE</button>
     </div>
-    <div class="col2">
-        <!-- call replace to not store on browser history so back button doesnt work -->
-        <!-- otherwise the 3js scene does not unload when hitting back -->
-        <button class="navItem" on:click={goViewer}>3D View</button>
-    </div>
-    <div class="col3">
+
+    {#if $currentView == 'viewer'}
+        <div class="col2">
+            <!-- call replace to not store on browser history so back button doesnt work -->
+            <!-- otherwise the 3js scene does not unload when hitting back -->
+            <button class="navItem" on:click={goViewer}>3D View</button>
+        </div>
+        <div class="col3">
+            <button class="navItem" on:click={goViewer}>U/S View</button>
+        </div>
+    {/if}
+
+    <div class="col4">
         <button class="navItem" on:click={goAtlasHome}>Atlas Home</button>
     </div>
-    <div class="col4">
+    <div class="col5">
         <button class="navItem" on:click={goHelp}>Help</button>
     </div>
-    <div class="col5">
+    <div class="col6">
         <LoginButton />
     </div>
 </nav>
@@ -54,7 +58,7 @@
         width: 70%;
         height: 5%;
         display: grid;
-        grid-template: repeat(6, 1fr);
+        grid-template: repeat(7, 1fr);
         grid-auto-rows: auto;
         grid-gap: 1%;
         justify-items: center;
@@ -101,5 +105,25 @@
 
     .col5 {
         grid-column: 6;
+    }
+
+    .col6 {
+        grid-column: 7;
+    }
+
+    button {
+        background: none;
+        color: #fff;
+        border-style: none;
+        z-index: 100%;
+        width: 100%;
+        height: 100%;
+        text-decoration: none;
+        font-weight: lighter;
+        transition: color 0.05s ease-in;
+    }
+
+    button:hover {
+        color: #00acac;
     }
 </style>

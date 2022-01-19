@@ -1,4 +1,13 @@
 <script>
+    import { replace } from 'svelte-spa-router';
+    import { currentView } from '../../stores.js';
+
+    currentView.set('home');
+    
+    function loadModel() {
+        replace('/viewer')
+        currentView.set('viewer');
+    }
 
 </script>
 
@@ -8,6 +17,7 @@
         <p>
             MODEL SELECT GOES HERE
         </p>
+        <button on:click={() => loadModel()}>LOAD NORMAL MODEL</button>
     </div>
 </div>
 

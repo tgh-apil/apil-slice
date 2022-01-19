@@ -68,13 +68,14 @@
     let beamMesh;
 
     // FOR CAMERAS
-    let pointerLockCam, camera, ultrasoundCamera; 
+    let pointerLockCam, camera, ultrasoundCamera;
+    // control this for ultrasound zoom level 
     let frustumSize = 250;
     let SCREEN_WIDTH = window.innerWidth;
     let SCREEN_HEIGHT = window.innerHeight;
     let aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
 
-    let ultrasoundCamHeight = 150;
+    let ultrasoundCamHeight = 50;
 
     // FOR STENCIL
     let backFaceStencilMat, frontFaceStencilMat, planeStencilMat;
@@ -106,6 +107,7 @@
 
     // FOR GUI CONTROL PARAMETERS
     let gui = new GUI();
+
     let modelControlFolder;
 
     let modeParams = {
@@ -119,8 +121,8 @@
     let partListObject = new Object();
     
     let modelControlParams = {
-        toggle_myocardium: false,
-        toggle_all_models: true,
+        toggle_myocardium: 2,
+        toggle_all_models: 0,
     }
 
     // object for probe controls in the GUI
@@ -292,7 +294,8 @@
 
                 modelParts.push(model);
                 
-                displayModelParts(true);
+                // // 0: visible, 1: wireframe, 2: hidden
+                // displayModelParts(0);
             }
         })
 
@@ -462,6 +465,10 @@
             }, interval);
         }
 
+        if (mouseButtonNumber == 1) {
+            resetProbe();
+        }
+
         if (mouseButtonNumber == 2) {
             mouseOmniInterval = setInterval(() => {
                 if (controlParams.omniplane < ultrasoundStartMaxValues.omniplaneMax) {
@@ -475,21 +482,21 @@
 
     // MOUSE CONTROLS: MOVEMENT (Advance/Retract/TWIST LEFT/TWIST RIGHT)
     function xTeeControlMove(mouseX, mouseY) {
-        if (mouseY > 1) {
+        if (mouseY >= 2) {
             if (controlParams.advance < 100) {
-                probeControls.advance(controlParams.advance += 1);
+                probeControls.advance(controlParams.advance += 0.5);
             }
-        } else if (mouseY < -1) {
+        } else if (mouseY <= -2) {
             if (controlParams.advance > 0) {
-                probeControls.advance(controlParams.advance -= 1);
+                probeControls.advance(controlParams.advance -= 0.5);
             }
         }
 
-        if (mouseX < -1) {
+        if (mouseX <= -2) {
             if (controlParams.twist < ultrasoundStartMaxValues.twistMax) {
                 probeControls.twist(controlParams.twist += 1);
             }
-        } else if (mouseX > 1) {
+        } else if (mouseX >= 2) {
             if (controlParams.twist > ultrasoundStartMaxValues.twistMin) {
                 probeControls.twist(controlParams.twist -= 1);
             }
@@ -633,11 +640,18 @@
         camera.updateProjectionMatrix();
 
         keyboardControls(isOn);
-        displayModelParts(!isOn);
+
+        // 0: visible, 1: wireframe, 2: hidden
+        if (isOn) {
+            displayModelParts(2);
+        } else {
+            displayModelParts(0);
+        }
 
         // default to hiding the non-clippable myocardium when switching modes
         // to keep it simple
-        displayNoClipMyocardium(false);
+        // 0: visible, 1: wireframe, 2: hidden
+        displayNoClipMyocardium(2);
 
         let layer;
 
@@ -825,6 +839,10 @@
         scene.add(ultrasoundProbeHead);
     }
 
+
+    // change this to position the ultrasound FOV higher or lower on the screen
+    // just don't go above 85 or lower than 75...
+    let ultrasoundCamOffset = -80;
     function spawnUltrasoundBeam() {
         ultrasoundCamPivot = new THREE.Group();
         let beamGeom = new THREE.CircleBufferGeometry(175, 32, Math.PI/4, Math.PI/2);
@@ -835,7 +853,9 @@
             side: THREE.DoubleSide,
         });
         beamMesh = new THREE.Mesh(beamGeom, beamMat);
-        beamMesh.position.z = -0.2;
+
+        // set slight offset so it doesn't intersect the clipped surface mesh 
+        beamMesh.position.z = -0.1;
         beamMesh.layers.set(mainCamLayer);
 
         // handles appearance of clipped meshes w/shaders
@@ -876,7 +896,7 @@
         ultrasoundCamPivot.add(ultrasoundCamera);
         ultrasoundCamPivot.add(planeMesh);
         ultrasoundCamPivot.add(beamMesh);
-
+        
         scene.add(ultrasoundCamPivot);
 
         // to control where the clippingPlane is created,
@@ -916,7 +936,7 @@
 
         ultrasoundCamPivot.rotateY(-Math.PI);
         ultrasoundCamera.rotateZ(Math.PI);
-        ultrasoundCamera.translateY(-50);
+        ultrasoundCamera.translateY(ultrasoundCamOffset);
     }
 
     function spawnUltrasoundOverlay() {
@@ -950,9 +970,9 @@
 
         // these require a small offset to render properly on the ultrasound cam
         let overlayEdgePoints = [
-            new THREE.Vector3(-(overlayHeight - 0.1), 0, 0),
-            new THREE.Vector3(0, (overlayHeight - 0.1), 0),
-            new THREE.Vector3((overlayHeight - 0.1), 0, 0),
+            new THREE.Vector3(-(overlayHeight -0.5), 0, 0),
+            new THREE.Vector3(0, (overlayHeight -0.5), 0),
+            new THREE.Vector3((overlayHeight -0.5), 0, 0),
         ];
 
         let overlayRectangleGeometry = new THREE.ExtrudeBufferGeometry(overlayShapeRectangle, overlayExtrudeSettings);
@@ -978,7 +998,13 @@
         ultrasoundOverlay.add(overlayMeshLeft, overlayMeshRight, overlayMeshRectangle, overlayEdge);
 
         ultrasoundOverlay.rotateX(Math.PI);
-        ultrasoundOverlay.position.y = 150.0;
+
+        // huh?
+        // honestly i have no idea why this is working  for an offset of -80 but not anything else?
+        ultrasoundOverlay.translateY(-ultrasoundCamera.position.y + ultrasoundCamOffset);
+
+        // so the beam mesh always follows the ultrasound overlay's position
+        beamMesh.position.y = ultrasoundOverlay.position.y - overlayHeight;
 
         scene.add(ultrasoundOverlay);
     }
@@ -1048,30 +1074,37 @@
     // -----------------END HMOUSE EVENT HELPER FUNCTIONS-----------------
 
     // -----------------START DISPLAY AND UI HELPER FUNCTIONS-----------------   
-    function displayModelParts(isOn) {
+    function displayModelParts(viewState) {
         modelParts.forEach(part => {
-            if (isOn) {
+            if (viewState == 0) {
+                part.material.wireframe = false;
+                part.layers.set(mainCamLayer);
+            } else if(viewState == 1) {
+                part.material.wireframe = true;
                 part.layers.set(mainCamLayer);
             } else {
                 part.layers.set(hiddenLayer);    
             }
         })
 
-        modelControlParams.toggle_all_models = isOn;
+        modelControlParams.toggle_all_models = viewState;
 
         for (let property in partListObject) {
-            partListObject[property] = isOn;
+            partListObject[property] = viewState;
         }
     }
 
-    function displayNoClipMyocardium(isOn) {
-        if (isOn) {
+    function displayNoClipMyocardium(viewState) {
+        if (viewState == 0) {
+            myocardiumNoClip.layers.set(mainCamLayer);
+        } else if (viewState == 1) {
+            myocardiumNoClip.material.wireframe = true;
             myocardiumNoClip.layers.set(mainCamLayer);
         } else {
             myocardiumNoClip.layers.set(hiddenLayer);
         }
 
-        modelControlParams.toggle_myocardium = isOn;
+        modelControlParams.toggle_myocardium = viewState;
     }
 
     function handleEditMode(isOn) {
@@ -1121,7 +1154,7 @@
             advanceRetract: controlParams.advance, 
         }
 
-        console.log(userBookmarks);
+        console.log('user bookmark saved!')
     }
 
     function deleteBookmark() {
@@ -1136,27 +1169,31 @@
         // deals with model visibility
         modelControlFolder = gui.addFolder('Model Control');
         
-        let modelGroupName = 'All Models Visible'; 
+        let modelGroupName = 'All Models Visible';
+        let modelVisibilityOptions = {'Visible': 0, 'Wireframe': 1, 'Hidden': 2}
 
         if (modelType.toLowerCase() == 'heart') {
-            modelControlFolder.add(modelControlParams, 'toggle_myocardium').name('Full Myocardium Visible').onChange(v => {
+            modelControlFolder.add(modelControlParams, 'toggle_myocardium', modelVisibilityOptions).name('Full Myocardium').onChange(v => {
                 displayNoClipMyocardium(v);
             }).listen();
 
-            modelGroupName = 'Full Blood Volume Visible';
+            modelGroupName = 'Full Blood Volume';
         }
 
-        modelControlFolder.add(modelControlParams, 'toggle_all_models').name(modelGroupName).onChange(v => {            
+        modelControlFolder.add(modelControlParams, 'toggle_all_models', modelVisibilityOptions).name(modelGroupName).onChange(v => {            
             displayModelParts(v);
         }).listen();
 
         modelParts.forEach(part => {
             let partName = `${part.name}_toggle`;
 
-            partListObject[partName] = true;
+            partListObject[partName] = 0;
 
-            modelControlFolder.add(partListObject, partName).name(`${part.name} Visible`).onChange(v => {
-                if (v) {
+            modelControlFolder.add(partListObject, partName, modelVisibilityOptions).name(`${part.name}`).onChange(v => {
+                if (v == 0) {
+                    part.layers.set(mainCamLayer);
+                } else if(v == 1) {
+                    part.material.wireframe = true;
                     part.layers.set(mainCamLayer);
                 } else {
                     part.layers.set(hiddenLayer);
@@ -1306,7 +1343,6 @@
 
             controlParams.advance = v.advanceRetract;
             probeControls.advance(controlParams.advance);
-
         });
 
         let saveBookmarkGui = bookmarkFolder.add(bookmarkParams, 'save_bookmark').name('Save Bookmark').enable(false);
@@ -1314,7 +1350,7 @@
         
         let bookmarkOptions = [
             userBookmarkGui,
-            // saveBookmarkGui,
+            saveBookmarkGui,
             // deleteBookmarkGui
         ]
 
@@ -1555,3 +1591,15 @@
     init();
     animate();
 </script>
+
+<div id='gui2'></div>
+
+<style>
+    #gui2 {
+        background-color: coral;
+        left: 10%;
+        bottom: 5%;
+        z-index: 100;
+        position: absolute;
+    }
+</style>
