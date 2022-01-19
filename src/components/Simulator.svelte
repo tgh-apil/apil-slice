@@ -21,6 +21,10 @@
     // TODO: firestore to get anatomy type for loading necessary assets
     let modelType = 'heart';
 
+    // TODO: POINT ME TO FIREBASE
+    // assumption is the blood volume and myocardium are all in the same file
+    let modelFilePath = '/gltf/normal.glb';
+
     // FOR ITEM SELECTION
     let raycaster = new THREE.Raycaster();
     let mouse = new THREE.Vector2();
@@ -70,7 +74,7 @@
     // FOR CAMERAS
     let pointerLockCam, camera, ultrasoundCamera;
     // control this for ultrasound zoom level 
-    let frustumSize = 250;
+    let frustumSize = 350;
     let SCREEN_WIDTH = window.innerWidth;
     let SCREEN_HEIGHT = window.innerHeight;
     let aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
@@ -1435,11 +1439,7 @@
 
         // loadHumanViewCube('/gltf/human.glb/');
 
-        // TODO: POINT ME TO FIREBASE
-        // assumption is the blood volume and myocardium are all in the same file
-        let path = '/gltf/normal_heart.glb';
-
-        modelParser(path).catch(err => {
+        modelParser(modelFilePath).catch(err => {
             console.log(`something went wrong loading the heart model: ${err}`);
         })
 

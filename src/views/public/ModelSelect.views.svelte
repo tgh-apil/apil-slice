@@ -4,6 +4,7 @@
 
     currentView.set('home');
     
+    // firebase me
     function loadModel() {
         replace('/viewer')
         currentView.set('viewer');
