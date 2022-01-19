@@ -492,11 +492,11 @@
             }
         }
 
-        if (mouseX <= -2) {
+        if (mouseX <= -1) {
             if (controlParams.twist < ultrasoundStartMaxValues.twistMax) {
                 probeControls.twist(controlParams.twist += 1);
             }
-        } else if (mouseX >= 2) {
+        } else if (mouseX >= 1) {
             if (controlParams.twist > ultrasoundStartMaxValues.twistMin) {
                 probeControls.twist(controlParams.twist -= 1);
             }
@@ -855,7 +855,7 @@
         beamMesh = new THREE.Mesh(beamGeom, beamMat);
 
         // set slight offset so it doesn't intersect the clipped surface mesh 
-        beamMesh.position.z = -0.1;
+        beamMesh.position.z = -0.3;
         beamMesh.layers.set(mainCamLayer);
 
         // handles appearance of clipped meshes w/shaders
