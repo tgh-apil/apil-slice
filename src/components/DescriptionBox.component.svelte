@@ -84,7 +84,6 @@
 
     <style>       
         #descriptionBoxInner {
-            background-color: #1212125e;
             width: 100%;
             margin: 0 auto;
         }
@@ -137,7 +136,7 @@
         #btn-box-max {
             position: absolute;
             z-index: 101;
-            bottom: 40%;
+            bottom: 42%;
             display: grid;
             grid-template: repeat(2, 1fr);
             grid-gap: 1%;
@@ -152,7 +151,7 @@
         #btn-box-min {
             position: absolute;
             z-index: 101;
-            bottom: 20%;
+            bottom: 22%;
             display: grid;
             grid-template: repeat(3, 1fr);
             grid-gap: 1%;
