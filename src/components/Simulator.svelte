@@ -6,7 +6,7 @@
     import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
     import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
     import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
-    import { viewWidth, descriptionBox, descriptionBoxMax, titleBoxPosition, btnBoxSize } from '../stores.js'; 
+    import { viewWidth, descriptionBox, descriptionBoxMax, titleBoxPosition, btnBoxSize, modelPath } from '../stores.js'; 
 
     // -----------------START GLOBAL VARIABLES---------------
     let scene, renderer;
@@ -23,7 +23,7 @@
 
     // TODO: POINT ME TO FIREBASE
     // assumption is the blood volume and myocardium are all in the same file
-    let modelFilePath = '/gltf/normal.glb';
+    let modelFilePath = $modelPath;
 
     // FOR ITEM SELECTION
     let raycaster = new THREE.Raycaster();

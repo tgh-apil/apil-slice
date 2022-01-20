@@ -18,3 +18,6 @@ export const titleBoxPosition = writable('titleBox-min-description');
 
 // can we set this based on the route?
 export const currentView = writable('home');
+
+// for the viewer/simulator
+export const modelPath = writable('/gltf/normal.glb');

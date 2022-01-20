@@ -1,13 +1,14 @@
 <script>
     import { replace } from 'svelte-spa-router';
-    import { currentView } from '../../stores.js';
+    import { currentView, modelPath } from '../../stores.js';
 
     currentView.set('home');
     
     // firebase me
-    function loadModel() {
+    function loadModel(path) {
         replace('/viewer')
         currentView.set('viewer');
+        modelPath.set(path)
     }
 
 </script>
@@ -16,9 +17,11 @@
     <div id="modelSelectBoxInner">
         <h1>Model Select</h1>
         <p>
-            MODEL SELECT GOES HERE
+            Select Heart
         </p>
-        <button on:click={() => loadModel()}>LOAD NORMAL MODEL</button>
+        <!-- temp paths -->
+        <button on:click={() => loadModel('/gltf/normal.glb')}>Normal Heart</button>
+        <button on:click={() => loadModel('/gltf/fontan.glb')}>Fontan Heart</button>
     </div>
 </div>
 
@@ -38,5 +41,10 @@
         height: 100%;
         margin: 0 auto;
         text-align: center;
+    }
+
+    button {
+        height: 5%;
+        width: 20%;
     }
 </style>
