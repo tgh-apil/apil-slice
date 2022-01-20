@@ -112,7 +112,7 @@
     // FOR GUI CONTROL PARAMETERS
     let gui = new GUI();
 
-    let modelControlFolder;
+    let modelControlFolder, controlFolder, adminFolder, bookmarkFolder;
 
     let modeParams = {
         activate_ultrasound: false,
@@ -138,14 +138,23 @@
         omniplane: 0,
         advance: 0,
         xtee: function() {
+            controlFolder.open();
+
             if (teeMouseControls.isLocked) {
                 teeMouseControls.unlock();
                 orbitControls.enabled = true;
+
+                bookmarkFolder.open();
+                modelControlFolder.open();
             } else {
                 teeMouseControls.lock();
                 orbitControls.enabled = false;
-            }            
+
+                bookmarkFolder.close();
+                modelControlFolder.close();
+            }
         },
+
         reset: function () {
             resetProbe();
         }
@@ -395,17 +404,17 @@
         scene.add(ambientLight);
 
         let spotLightOne = new THREE.SpotLight('white', 0.3);
-        spotLightOne.position.set(100, 200, 100);
+        spotLightOne.position.set(100, 300, 100);
         spotLightOne.name = 'spotlight_one';
         scene.add(spotLightOne);
 
         let spotLightTwo = new THREE.SpotLight('white', 0.3);
-        spotLightTwo.position.set(-100, 200, 100);
+        spotLightTwo.position.set(-100, 300, 100);
         spotLightTwo.name = 'spotlight_two';
         scene.add(spotLightTwo);
 
         let spotLightThree = new THREE.SpotLight('white', 0.3);
-        spotLightThree.position.set(0, 200, -100);
+        spotLightThree.position.set(0, 300, -100);
         spotLightThree.name = 'spotlight_three';
         scene.add(spotLightThree);
 
@@ -486,27 +495,27 @@
 
     // MOUSE CONTROLS: MOVEMENT (Advance/Retract/TWIST LEFT/TWIST RIGHT)
     function xTeeControlMove(mouseX, mouseY) {
-        if (mouseY >= 2) {
-            if (controlParams.advance < 100) {
-                probeControls.advance(controlParams.advance += 0.5);
-            }
-        } else if (mouseY <= -2) {
-            if (controlParams.advance > 0) {
-                probeControls.advance(controlParams.advance -= 0.5);
-            }
+        if (controlParams.advance < 100 && controlParams.advance > 0) {
+            probeControls.advance(controlParams.advance += (mouseY / 50));                
+        } else if (controlParams.advance >= 100) {
+            // probe forced to go backwards
+            probeControls.advance(controlParams.advance -= (Math.abs(mouseY) / 50));            
+        } else if (controlParams.advance <= 0){
+            // probe forced to go forwards
+            probeControls.advance(controlParams.advance += (Math.abs(mouseY) / 50));            
+        } else {
+            console.log('something went wrong with the advance');
         }
 
-        if (mouseX <= -1) {
-            if (controlParams.twist < ultrasoundStartMaxValues.twistMax) {
-                probeControls.twist(controlParams.twist += 1);
-            }
-        } else if (mouseX >= 1) {
-            if (controlParams.twist > ultrasoundStartMaxValues.twistMin) {
-                probeControls.twist(controlParams.twist -= 1);
-            }
+        if (controlParams.twist < ultrasoundStartMaxValues.twistMax && controlParams.twist > ultrasoundStartMaxValues.twistMin) {
+            probeControls.twist(controlParams.twist += (mouseX / 20));
+        } else if (controlParams.twist >= ultrasoundStartMaxValues.twistMax) {
+            probeControls.twist(controlParams.twist -= (Math.abs(mouseX) / 20));            
+        } else if (controlParams.twist <= ultrasoundStartMaxValues.twistMin) {
+            probeControls.twist(controlParams.twist += (Math.abs(mouseX) / 20));            
+        } else {
+            console.log('something went wrong with the twist');
         }
-
-        return;
     }
 
     function keyboardControls(isOn) {
@@ -1059,13 +1068,14 @@
     }
 
     function handleMouseMove() {
-        let e = window.event;
-        
         // when tee mouse controls are on, prevent scene rotation
         // allow for mouse movements to track to probe movements
         if (teeMouseControls.isLocked) {
-            mouse.x = e.movementX;
+            let e = window.event;
+
             mouse.y = e.movementY;
+            mouse.x = e.movementX;
+
             xTeeControlMove(mouse.x, mouse.y);
         }
     }
@@ -1259,7 +1269,7 @@
         }
 
         // deals with all probe control options
-        let controlFolder = gui.addFolder('TEE Probe Controls');
+        controlFolder = gui.addFolder('TEE Probe Controls');
         controlFolder.close();
 
         // default initial mode is just the view, no ultrasound
@@ -1297,7 +1307,7 @@
 
         // keep variables affected by ultrasound mode on/off out of local scope of isAdmin if block
         let toggleEditing;
-        let adminFolder;
+        adminFolder;
 
         if (isAdmin) {
             adminFolder = gui.addFolder('Admin Functions');
@@ -1327,7 +1337,7 @@
             ]
         }
 
-        let bookmarkFolder = gui.addFolder('User Bookmarks');
+        bookmarkFolder = gui.addFolder('User Bookmarks');
         
         let userBookmarkGui = bookmarkFolder.add(bookmarkParams, 'bookmarks', userBookmarks).enable(false).onChange(v => {
             // update the gui object for the controls (controlParams)
