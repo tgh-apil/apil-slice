@@ -21,7 +21,6 @@
         text-align: left;
         z-index: 100;
         overflow: auto;
-        width: 100%;
     }
 
     #titleBox-min-description {
@@ -31,7 +30,6 @@
         text-align: left;
         z-index: 100;
         overflow: auto;
-        width: 100%;
     }
 
     #titleBox-hidden-description {
@@ -41,7 +39,6 @@
         text-align: left;
         z-index: 100;
         overflow: auto;
-        width: 100%;
     }
 
     #titleBoxInner {

@@ -55,7 +55,7 @@
         position: absolute;
         z-index: 100;
         top: 0%;
-        width: 70%;
+        width: 80%;
         height: 5%;
         display: grid;
         grid-template: repeat(7, 1fr);

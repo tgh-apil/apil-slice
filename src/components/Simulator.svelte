@@ -74,10 +74,14 @@
     // FOR CAMERAS
     let pointerLockCam, camera, ultrasoundCamera;
     // control this for ultrasound zoom level 
-    let frustumSize = 250;
+    let frustumSize = 220;
     let SCREEN_WIDTH = window.innerWidth;
     let SCREEN_HEIGHT = window.innerHeight;
     let aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
+
+    // amount to split the screen by when in ultrasound mode
+    // splits evenly between 3d view (main cam) and ultrasound view (ortho cam)
+    let screenSplit = 0.4
 
     let ultrasoundCamHeight = 50;
 
@@ -112,6 +116,12 @@
     // FOR GUI CONTROL PARAMETERS
     let gui = new GUI();
     let bottomGuiHidden = true;
+    let popupInputUiHidden = true;
+    let adminGuiHidden;
+    let popupType = 'confirm';
+    let popupLabel = 'Not Set';
+    let popupFunction = console.log('not set');
+    let popupConfirmButtonText = 'Save';
 
     let modelControlFolder, controlFolder, adminFolder;
 
@@ -145,7 +155,10 @@
                 teeMouseControls.unlock();
                 orbitControls.enabled = true;
                 modelControlFolder.open();
+                bottomGuiHidden = false;
+
             } else {
+                bottomGuiHidden = true;
                 teeMouseControls.lock();
                 orbitControls.enabled = false;
                 modelControlFolder.close();
@@ -432,7 +445,7 @@
         // does not render anything
         pointerLockCam = new THREE.PerspectiveCamera(1, 1, 0.1, 1);
     }
-    // -----------------END GLOBAL SCEBE HELPER FUNCTIONS-----------------
+    // -----------------END GLOBAL SCENE HELPER FUNCTIONS-----------------
 
     // -----------------START ULTRASOUND CONTROL FUNCTIONS-----------------
     // MOUSE CONTROLS: SCROLL WHEEL (Anteflex/Retroflex)
@@ -637,7 +650,7 @@
     }
 
     function saveBookmark() {
-        let bookmarkName = 'test';
+        let bookmarkName = document.getElementById('input-ui-2').value;
         let newVal = {
             retroAnteflex: controlParams.anteflex,
             leftRightFlex: controlParams.rightLeftFlex,
@@ -645,6 +658,8 @@
             omniplaneRot: controlParams.omniplane,
             advanceRetract: controlParams.advance,  
         }
+
+        popupInputUiHidden = true;
 
         // for firebase reloading at a later page visit
         userBookmarks.push(
@@ -658,11 +673,13 @@
         // and since we are appending to the userBookmarks by 1 every time this function is called
         // we can use userBookmarks.length - 1 as the new value to the new option being added to the dropdown
         document.getElementById('bookmark-ui-1').add(new Option(bookmarkName, userBookmarks.length - 1))
-        console.log('user bookmark saved!')
+        keyboardControls(true);
     }
 
     function deleteBookmark() {
-        console.log('bookmark deleted!');
+        let bookmarkToRemove = document.getElementById('bookmark-ui-1');
+        bookmarkToRemove.remove(bookmarkToRemove.selectedIndex);
+        popupInputUiHidden = true;
     }
     // -----------------END BOOKMARK CONTROL FUNCTIONS-----------------
 
@@ -693,17 +710,9 @@
 
     function handleTeeMode(isOn) {
         splitView = isOn;
-
         camera.updateProjectionMatrix();
 
         keyboardControls(isOn);
-
-        // 0: visible, 1: wireframe, 2: hidden
-        if (isOn) {
-            displayModelParts(2);
-        } else {
-            displayModelParts(0);
-        }
 
         // default to hiding the non-clippable myocardium when switching modes
         // to keep it simple
@@ -715,6 +724,9 @@
         if (isOn) {
             layer = mainCamLayer;
             myocardium.material.clippingPlanes = [clippingPlane];
+
+            // 0: visible, 1: wireframe, 2: hidden
+            displayModelParts(2);
 
             // leave these two here
             // these two must be set to the ultrasoundCamLayer when ultrasound is on
@@ -755,6 +767,9 @@
         } else {
             layer = hiddenLayer;
             myocardium.material.clippingPlanes = [];
+            
+            // 0: visible, 1: wireframe, 2: hidden
+            displayModelParts(0);
 
             // leave these two here
             // these two must be set to the hidden layer when ultrasound is off
@@ -896,7 +911,6 @@
         scene.add(ultrasoundProbeHead);
     }
 
-
     // change this to position the ultrasound FOV higher or lower on the screen
     let ultrasoundCamOffset = -100;
     function spawnUltrasoundBeam() {
@@ -934,7 +948,9 @@
         // orthogragphic camera settings to create ultrasound 'image'
         let ultrasoundCamLeft = - frustumSize * aspect / 4;
         let ultrasoundCamRight = -ultrasoundCamLeft;
-        let ultrasoundCamTop = frustumSize / 2;
+
+        // i think this works?
+        let ultrasoundCamTop = frustumSize / (2 - screenSplit);
         let ultrasoundCamBottom = -ultrasoundCamTop;
         
         ultrasoundCamera = new THREE.OrthographicCamera(
@@ -1242,12 +1258,29 @@
         })
     }
 
+    function openInputPopup(type, label, fn, confirmText) {
+        popupInputUiHidden = false
+
+        popupType = type;
+        popupLabel = label;
+        popupConfirmButtonText = confirmText;
+        popupFunction = fn;
+
+        keyboardControls(false);
+    }
+
+    function closeInputPopup() {
+        popupInputUiHidden = true;
+        keyboardControls(true);
+    }
+
     function handleGUI() {
         gui.title('Model Viewer');
 
         let activateUltrasound = gui.add(modeParams, 'activate_ultrasound').name('Activate Ultrasound').onChange(v => {
             handleTeeMode(v);
             bottomGuiHidden = !v;
+            adminGuiHidden = true;
 
             controlOptions.forEach(option => {
                 option.enable(v);
@@ -1548,7 +1581,7 @@
         renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
 
         if (splitView) {
-            camera.aspect = 0.5 * aspect;
+            camera.aspect = screenSplit * aspect;
         } else {
             camera.aspect = aspect;
         }
@@ -1557,7 +1590,7 @@
         
         ultrasoundCamera.left = - frustumSize * aspect / 4;
         ultrasoundCamera.right = -ultrasoundCamera.left;
-        ultrasoundCamera.top = frustumSize / 2;
+        ultrasoundCamera.top = frustumSize / (2 - screenSplit);
         ultrasoundCamera.bottom = -ultrasoundCamera.top;
 
         ultrasoundCamera.updateProjectionMatrix();
@@ -1569,12 +1602,12 @@
 
         if (splitView) {
             // positions the main model viewer window in split-screen
-            renderer.setViewport(0, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT);
-            camera.aspect = 0.5 * aspect;
+            renderer.setViewport(0, 0, SCREEN_WIDTH * screenSplit, SCREEN_HEIGHT);
+            camera.aspect = SCREEN_WIDTH * screenSplit / SCREEN_HEIGHT;
             renderer.render(scene, camera);
     
             //positions the ultrasound window in split-screen
-            renderer.setViewport(SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT);
+            renderer.setViewport(SCREEN_WIDTH * screenSplit, 0, SCREEN_WIDTH * screenSplit, SCREEN_HEIGHT);
             renderer.render(scene, ultrasoundCamera);
         } else {
             // positions the main model viewer window in single screen
@@ -1590,23 +1623,23 @@
     animate();
 </script>
 
-<div hidden>
+<div hidden={popupInputUiHidden}>
     <div id="popup-input-ui-outer">
         <div id="popup-input-ui-inner">
-            <h1>hi</h1>
+            <h2 for='input-ui-input-field' id=input-ui-1><b>{popupLabel}</b></h2>
+            {#if popupType == 'input'}
+                <input type='text' id=input-ui-2 />
+            {:else}
+                <br id=input-ui-2 />
+            {/if}
+            <button id='input-ui-3' on:click={popupFunction()}>{popupConfirmButtonText}</button>
+            <button id='input-ui-4'on:click={() => closeInputPopup()}>Cancel</button>
         </div>
     </div>
 </div>
 
 <div hidden={bottomGuiHidden}>
     <div id="bottom-ui">
-        <div hidden={!isAdmin}>
-            <div id="admin-ui">
-                <button id='admin-ui-1'>Edit Scene</button>
-                <button id='admin-ui-2'>Add Control Point</button>
-                <button id='admin-ui-3'>Save Path</button>
-            </div>
-        </div>
         <div id="bookmark-ui">
             <select name="bookmark-select" id='bookmark-ui-1' on:change={() => bookmarkMove()}>
                 <option label="Select Bookmark"></option>
@@ -1614,8 +1647,8 @@
                     <option value={i}>{bookmark.name}</option>
                 {/each}
             </select>
-            <button id='bookmark-ui-2' on:click={() => saveBookmark()}>Save Bookmark</button>
-            <button id='bookmark-ui-3'>Delete Bookmark</button>
+            <button id='bookmark-ui-2' on:click={() => openInputPopup('input', 'Name your bookmark', saveBookmark, 'Save')}>Save Bookmark</button>
+            <button id='bookmark-ui-3' on:click={() => openInputPopup('NA', 'Are you sure you want to delete that bookmark?', deleteBookmark, 'Confirm')}>Delete Bookmark</button>
         </div>
     </div>
 </div>
@@ -1634,40 +1667,29 @@
     #popup-input-ui-inner {
         position: absolute;
         z-index: 100;
-        background-color: #121212;
-        width: 40%;
-        height: 20%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
+        background: rgba(0, 0, 0, 0.80);
+        width: 30%;
+        height: 15%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        column-gap: 1%;
+        row-gap: 5%;
     }
 
     #bottom-ui {
-        right: 2.5%;
+        right: 5%;
         bottom: 5%;
-        height: 7%;
-        width: 45%;
+        height: 10%;
+        width: 50%;
         z-index: 100;
         position: absolute;
         display: grid;
-        grid-template: repeat(2, 1fr);
+        grid-template: 1fr 1fr;
         grid-gap: 1%;
-    }
-    
-    #admin-ui {
-        grid-column: 1;
-        background-color: #121212;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        height: 100%;
-        z-index: 101;
-        column-gap: 1%;
-        row-gap: 5%;
     }
 
     #bookmark-ui {
-        grid-column: 2;
+        grid-column: 1 / 2;
         background-color: #121212;
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -1675,10 +1697,6 @@
         z-index: 101;
         column-gap: 1%;
         row-gap: 5%;
-    }
-
-    #admin-ui-1 {
-        grid-column: 1 / 3;
     }
 
     #bookmark-ui-1 {
@@ -1686,5 +1704,27 @@
 
         /* forces the dropdown to open upwards if # of entries forces it to touch the bottom of the screen */
         bottom: 100%;
+    }
+
+    #input-ui-1 {
+        grid-column: 1 / 3;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    #input-ui-2 {
+        grid-column: 1 / 3;
+    }
+
+    #input-ui-3 {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    #input-ui-4 {
+        grid-column: 2;
+        grid-row: 2;
     }
 </style>
