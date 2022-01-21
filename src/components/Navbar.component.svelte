@@ -89,13 +89,13 @@
         grid-column: 1 / 2;
     }
 
-    .col2 {
+    /* .col2 {
         grid-column: 3;
     }
 
     .col3 {
         grid-column: 4;
-    }
+    } */
 
     .col4 {
         grid-column: 5;
