@@ -1,14 +1,14 @@
 <script>
-    import { titleBox, titleBoxPosition } from '../stores.js';
+    import { titleBox, titleBoxPosition, modelTitle, modelPoster } from '../stores.js';
 </script>
 
 <div id="{$titleBoxPosition}">
     <div id="titleBoxInner" hidden={!$titleBox}>
         <h1>
-            Normal Heart
+            {$modelTitle}
         </h1>
         <h3>
-            Posted by: APIL
+            Posted by: {$modelPoster}
         </h3>
     </div>
 </div>

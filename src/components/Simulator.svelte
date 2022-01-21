@@ -74,7 +74,7 @@
     // FOR CAMERAS
     let pointerLockCam, camera, ultrasoundCamera;
     // control this for ultrasound zoom level 
-    let frustumSize = 350;
+    let frustumSize = 250;
     let SCREEN_WIDTH = window.innerWidth;
     let SCREEN_HEIGHT = window.innerHeight;
     let aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
@@ -111,8 +111,9 @@
 
     // FOR GUI CONTROL PARAMETERS
     let gui = new GUI();
+    let bottomGuiHidden = true;
 
-    let modelControlFolder, controlFolder, adminFolder, bookmarkFolder;
+    let modelControlFolder, controlFolder, adminFolder;
 
     let modeParams = {
         activate_ultrasound: false,
@@ -143,14 +144,10 @@
             if (teeMouseControls.isLocked) {
                 teeMouseControls.unlock();
                 orbitControls.enabled = true;
-
-                bookmarkFolder.open();
                 modelControlFolder.open();
             } else {
                 teeMouseControls.lock();
                 orbitControls.enabled = false;
-
-                bookmarkFolder.close();
                 modelControlFolder.close();
             }
         },
@@ -174,35 +171,29 @@
     }
 
     // TODO: Firestore
-    let userBookmarks = {
-        'Apical Four Chamber': {
-            retroAnteflex: -30,
-            leftRightFlex: 0,
-            leftRightTwist: 13,
-            omniplaneRot: 0,
-            advanceRetract: 23, 
+    let userBookmarks = [
+        {
+            name: 'Apical Four Chamber',
+            value: {
+                retroAnteflex: -30,
+                leftRightFlex: 0,
+                leftRightTwist: 13,
+                omniplaneRot: 0,
+                advanceRetract: 23, 
+            },
         },
 
-        'Parasternal Long Axis': {
-            retroAnteflex: -22,
-            leftRightFlex: 1,
-            leftRightTwist: 13,
-            omniplaneRot: -47,
-            advanceRetract: 23, 
+        {
+            name: 'Parasternal Long Axis',
+            value: {
+                retroAnteflex: -22,
+                leftRightFlex: 1,
+                leftRightTwist: 13,
+                omniplaneRot: -47,
+                advanceRetract: 23
+            }, 
         },
-    };
-    
-    let bookmarkParams = {
-        bookmarks: 'Saved Bookmarks',
-
-        save_bookmark: function() {
-            saveBookmark();
-        },
-
-        delete_bookmark: function() {
-            deleteBookmark();
-        },
-    }
+    ];
 
     // handles movemnt of the probe + beam
     let probeControls = {
@@ -622,6 +613,59 @@
     }
     // -----------------END ULTRASOUND CONTROL FUNCTIONS-----------------
 
+    // -----------------START BOOKMARK CONTROL FUNCTIONS-----------------
+    function bookmarkMove() {
+        let i = document.getElementById('bookmark-ui-1').value;
+
+        // we can have i = -1 since the first 'option' in the dropdown is just a label for the dropdown
+        if (i >= 0) {
+            controlParams.anteflex = userBookmarks[i].value.retroAnteflex;
+            probeControls.anteflex(controlParams.anteflex);
+    
+            controlParams.rightLeftFlex = userBookmarks[i].value.leftRightFlex;
+            probeControls.rightLeftFlex(controlParams.rightLeftFlex);
+    
+            controlParams.twist = userBookmarks[i].value.leftRightTwist;
+            probeControls.twist(controlParams.twist);
+    
+            controlParams.omniplane = userBookmarks[i].value.omniplaneRot;
+            probeControls.omniplane(controlParams.omniplane);
+    
+            controlParams.advance = userBookmarks[i].value.advanceRetract;
+            probeControls.advance(controlParams.advance);
+        }
+    }
+
+    function saveBookmark() {
+        let bookmarkName = 'test';
+        let newVal = {
+            retroAnteflex: controlParams.anteflex,
+            leftRightFlex: controlParams.rightLeftFlex,
+            leftRightTwist: controlParams.twist,
+            omniplaneRot: controlParams.omniplane,
+            advanceRetract: controlParams.advance,  
+        }
+
+        // for firebase reloading at a later page visit
+        userBookmarks.push(
+            {
+                name: bookmarkName,
+                value: newVal,
+            }
+        )
+
+        // since we are using the index of the bookmark as the value in bookmarkMove() to choose the correct value of moves
+        // and since we are appending to the userBookmarks by 1 every time this function is called
+        // we can use userBookmarks.length - 1 as the new value to the new option being added to the dropdown
+        document.getElementById('bookmark-ui-1').add(new Option(bookmarkName, userBookmarks.length - 1))
+        console.log('user bookmark saved!')
+    }
+
+    function deleteBookmark() {
+        console.log('bookmark deleted!');
+    }
+    // -----------------END BOOKMARK CONTROL FUNCTIONS-----------------
+
     // -----------------START ULTRASOUND MODE HELPER FUNCTIONS-----------------
     // generates a clipping plane co-planar with the 'ultrasound beam'/ultrasound camera
     // uses three co-planar points: point1, point2, point3 which are initiallized in init()
@@ -854,8 +898,7 @@
 
 
     // change this to position the ultrasound FOV higher or lower on the screen
-    // just don't go above 85 or lower than 75...
-    let ultrasoundCamOffset = -80;
+    let ultrasoundCamOffset = -100;
     function spawnUltrasoundBeam() {
         ultrasoundCamPivot = new THREE.Group();
         let beamGeom = new THREE.CircleBufferGeometry(175, 32, Math.PI/4, Math.PI/2);
@@ -1013,8 +1056,8 @@
         ultrasoundOverlay.rotateX(Math.PI);
 
         // huh?
-        // honestly i have no idea why this is working  for an offset of -80 but not anything else?
-        ultrasoundOverlay.translateY(-ultrasoundCamera.position.y + ultrasoundCamOffset);
+        // honestly i have no idea why this is working?
+        ultrasoundOverlay.translateY(-ultrasoundCamera.position.y - (-ultrasoundCamOffset/2));
 
         // so the beam mesh always follows the ultrasound overlay's position
         beamMesh.position.y = ultrasoundOverlay.position.y - overlayHeight;
@@ -1110,6 +1153,7 @@
 
     function displayNoClipMyocardium(viewState) {
         if (viewState == 0) {
+            myocardiumNoClip.material.wireframe = false;
             myocardiumNoClip.layers.set(mainCamLayer);
         } else if (viewState == 1) {
             myocardiumNoClip.material.wireframe = true;
@@ -1155,24 +1199,6 @@
             ultrasoundTube.layers.set(layer);
             console.log('regenerating ultrasound tube');
         }
-    }
-
-    function saveBookmark() {
-        let bookmarkName = 'test';
-
-        userBookmarks[bookmarkName] = {
-            retroAnteflex: controlParams.anteflex,
-            leftRightFlex: controlParams.rightLeftFlex,
-            leftRightTwist: controlParams.twist,
-            omniplaneRot: controlParams.omniplane,
-            advanceRetract: controlParams.advance, 
-        }
-
-        console.log('user bookmark saved!')
-    }
-
-    function deleteBookmark() {
-        console.log('bookmark deleted!');
     }
 
     // folder contents change if model is or is not heart
@@ -1221,18 +1247,14 @@
 
         let activateUltrasound = gui.add(modeParams, 'activate_ultrasound').name('Activate Ultrasound').onChange(v => {
             handleTeeMode(v);
+            bottomGuiHidden = !v;
 
             controlOptions.forEach(option => {
                 option.enable(v);
             })
 
-            bookmarkOptions.forEach(option => {
-                option.enable(v);
-            })
-
             if (v) {
                 controlFolder.open();
-                bookmarkFolder.open();
                 viewWidth.set('half-less');
 
                 if (isAdmin) {
@@ -1240,7 +1262,6 @@
                 }
             } else {
                 controlFolder.close();
-                bookmarkFolder.close();
                 viewWidth.set('full-less');
                 
                 if (isAdmin) {
@@ -1336,39 +1357,6 @@
                 saveControlSpherePos,
             ]
         }
-
-        bookmarkFolder = gui.addFolder('User Bookmarks');
-        
-        let userBookmarkGui = bookmarkFolder.add(bookmarkParams, 'bookmarks', userBookmarks).enable(false).onChange(v => {
-            // update the gui object for the controls (controlParams)
-            // then move the actual probe (probeControls)
-            
-            controlParams.anteflex = v.retroAnteflex;
-            probeControls.anteflex(controlParams.anteflex);
-
-            controlParams.rightLeftFlex = v.leftRightFlex;
-            probeControls.rightLeftFlex(controlParams.rightLeftFlex);
-
-            controlParams.twist = v.leftRightTwist;
-            probeControls.twist(controlParams.twist);
-
-            controlParams.omniplane = v.omniplaneRot;
-            probeControls.omniplane(controlParams.omniplane);
-
-            controlParams.advance = v.advanceRetract;
-            probeControls.advance(controlParams.advance);
-        });
-
-        let saveBookmarkGui = bookmarkFolder.add(bookmarkParams, 'save_bookmark').name('Save Bookmark').enable(false);
-        let deleteBookmarkGui = bookmarkFolder.add(bookmarkParams, 'delete_bookmark').name('Delete Bookmark').enable(false);
-        
-        let bookmarkOptions = [
-            userBookmarkGui,
-            saveBookmarkGui,
-            // deleteBookmarkGui
-        ]
-
-        bookmarkFolder.close();
     }
     // -----------------END DISPLAY AND UI HELPER FUNCTIONS-----------------
 
@@ -1602,14 +1590,101 @@
     animate();
 </script>
 
-<div id='gui2'></div>
+<div hidden>
+    <div id="popup-input-ui-outer">
+        <div id="popup-input-ui-inner">
+            <h1>hi</h1>
+        </div>
+    </div>
+</div>
+
+<div hidden={bottomGuiHidden}>
+    <div id="bottom-ui">
+        <div hidden={!isAdmin}>
+            <div id="admin-ui">
+                <button id='admin-ui-1'>Edit Scene</button>
+                <button id='admin-ui-2'>Add Control Point</button>
+                <button id='admin-ui-3'>Save Path</button>
+            </div>
+        </div>
+        <div id="bookmark-ui">
+            <select name="bookmark-select" id='bookmark-ui-1' on:change={() => bookmarkMove()}>
+                <option label="Select Bookmark"></option>
+                {#each userBookmarks as bookmark, i}
+                    <option value={i}>{bookmark.name}</option>
+                {/each}
+            </select>
+            <button id='bookmark-ui-2' on:click={() => saveBookmark()}>Save Bookmark</button>
+            <button id='bookmark-ui-3'>Delete Bookmark</button>
+        </div>
+    </div>
+</div>
 
 <style>
-    #gui2 {
-        background-color: coral;
-        left: 10%;
+    #popup-input-ui-outer {
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    #popup-input-ui-inner {
+        position: absolute;
+        z-index: 100;
+        background-color: #121212;
+        width: 40%;
+        height: 20%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    #bottom-ui {
+        right: 2.5%;
         bottom: 5%;
+        height: 7%;
+        width: 45%;
         z-index: 100;
         position: absolute;
+        display: grid;
+        grid-template: repeat(2, 1fr);
+        grid-gap: 1%;
+    }
+    
+    #admin-ui {
+        grid-column: 1;
+        background-color: #121212;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        height: 100%;
+        z-index: 101;
+        column-gap: 1%;
+        row-gap: 5%;
+    }
+
+    #bookmark-ui {
+        grid-column: 2;
+        background-color: #121212;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        height: 100%;
+        z-index: 101;
+        column-gap: 1%;
+        row-gap: 5%;
+    }
+
+    #admin-ui-1 {
+        grid-column: 1 / 3;
+    }
+
+    #bookmark-ui-1 {
+        grid-column: 1 / 3;
+
+        /* forces the dropdown to open upwards if # of entries forces it to touch the bottom of the screen */
+        bottom: 100%;
     }
 </style>

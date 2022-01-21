@@ -1,10 +1,11 @@
     <script>
-        import { descriptionBox, descriptionBoxGroupShow, descriptionBoxMax, viewWidth, titleBoxPosition, btnBoxSize, btnBoxSizeShow } from '../stores.js';
+        import { descriptionBox, descriptionBoxGroupShow, descriptionBoxMax, viewWidth, titleBoxPosition, btnBoxSize, btnBoxSizeShow, modelDescription } from '../stores.js';
         import TitleBox from './TitleBox.component.svelte';
 
+        // splits the possibly long description text to paragraphs
+        let descriptionParagraphs  = $modelDescription.split('\n');
 
-        // todo: re-write this shit
-        
+        // todo: re-write this shit        
         function changeDescriptionBoxSize() {
             descriptionBoxMax.set(!$descriptionBoxMax);
             descriptionBox.set(true);
@@ -76,13 +77,10 @@
             </div>
         </div>
         <div id={$viewWidth}>
-            <div id="descriptionBoxInner" hidden={!$descriptionBox} >
-                <p>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque interdum congue lorem vel commodo. Curabitur eget lacus sit amet metus bibendum blandit sit amet ut neque. Morbi porttitor tortor nulla, in gravida sem accumsan ac. Proin libero purus, vehicula eget pharetra et, pretium ac nisl. Vivamus eget vehicula turpis. Sed vulputate felis eu mi pharetra, lobortis bibendum enim consequat. Vestibulum suscipit neque non urna mollis fringilla. Sed fringilla risus est. Integer sit amet facilisis erat. Donec dignissim massa ac nulla varius ultrices. Nulla luctus sollicitudin erat, vel consectetur enim sagittis non. Phasellus luctus risus quis nunc eleifend, id cursus nunc auctor.
-                </p>
-                <p>
-                    Donec at erat sollicitudin, aliquam nisl ut, aliquet est. In condimentum neque ac lobortis dapibus. Maecenas mi quam, pulvinar id vehicula pharetra, finibus scelerisque neque. Maecenas ac odio nisi. Phasellus tincidunt quis elit in vehicula. Nunc in tristique nibh, eu interdum est. Curabitur eu neque nisi. Aenean sollicitudin ultricies fermentum. Pellentesque in sem est. Nullam tempor dui eu quam auctor tempor nec et neque. Vivamus posuere consequat dolor eget luctus. Nulla velit erat, ultrices at aliquam finibus, gravida ut libero. Nunc sed tellus dictum, fermentum libero sit amet, efficitur risus. Nullam nunc augue, tristique vitae malesuada ut, consectetur quis diam.
-                </p>
+            <div id="descriptionBoxInner" hidden={!$descriptionBox}>
+                {#each descriptionParagraphs as paragraph}
+                    <p>{paragraph}</p>
+                {/each}
             </div>
         </div>
     </div>
@@ -91,6 +89,7 @@
         #descriptionBoxInner {
             background: rgba(0, 0, 0, 0.80);
             width: 100%;
+            height: 90%;
             margin: 0 auto;
         }
 
