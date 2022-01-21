@@ -4,7 +4,7 @@
 
 
     function goViewer() {
-        console.log('going to 3D mode')
+        console.log('not set')
     }
 
     function goAtlasHome() {
@@ -27,16 +27,14 @@
         <button class="logo" on:click={goAtlasHome}>APIL SLICE</button>
     </div>
 
-    {#if $currentView == 'viewer'}
+    <!-- {#if $currentView == 'viewer'}
         <div class="col2">
-            <!-- call replace to not store on browser history so back button doesnt work -->
-            <!-- otherwise the 3js scene does not unload when hitting back -->
             <button class="navItem" on:click={goViewer}>3D View</button>
         </div>
         <div class="col3">
             <button class="navItem" on:click={goViewer}>U/S View</button>
         </div>
-    {/if}
+    {/if} -->
 
     <div class="col4">
         <button class="navItem" on:click={goAtlasHome}>Atlas Home</button>

@@ -6,7 +6,7 @@
     import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
     import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
     import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
-    import { viewWidth, descriptionBox, descriptionBoxMax, titleBoxPosition, btnBoxSize, modelPath } from '../stores.js'; 
+    import { viewWidth, descriptionBox, descriptionBoxMax, titleBoxPosition, btnBoxSize, modelPath, activateUltrasoundGlobal } from '../stores.js'; 
 
     // -----------------START GLOBAL VARIABLES---------------
     let scene, renderer;
@@ -117,10 +117,9 @@
     let gui = new GUI();
     let bottomGuiHidden = true;
     let popupInputUiHidden = true;
-    let adminGuiHidden;
     let popupType = 'confirm';
     let popupLabel = 'Not Set';
-    let popupFunction = console.log('not set');
+    let popupFunction = null;
     let popupConfirmButtonText = 'Save';
 
     let modelControlFolder, controlFolder, adminFolder;
@@ -1280,8 +1279,7 @@
         let activateUltrasound = gui.add(modeParams, 'activate_ultrasound').name('Activate Ultrasound').onChange(v => {
             handleTeeMode(v);
             bottomGuiHidden = !v;
-            adminGuiHidden = true;
-
+            
             controlOptions.forEach(option => {
                 option.enable(v);
             })
@@ -1313,7 +1311,7 @@
             }
 
             toggleEditing.enable(!v);
-        });
+        }).listen();
 
         // only enable ultrasound mode if a path for the probe exists
         if (path) {

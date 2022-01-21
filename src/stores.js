@@ -25,3 +25,4 @@ export const modelTitle = writable('Default Model');
 export const modelPoster = writable('Default User');
 export const modelDescription = writable('Default Description');
 export const modelPath = writable('/gltf/normal.glb');
+export const activateUltrasoundGlobal = writable(false);
