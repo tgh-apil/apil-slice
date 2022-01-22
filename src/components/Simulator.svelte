@@ -63,13 +63,14 @@
     let numPathPoints = 50;
     let positionAlongPath = 0;
 
-    // ULTRASOUND PROBE, BEAM, AND CABLE/TUBE
+    // ULTRASOUND PROBE, BEAM, POSITIONAL MARKER, AND CABLE/TUBE
     let ultrasoundGroup;
     let ultrasoundProbeHead;
     let ultrasoundCamPivot;
-    let ultrasoundTube;
     let ultrasoundOverlay;
     let beamMesh;
+    let circleMarker;
+    let ultrasoundTube;
 
     // FOR CAMERAS
     let pointerLockCam, camera, ultrasoundCamera;
@@ -114,13 +115,15 @@
     }
 
     // FOR GUI CONTROL PARAMETERS
-    let gui = new GUI();
+    let gui = new GUI({width: 250});
+
     let bottomGuiHidden = true;
     let popupInputUiHidden = true;
     let popupType = 'confirm';
     let popupLabel = 'Not Set';
     let popupFunction = null;
     let popupConfirmButtonText = 'Save';
+    let omniplaneReadoutHidden = true;
 
     let modelControlFolder, controlFolder, adminFolder;
 
@@ -650,29 +653,36 @@
 
     function saveBookmark() {
         let bookmarkName = document.getElementById('input-ui-2').value;
-        let newVal = {
-            retroAnteflex: controlParams.anteflex,
-            leftRightFlex: controlParams.rightLeftFlex,
-            leftRightTwist: controlParams.twist,
-            omniplaneRot: controlParams.omniplane,
-            advanceRetract: controlParams.advance,  
-        }
 
-        popupInputUiHidden = true;
-
-        // for firebase reloading at a later page visit
-        userBookmarks.push(
-            {
-                name: bookmarkName,
-                value: newVal,
+        if (bookmarkName !== "") {
+            let newVal = {
+                retroAnteflex: controlParams.anteflex,
+                leftRightFlex: controlParams.rightLeftFlex,
+                leftRightTwist: controlParams.twist,
+                omniplaneRot: controlParams.omniplane,
+                advanceRetract: controlParams.advance,  
             }
-        )
+    
+            popupInputUiHidden = true;
+    
+            // for firebase reloading at a later page visit
+            userBookmarks.push(
+                {
+                    name: bookmarkName,
+                    value: newVal,
+                }
+            )
+    
+            // since we are using the index of the bookmark as the value in bookmarkMove() to choose the correct value of moves
+            // and since we are appending to the userBookmarks by 1 every time this function is called
+            // we can use userBookmarks.length - 1 as the new value to the new option being added to the dropdown
+            document.getElementById('bookmark-ui-1').add(new Option(bookmarkName, userBookmarks.length - 1))
+            keyboardControls(true);
 
-        // since we are using the index of the bookmark as the value in bookmarkMove() to choose the correct value of moves
-        // and since we are appending to the userBookmarks by 1 every time this function is called
-        // we can use userBookmarks.length - 1 as the new value to the new option being added to the dropdown
-        document.getElementById('bookmark-ui-1').add(new Option(bookmarkName, userBookmarks.length - 1))
-        keyboardControls(true);
+            openInputPopup('NA', 'View saved!', closeInputPopup, 'Close');
+        } else {
+            openInputPopup('input', 'Must enter a name to save a view!',  saveBookmark, 'Save View')
+        }
     }
 
     function deleteBookmark() {
@@ -763,6 +773,9 @@
                 rotateAlongCurve(path);
                 matchCoPlanar(pointA, pointB, pointC);
             }
+
+            // circleMarker is technically part of the ultrasound beam, but it has to be visible to the main cam and the ultrasound cam
+            circleMarker.layers.set(0);
         } else {
             layer = hiddenLayer;
             myocardium.material.clippingPlanes = [];
@@ -778,6 +791,8 @@
             ultrasoundOverlay.children.forEach(element => {
                 element.layers.set(hiddenLayer);
             });
+
+            circleMarker.layers.set(hiddenLayer);
         }
 
         myocardium.layers.set(layer);
@@ -916,9 +931,9 @@
         ultrasoundCamPivot = new THREE.Group();
         let beamGeom = new THREE.CircleBufferGeometry(175, 32, Math.PI/4, Math.PI/2);
         let beamMat = new THREE.MeshBasicMaterial({
-            color: 0x42cef5,
+            color: 0x00acac,
             transparent: true,
-            opacity: 0.4,
+            opacity: 0.35,
             side: THREE.DoubleSide,
         });
         beamMesh = new THREE.Mesh(beamGeom, beamMat);
@@ -949,7 +964,10 @@
         let ultrasoundCamRight = -ultrasoundCamLeft;
 
         // i think this works?
-        let ultrasoundCamTop = frustumSize / (2 - screenSplit);
+        // take the amount of screen space that the ultrasound cam will take up (here, 40%)
+        // and multiply the divisor found in ultrasoundCamLeft
+        // to keep proper aspect ratio for the orthocam
+        let ultrasoundCamTop = frustumSize / (4 * screenSplit);
         let ultrasoundCamBottom = -ultrasoundCamTop;
         
         ultrasoundCamera = new THREE.OrthographicCamera(
@@ -1004,6 +1022,23 @@
         // (1) clippingPlane is added to the scene
         // (2) co-planar points are added to ultrasoundCamPivot to get its transforms
         matchCoPlanar(pointA, pointB, pointC);
+
+        let circleMarkerRadius = 5;
+        let circleMarkerGeom = new THREE.CircleGeometry(circleMarkerRadius, 32);
+        let circleMarkerMat = new THREE.MeshBasicMaterial({
+            color: 0x00acac,
+            side: THREE.DoubleSide,
+        })
+
+        circleMarker = new THREE.Mesh(circleMarkerGeom, circleMarkerMat);
+        
+        circleMarker.translateY(circleMarkerRadius);
+        circleMarker.translateX(-30);
+
+        // must be above 0 to be on top of the ultrasoundOverlay geometry
+        circleMarker.translateZ(0.3);
+
+        ultrasoundCamPivot.add(circleMarker)
 
         ultrasoundCamPivot.rotateY(-Math.PI);
         ultrasoundCamera.rotateZ(Math.PI);
@@ -1062,7 +1097,7 @@
         let overlayMeshRectangle = new THREE.Mesh(overlayRectangleGeometry, overlayMat);
         let overlayMeshLeft = new THREE.Mesh(overlayLeftGeometry, overlayMat);
         let overlayMeshRight = new THREE.Mesh(overlayRightGeometry, overlayMat);
-
+        
         let overlayEdge = new THREE.Line(overlayEdgeGeometry, overlayEdgeGeometryMat);
 
         ultrasoundOverlay = new THREE.Group();
@@ -1279,7 +1314,8 @@
         let activateUltrasound = gui.add(modeParams, 'activate_ultrasound').name('Activate Ultrasound').onChange(v => {
             handleTeeMode(v);
             bottomGuiHidden = !v;
-            
+            omniplaneReadoutHidden = !v;
+
             controlOptions.forEach(option => {
                 option.enable(v);
             })
@@ -1294,17 +1330,18 @@
             } else {
                 controlFolder.close();
                 viewWidth.set('full-less');
-                
+
                 if (isAdmin) {
                     adminFolder.open()
                 }
             }
 
             // to control the elements of the description box
-            descriptionBoxMax.set(false);
             descriptionBox.set(true);
             btnBoxSize.set('btn-box-min');
             titleBoxPosition.set('titleBox-min-description')
+            descriptionBoxMax.set(false);
+
 
             if (!ultrasoundTube) {
                 spawnUltrasoundTube();
@@ -1588,7 +1625,7 @@
         
         ultrasoundCamera.left = - frustumSize * aspect / 4;
         ultrasoundCamera.right = -ultrasoundCamera.left;
-        ultrasoundCamera.top = frustumSize / (2 - screenSplit);
+        ultrasoundCamera.top = frustumSize / (4 * screenSplit);
         ultrasoundCamera.bottom = -ultrasoundCamera.top;
 
         ultrasoundCamera.updateProjectionMatrix();
@@ -1621,6 +1658,10 @@
     animate();
 </script>
 
+<div hidden={omniplaneReadoutHidden}>
+    <div id="omniplane-ui-readout">Omniplane rotation: <b>{controlParams.omniplane}°</b></div>
+</div>
+
 <div hidden={popupInputUiHidden}>
     <div id="popup-input-ui-outer">
         <div id="popup-input-ui-inner">
@@ -1640,18 +1681,25 @@
     <div id="bottom-ui">
         <div id="bookmark-ui">
             <select name="bookmark-select" id='bookmark-ui-1' on:change={() => bookmarkMove()}>
-                <option label="Select Bookmark"></option>
+                <option label="Select Saved View"></option>
                 {#each userBookmarks as bookmark, i}
                     <option value={i}>{bookmark.name}</option>
                 {/each}
             </select>
-            <button id='bookmark-ui-2' on:click={() => openInputPopup('input', 'Name your bookmark', saveBookmark, 'Save')}>Save Bookmark</button>
-            <button id='bookmark-ui-3' on:click={() => openInputPopup('NA', 'Are you sure you want to delete that bookmark?', deleteBookmark, 'Confirm')}>Delete Bookmark</button>
+            <button id='bookmark-ui-2' on:click={() => openInputPopup('input', 'Name your view', saveBookmark, 'Save')}>Save View</button>
+            <button id='bookmark-ui-3' on:click={() => openInputPopup('NA', 'Are you sure you want to delete that view?', deleteBookmark, 'Confirm')}>Delete View</button>
         </div>
     </div>
 </div>
 
 <style>
+    #omniplane-ui-readout {
+        position: absolute;
+        z-index: 100;
+        top: 13%;
+        left: 42%;
+    }
+
     #popup-input-ui-outer {
         position: absolute;
         height: 100%;
@@ -1664,8 +1712,9 @@
 
     #popup-input-ui-inner {
         position: absolute;
+        border: solid 1px #424242;
         z-index: 100;
-        background: rgba(0, 0, 0, 0.80);
+        background: #121212e5;
         width: 30%;
         height: 15%;
         display: grid;
@@ -1675,10 +1724,11 @@
     }
 
     #bottom-ui {
-        right: 5%;
-        bottom: 5%;
-        height: 10%;
-        width: 50%;
+        right: 2%;
+        /* close enough to the description box? */
+        bottom: 5.2%;
+        height: 15%;
+        width: 250px;
         z-index: 100;
         position: absolute;
         display: grid;
@@ -1710,19 +1760,37 @@
         justify-content: center;
         align-items: center;
         text-align: center;
+        grid-row: 1;
     }
 
     #input-ui-2 {
         grid-column: 1 / 3;
+        grid-row: 2;
     }
 
     #input-ui-3 {
         grid-column: 1;
-        grid-row: 2;
+        grid-row: 3;
     }
 
     #input-ui-4 {
         grid-column: 2;
-        grid-row: 2;
+        grid-row: 3;
+    }
+
+    select {
+        border: none;
+        outline: none;
+        background-color: #1f1f1f;
+        color: #fff;
+        font-style: bold;
+    }
+
+    select:hover {
+        background-color: #424242;
+    }
+
+    select:focus {
+        border-style: none;
     }
 </style>

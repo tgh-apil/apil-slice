@@ -100,7 +100,7 @@
             height: 15%;
             text-align: left;
             z-index: 100;
-            width: 40%;
+            width: 80%;
             overflow: auto;
         }
 
@@ -111,7 +111,7 @@
             height: 35%;
             text-align: left;
             z-index: 100;
-            width: 40%;
+            width: 80%;
             overflow: auto;
         }
 
