@@ -1,6 +1,6 @@
 <script>
     import { replace } from 'svelte-spa-router';
-    import { currentView, modelPath, modelTitle, modelPoster, modelDescription } from '../../stores.js';
+    import { currentView, modelPath, modelTitle, modelPoster, modelDescription, navBarSize } from '../../stores.js';
 
     currentView.set('home');
 
@@ -16,6 +16,7 @@
     function loadModel(path) {
         replace('/viewer')
         currentView.set('viewer');
+        navBarSize.set('navbar-viewer');
         modelPath.set(path)
 
         // temp FOR EXAMPLE ONLY -- to be read off of firestore

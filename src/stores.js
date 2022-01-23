@@ -16,6 +16,8 @@ export const viewWidth = writable('full-less');
 export const titleBox = writable(true);
 export const titleBoxPosition = writable('titleBox-min-description');
 
+export const navBarSize = writable('navbar-full');
+
 // can we set this based on the route?
 export const currentView = writable('home');
 

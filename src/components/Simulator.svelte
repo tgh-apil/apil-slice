@@ -6,7 +6,8 @@
     import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
     import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
     import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
-    import { viewWidth, descriptionBox, descriptionBoxMax, titleBoxPosition, btnBoxSize, modelPath, activateUltrasoundGlobal } from '../stores.js'; 
+    import { viewWidth, descriptionBox, descriptionBoxMax, titleBoxPosition, btnBoxSize, modelPath, navBarSize } from '../stores.js'; 
+
 
     // -----------------START GLOBAL VARIABLES---------------
     let scene, renderer;
@@ -59,6 +60,7 @@
         },
     ];
     let controlSphereList = [];
+
     // number of points between each control sphere
     let numPathPoints = 50;
     let positionAlongPath = 0;
@@ -235,15 +237,20 @@
         // v coming in as an integer from 0 -> 100 representing a percentage of amount traveled on the path
         advance: function(v) {
             if (path) {
-                // convert v to decimal and round to nearest int
-                positionAlongPath = Math.round((v / 100) * (points.length - 1));
+                // convert v to decimal and round to nearest lowest int
+                try {
+                    positionAlongPath = Math.floor((v / 100) * (points.length - 1));
 
-                ultrasoundGroup.position.x = points[positionAlongPath].x;
-                ultrasoundGroup.position.y = points[positionAlongPath].y;
-                ultrasoundGroup.position.z = points[positionAlongPath].z;
-            
-                rotateAlongCurve(path);
-                matchCoPlanar(pointA, pointB, pointC);
+                    ultrasoundGroup.position.x = points[positionAlongPath].x;
+                    ultrasoundGroup.position.y = points[positionAlongPath].y;
+                    ultrasoundGroup.position.z = points[positionAlongPath].z;
+                
+                    rotateAlongCurve(path);
+                    matchCoPlanar(pointA, pointB, pointC);
+                } catch (e) {
+                    console.log('value is negative');
+                }
+
             } else {
                 console.log('path needed before probe can move!')
             }
@@ -390,6 +397,8 @@
             if (target.object.name == 'control_sphere') {
                 generateTransformControl(target.object);
                 previousObject = target.object;
+            } else {
+                console.log('object not setup as raycast target');
             }
 
             // for annotations -- not quite working ignore for now
@@ -398,9 +407,7 @@
             //     console.log(target.point);
             // }
 
-            if (previousObject) {
-                previousObject.material = new THREE.LineBasicMaterial({color: 'pink'});
-            }
+            previousObject.material = new THREE.LineBasicMaterial({color: 'pink'});
         }
     }
 
@@ -840,7 +847,7 @@
         let material = new THREE.LineBasicMaterial({color: 'white'});
         controlSphere = new THREE.Mesh(geometry, material);
         controlSphere.name = 'control_sphere';
-        
+
         controlSphere.layers.set(mainCamLayer);
         scene.add(controlSphere);
         controlSphereList.push(controlSphere);
@@ -865,6 +872,8 @@
             }
 
             path = new THREE.CatmullRomCurve3(splinePoints);
+            path.curveType = 'catmullrom';
+            path.tension = 0.25;
 
             // scale the number of points between controls
             pointCount = controlSphereList.length * numPathPoints;
@@ -895,8 +904,6 @@
         } else {
             console.log('cannot save path: no path in scene');
         }
-
-        console.log(controlSpherePostionList);
     }
 
     // rotate the probe head along a generated path
@@ -909,8 +916,15 @@
 
         let dir = tangent.normalize();
 
-        // apply some huge multiplier to the tangent point so it points outwards far into space
+        // // temp -- assume tha the heart's apex is always towards the -z-axis
+        // let absZ = Math.abs(dir.z) * -1;
+
+        // let absLookAtVector = new THREE.Vector3(dir.x, dir.y, absZ);
+
+        // apply some huge multiplier to the tangent point so it points outwards into space
         ultrasoundGroup.lookAt(dir.multiplyScalar(1000));
+        // prevent camera flipping
+        ultrasoundGroup.up = new THREE.Vector3(0, 1, 0);
     }
     // -----------------END ULTRASOUND MODE HELPER FUNCTIONS-----------------
 
@@ -1249,6 +1263,14 @@
             ultrasoundTube.layers.set(layer);
             console.log('regenerating ultrasound tube');
         }
+
+        // remove existing transform controls in the scene before adding a new one
+        scene.children.forEach(element => {
+            if (element.name == 'transform_controls') {
+                element.detach();
+                element.dispose();
+            }
+        })
     }
 
     // folder contents change if model is or is not heart
@@ -1322,6 +1344,7 @@
 
             if (v) {
                 controlFolder.open();
+                navBarSize.set('navbar-ultrasound');
                 viewWidth.set('half-less');
 
                 if (isAdmin) {
@@ -1329,6 +1352,7 @@
                 }
             } else {
                 controlFolder.close();
+                navBarSize.set('navbar-viewer');
                 viewWidth.set('full-less');
 
                 if (isAdmin) {
@@ -1419,7 +1443,7 @@
 
             let addControlSphere = adminFolder.add(adminParams, 'add_control_sphere').name('Add Spline Control').enable(false);
             let saveControlSpherePos = adminFolder.add(adminParams, 'save_sphere_position').name('Save Path').enable(false);
-            
+
             let adminOptions = [
                 addControlSphere,
                 saveControlSpherePos,
@@ -1781,13 +1805,13 @@
     select {
         border: none;
         outline: none;
-        background-color: #1f1f1f;
+        background-color: #424242;
         color: #fff;
         font-style: bold;
     }
 
     select:hover {
-        background-color: #424242;
+        background-color: #797979;
     }
 
     select:focus {

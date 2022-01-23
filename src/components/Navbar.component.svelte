@@ -1,6 +1,6 @@
 <script>
     import LoginButton from './LoginButton.component.svelte';
-    import { currentView, descriptionBoxGroupShow, helpBox } from '../stores.js';
+    import { currentView, descriptionBoxGroupShow, helpBox, navBarSize } from '../stores.js';
 
 
     function goViewer() {
@@ -8,6 +8,8 @@
     }
 
     function goAtlasHome() {
+        navBarSize.set('navbar-full');
+
         // can't call replace and reload the window...have to do it like this
         window.location = '/#';
 
@@ -22,7 +24,7 @@
 
 </script>
 
-<nav id="navbar">
+<nav id={$navBarSize}>
     <div class="col1">
         <button class="logo" on:click={goAtlasHome}>APIL SLICE</button>
     </div>
@@ -48,12 +50,46 @@
 </nav>
 
 <style>
-    #navbar {
-        background-color: #121212e5;
+    #navbar-full {
+        background-color: #4242425d;
+        position: absolute;
+        z-index: 100;
+        top: 0%;
+        left: 0%;
+        right: 5%;
+        width: 100%;
+        height: 5%;
+        display: grid;
+        grid-template: repeat(7, 1fr);
+        grid-auto-rows: auto;
+        grid-gap: 1%;
+        justify-items: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    #navbar-viewer {
+        background-color: #4242425d;
         position: absolute;
         z-index: 100;
         top: 0%;
         width: 80%;
+        height: 5%;
+        display: grid;
+        grid-template: repeat(7, 1fr);
+        grid-auto-rows: auto;
+        grid-gap: 1%;
+        justify-items: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    #navbar-ultrasound {
+        background-color: #4242425d;
+        position: absolute;
+        z-index: 100;
+        top: 0%;
+        width: 40%;
         height: 5%;
         display: grid;
         grid-template: repeat(7, 1fr);
