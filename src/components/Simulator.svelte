@@ -6,7 +6,15 @@
     import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
     import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
     import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
-    import { viewWidth, descriptionBox, descriptionBoxMax, titleBoxPosition, btnBoxSize, modelPath, navBarSize } from '../stores.js'; 
+    
+    import { viewWidth, descriptionBox, descriptionBoxMax, titleBoxPosition, btnBoxSize, modelPath, navBarSize, 
+            controlSpherePostionList, userBookmarks, modelType } from '../stores.js';
+    
+    // -----------------STARTFIREBASE IMPORTS---------------
+    import { app } from '../firebase.js';
+    import { getStorage, ref, getDownloadURL } from 'firebase/storage';
+    import { getFirestore, updateDoc, doc, arrayUnion, arrayRemove } from 'firebase/firestore/lite';
+    // -----------------END FIREBASE IMPORTS---------------
 
 
     // -----------------START GLOBAL VARIABLES---------------
@@ -14,51 +22,23 @@
     let orbitControls, teeMouseControls, transformControls;
     let splitView = false;
     let loader, dracoLoader;
+    let db = getFirestore(app);
 
     // FOR USER PERMISSIONS
     // TODO: This flag will be handled by firebase if the logged in user is/is not an admin
     let isAdmin = true;
-
-    // TODO: firestore to get anatomy type for loading necessary assets
-    let modelType = 'heart';
-
-    // TODO: POINT ME TO FIREBASE
-    // assumption is the blood volume and myocardium are all in the same file
-    let modelFilePath = $modelPath;
 
     // FOR ITEM SELECTION
     let raycaster = new THREE.Raycaster();
     let mouse = new THREE.Vector2();
 
     // FOR MESH DATA
-    let model, myocardium, myocardiumNoClip, humanViewCube;
+    let myocardium, myocardiumNoClip;
     let modelParts = [];
-
-    // TODO: firestore
-    let annotationList = [];
 
     // FOR SPLINE EDITING
     let path, pointCount, points, controlSphere, splineObject;
-    // stores coords of the control spheres if a path has been generated previously
-    // connect this to firebase
-    // temp values
-    let controlSpherePostionList = [
-        {
-            x: 25.3,
-            y: 119.74,
-            z: 63.12
-        },
-        {
-            x: 13.2,
-            y: 25.00,
-            z: 46.83,
-        },
-        {
-            x: -52.74,
-            y: -10.80,
-            z: -70.77,
-        },
-    ];
+
     let controlSphereList = [];
 
     // number of points between each control sphere
@@ -115,6 +95,12 @@
         omniplaneMin: -180.0,
         omniplaneMax: 180.0,
     }
+
+    // FOR LOCAL BOOKMARKING
+    // this is only used for the user's current session -- it is not persistent
+    // persistence is on firebase
+    // only use the $userBookmarks store (data loaded from firestore) as read only at this stage
+    let localBookmarks = $userBookmarks;
 
     // FOR GUI CONTROL PARAMETERS
     let gui = new GUI({width: 250});
@@ -187,31 +173,6 @@
         },
     }
 
-    // TODO: Firestore
-    let userBookmarks = [
-        {
-            name: 'Apical Four Chamber',
-            value: {
-                retroAnteflex: -30,
-                leftRightFlex: 0,
-                leftRightTwist: 13,
-                omniplaneRot: 0,
-                advanceRetract: 23, 
-            },
-        },
-
-        {
-            name: 'Parasternal Long Axis',
-            value: {
-                retroAnteflex: -22,
-                leftRightFlex: 1,
-                leftRightTwist: 13,
-                omniplaneRot: -47,
-                advanceRetract: 23
-            }, 
-        },
-    ];
-
     // handles movemnt of the probe + beam
     let probeControls = {
         anteflex: function (v) {
@@ -259,14 +220,29 @@
     // -----------------END GLOBAL VARIABLES-----------------
 
     // -----------------START GLOBAL SCENE HELPER FUNCTIONS-----------------
+    // responsible for getting the selected 3D model from firebase storage
     function modelLoader(path) {
-        // from https://discourse.threejs.org/t/most-simple-way-to-wait-loading-in-gltf-loader/13896/3
+        // get reference to storage service used to create references in storage bucket
+        let storage = getStorage(app);
+
+        let modelFolder = path.slice(0, -4);
+
+        // create storage reference from google storage service
+        let storageRef = ref(storage);
+
+        // points to a sub directory within the root storage called 'models'
+        let modelDirRef = ref(storageRef, `models/${modelFolder}/${path}`);
+            
         return new Promise((resolve, reject) => {
-            loader.load(path, res => resolve(res), null, reject);
+            getDownloadURL(modelDirRef)
+                .then((url) => {
+                    loader.load(url, res => resolve(res), null, reject);
+                })
         });
     }
 
-    async function modelParser(path) {
+    // responsbile for setting up the selected 3D model (colours, clipping, etc...)
+    async function modelParser(path) {       
         let data = await modelLoader(path);
         let models = data.scene;
 
@@ -275,7 +251,7 @@
         models.children.forEach(model => {
             // only handle the myocardium if it's a heart model and it has a myocardium model
             if (model.name.toLowerCase() == 'myocardium') {
-                if (modelType.toLowerCase() == 'heart') {
+                if ($modelType.toLowerCase() == 'heart') {
                     // create two copies: one clippable, one not
                     myocardium = model;
                     myocardiumNoClip = model.clone();
@@ -328,51 +304,6 @@
         addModelControlFolder();
 
         console.log(`all models loaded!`);
-    }
-
-    // not quite working...
-    // ignore ignore ignore
-    function loadHumanViewCube(path) {
-        loader.load(
-            path,
-            function(gltf) {
-                gltf.asset;
-                model = gltf.scene;
-                model.traverse(c => {
-                    if (c.isMesh) {
-                        humanViewCube = c;
-                        console.log(humanViewCube);
-                        humanViewCube.material = modelMat('white');
-                        humanViewCube.rotateY(Math.PI);
-                        humanViewCube.position.z = 200;
-                        humanViewCube.layers.set(mainCamLayer);
-                        humanViewCube.geometry.center.set(SCREEN_WIDTH - 200, SCREEN_HEIGHT - 200);
-                        scene.add(humanViewCube);
-                    }
-                })
-            }
-        )
-            
-    }
-    
-    // not quite working...
-    // ignore ignore ignore
-    function spawnAnnotation(pos, normal) {
-        let objectPointer = new THREE.Object3D()
-        let annotationGeom = new THREE.CircleGeometry(6, 32);
-        let annotationMat = new THREE.MeshBasicMaterial({
-            color: 'white',
-            side: THREE.DoubleSide,
-        });
-        let annotation = new THREE.Mesh(annotationGeom, annotationMat);
-
-        objectPointer.lookAt(normal);
-
-        annotation.position.x = pos.x;
-        annotation.position.y = pos.y;
-        annotation.position.z = pos.z;
-
-        scene.add(annotation);
     }
 
     function handleRaycast(e) {
@@ -641,24 +572,24 @@
 
         // we can have i = -1 since the first 'option' in the dropdown is just a label for the dropdown
         if (i >= 0) {
-            controlParams.anteflex = userBookmarks[i].value.retroAnteflex;
+            controlParams.anteflex = localBookmarks[i].value.retroAnteflex;
             probeControls.anteflex(controlParams.anteflex);
     
-            controlParams.rightLeftFlex = userBookmarks[i].value.leftRightFlex;
+            controlParams.rightLeftFlex = localBookmarks[i].value.leftRightFlex;
             probeControls.rightLeftFlex(controlParams.rightLeftFlex);
     
-            controlParams.twist = userBookmarks[i].value.leftRightTwist;
+            controlParams.twist = localBookmarks[i].value.leftRightTwist;
             probeControls.twist(controlParams.twist);
     
-            controlParams.omniplane = userBookmarks[i].value.omniplaneRot;
+            controlParams.omniplane = localBookmarks[i].value.omniplaneRot;
             probeControls.omniplane(controlParams.omniplane);
     
-            controlParams.advance = userBookmarks[i].value.advanceRetract;
+            controlParams.advance = localBookmarks[i].value.advanceRetract;
             probeControls.advance(controlParams.advance);
         }
     }
 
-    function saveBookmark() {
+    async function saveBookmark() {
         let bookmarkName = document.getElementById('input-ui-2').value;
 
         if (bookmarkName !== "") {
@@ -672,19 +603,28 @@
     
             popupInputUiHidden = true;
     
-            // for firebase reloading at a later page visit
-            userBookmarks.push(
-                {
-                    name: bookmarkName,
-                    value: newVal,
-                }
-            )
+            localBookmarks = [...localBookmarks, {name: bookmarkName, value: newVal}]
+            console.log(localBookmarks);
     
             // since we are using the index of the bookmark as the value in bookmarkMove() to choose the correct value of moves
             // and since we are appending to the userBookmarks by 1 every time this function is called
             // we can use userBookmarks.length - 1 as the new value to the new option being added to the dropdown
-            document.getElementById('bookmark-ui-1').add(new Option(bookmarkName, userBookmarks.length - 1))
+            document.getElementById('bookmark-ui-1').add(new Option(bookmarkName, localBookmarks.length - 1))
             keyboardControls(true);
+
+            // write new data to firebase
+
+            let docName = $modelPath;
+            docName = docName.slice(0, -4);
+            
+            // get reference to this specific bookmark from firebase
+            // database, collection, document
+            let bookmarkRef = doc(db, 'modelDb', docName);
+
+            await updateDoc(bookmarkRef, {
+                // newest entry to the local bookmarks is always going to be the last one
+                bookmarks: arrayUnion(localBookmarks.at(-1)),
+            })
 
             openInputPopup('NA', 'View saved!', closeInputPopup, 'Close');
         } else {
@@ -692,10 +632,28 @@
         }
     }
 
-    function deleteBookmark() {
+    async function deleteBookmark() {
         let bookmarkToRemove = document.getElementById('bookmark-ui-1');
-        bookmarkToRemove.remove(bookmarkToRemove.selectedIndex);
+
+        // this index starts at 1...
+        let bookmarkIndex = bookmarkToRemove.selectedIndex
+        bookmarkToRemove.remove(bookmarkIndex);
         popupInputUiHidden = true;
+
+        let bookmarkToRemoveFirestore = localBookmarks.slice(bookmarkIndex - 1);
+
+        let docName = $modelPath;
+        docName = docName.slice(0, -4);
+        
+        // get reference to this specific bookmark from firebase
+        // database, collection, document
+        let bookmarkRef = doc(db, 'modelDb', docName);
+
+        await updateDoc(bookmarkRef, {
+            // bookmark to remove is an array and the actual entry we want to remove is in position 0 of the array
+            // it should be the only entry in the array
+            bookmarks: arrayRemove(bookmarkToRemoveFirestore[0]),
+        })
     }
     // -----------------END BOOKMARK CONTROL FUNCTIONS-----------------
 
@@ -893,14 +851,16 @@
         }
     }
 
+    // point me to firebase
     function saveControlSpherePosition() {
-        // point me to firebase
         if (path) {
             // clear the list every time we save
-            controlSpherePostionList = [];
+            controlSpherePostionList.set([]);
+
             controlSphereList.forEach(element => {
                 controlSpherePostionList.push(element.position);
             })
+
         } else {
             console.log('cannot save path: no path in scene');
         }
@@ -1284,7 +1244,7 @@
         let modelGroupName = 'All Models Visible';
         let modelVisibilityOptions = {'Visible': 0, 'Wireframe': 1, 'Hidden': 2}
 
-        if (modelType.toLowerCase() == 'heart') {
+        if ($modelType.toLowerCase() == 'heart') {
             modelControlFolder.add(modelControlParams, 'toggle_myocardium', modelVisibilityOptions).name('Full Myocardium').onChange(v => {
                 displayNoClipMyocardium(v);
             }).listen();
@@ -1527,11 +1487,10 @@
         dracoLoader.setDecoderPath('/draco/gltf/');
         loader.setDRACOLoader(dracoLoader);
 
-        // loadHumanViewCube('/gltf/human.glb/');
-
-        modelParser(modelFilePath).catch(err => {
+        // FIREBASE STUFF
+        modelParser($modelPath).catch(err => {
             console.log(`something went wrong loading the heart model: ${err}`);
-        })
+        });
 
         // ULTRASOUND TEE PROBE ASSEMBLY
         // probe has the following components:
@@ -1578,14 +1537,14 @@
         // SPAWN PATH IF PATH CONTROL SPHERES HAVE BEEN SET
         // probably needs to be wrapped in an async function
         // read from firebase
-        if (controlSpherePostionList.length > 0) {
+        if ($controlSpherePostionList.length > 0) {
             console.log('regenerating probe path from saved control points!')
 
-            for (let i = 0; i < controlSpherePostionList.length; i++) {
+            for (let i = 0; i < $controlSpherePostionList.length; i++) {
                 generateControlSphere();
-                controlSphereList[i].position.x = controlSpherePostionList[i].x;
-                controlSphereList[i].position.y = controlSpherePostionList[i].y;
-                controlSphereList[i].position.z = controlSpherePostionList[i].z;
+                controlSphereList[i].position.x = $controlSpherePostionList[i].x;
+                controlSphereList[i].position.y = $controlSpherePostionList[i].y;
+                controlSphereList[i].position.z = $controlSpherePostionList[i].z;
                 controlSphereList[i].layers.set(hiddenLayer);
             }
             
@@ -1706,7 +1665,7 @@
         <div id="bookmark-ui">
             <select name="bookmark-select" id='bookmark-ui-1' on:change={() => bookmarkMove()}>
                 <option label="Select Saved View"></option>
-                {#each userBookmarks as bookmark, i}
+                {#each $userBookmarks as bookmark, i}
                     <option value={i}>{bookmark.name}</option>
                 {/each}
             </select>
@@ -1748,7 +1707,7 @@
     }
 
     #bottom-ui {
-        right: 2%;
+        right: 1%;
         /* close enough to the description box? */
         bottom: 5.2%;
         height: 15%;
