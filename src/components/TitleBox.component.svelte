@@ -14,18 +14,9 @@
 </div>
 
 <style>
-    #titleBox-max-description {
+    #titleBox-show-description {
         position: absolute;
-        bottom: 40%;
-        height: 20%;
-        text-align: left;
-        z-index: 100;
-        overflow: auto;
-    }
-
-    #titleBox-min-description {
-        position: absolute;
-        bottom: 20%;
+        bottom: 38%;
         height: 20%;
         text-align: left;
         z-index: 100;

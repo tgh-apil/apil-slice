@@ -105,7 +105,9 @@
     // FOR GUI CONTROL PARAMETERS
     let gui = new GUI({width: 250});
 
-    let bottomGuiHidden = true;
+    let bottomGuiHidden = false;
+    let bookmarkUiHidden = true;
+    let controlUiHidden = true;
     let popupInputUiHidden = true;
     let popupType = 'confirm';
     let popupLabel = 'Not Set';
@@ -159,6 +161,9 @@
             resetProbe();
         }
     }
+
+    // default to allow keyboard controls for input
+    let inputControlOptions = 'keyboard';
 
     let adminParams = {
         toggle_editing: false,
@@ -236,7 +241,11 @@
         return new Promise((resolve, reject) => {
             getDownloadURL(modelDirRef)
                 .then((url) => {
-                    loader.load(url, res => resolve(res), null, reject);
+                    // args: file path, returns a promise on resolve, shows progress of the load, reject the promise if there's an error
+                    loader.load(url, 
+                                res => resolve(res), 
+                                xhr => console.log((xhr.loaded / xhr.total * 100)), 
+                                reject);
                 })
         });
     }
@@ -439,8 +448,17 @@
 
     // MOUSE CONTROLS: MOVEMENT (Advance/Retract/TWIST LEFT/TWIST RIGHT)
     function xTeeControlMove(mouseX, mouseY) {
+        let mod;
+
+        // reverses control direction depending on contoller input
+        if (inputControlOptions == 'rod controller' || inputControlOptions == 'tee controller') {
+            mod = -1;
+        } else {
+            mod = 1;
+        }
+    
         if (controlParams.advance < 100 && controlParams.advance > 0) {
-            probeControls.advance(controlParams.advance += (mouseY / 50));                
+            probeControls.advance(controlParams.advance -= (mod * mouseY / 50));                
         } else if (controlParams.advance >= 100) {
             // probe forced to go backwards
             probeControls.advance(controlParams.advance -= (Math.abs(mouseY) / 50));            
@@ -452,7 +470,7 @@
         }
 
         if (controlParams.twist < ultrasoundStartMaxValues.twistMax && controlParams.twist > ultrasoundStartMaxValues.twistMin) {
-            probeControls.twist(controlParams.twist += (mouseX / 20));
+            probeControls.twist(controlParams.twist += (mod * mouseX / 20));
         } else if (controlParams.twist >= ultrasoundStartMaxValues.twistMax) {
             probeControls.twist(controlParams.twist -= (Math.abs(mouseX) / 20));            
         } else if (controlParams.twist <= ultrasoundStartMaxValues.twistMin) {
@@ -463,6 +481,10 @@
     }
 
     function keyboardControls(isOn) {
+        if (inputControlOptions == 'keyboard') {
+            isOn = true;
+        }
+
         if (isOn) {
             document.onkeydown = function(e) {
             switch (e.key) {
@@ -610,10 +632,8 @@
             // and since we are appending to the userBookmarks by 1 every time this function is called
             // we can use userBookmarks.length - 1 as the new value to the new option being added to the dropdown
             document.getElementById('bookmark-ui-1').add(new Option(bookmarkName, localBookmarks.length - 1))
-            keyboardControls(true);
 
             // write new data to firebase
-
             let docName = $modelPath;
             docName = docName.slice(0, -4);
             
@@ -680,95 +700,6 @@
         // the clipping plane to hide the tube is the same as the ultrasound clipping plane
         // just with its normal in the opposite direction
         tubeClippingPlane.setFromCoplanarPoints(worldPoint3, worldPoint2, worldPoint1).negate();
-    }
-
-    function handleTeeMode(isOn) {
-        splitView = isOn;
-        camera.updateProjectionMatrix();
-
-        keyboardControls(isOn);
-
-        // default to hiding the non-clippable myocardium when switching modes
-        // to keep it simple
-        // 0: visible, 1: wireframe, 2: hidden
-        displayNoClipMyocardium(2);
-
-        let layer;
-
-        if (isOn) {
-            layer = mainCamLayer;
-            myocardium.material.clippingPlanes = [clippingPlane];
-
-            // 0: visible, 1: wireframe, 2: hidden
-            displayModelParts(2);
-
-            // leave these two here
-            // these two must be set to the ultrasoundCamLayer when ultrasound is on
-            frontMesh.layers.set(ultrasoundCamLayer);
-            backMesh.layers.set(ultrasoundCamLayer);
-            
-            // remove existing transform controls in the scene when entering ultrasound mode
-            scene.children.forEach(element => {
-                if (element.name == 'transform_controls') {
-                    element.detach();
-                }
-            })
-            
-            controlSphereList.forEach(sphere => {
-                sphere.layers.set(hiddenLayer);
-            });
-
-            // the ultrasound overlay contains two elements:
-            // extruded shapes for the overlay shape(two triangles and one rectangle)
-            // and two lines to highlight the edges of the ultrasound beam
-            // these elements go on two different layers -- the lines are visible by the main cam and the ultrasound cam
-            // the overlay shapes are just to the ultrasound layer
-            ultrasoundOverlay.children.forEach(element => {
-                if (element.type == 'Line') {
-                    element.layers.set(ultrasoundCamLayer);
-                } else {
-                    element.layers.set(ultrasoundOverlayLayer);
-                }
-            });
-
-            if (path) {
-                ultrasoundGroup.position.x = points[positionAlongPath].x;
-                ultrasoundGroup.position.y = points[positionAlongPath].y;
-                ultrasoundGroup.position.z = points[positionAlongPath].z;
-                rotateAlongCurve(path);
-                matchCoPlanar(pointA, pointB, pointC);
-            }
-
-            // circleMarker is technically part of the ultrasound beam, but it has to be visible to the main cam and the ultrasound cam
-            circleMarker.layers.set(0);
-        } else {
-            layer = hiddenLayer;
-            myocardium.material.clippingPlanes = [];
-            
-            // 0: visible, 1: wireframe, 2: hidden
-            displayModelParts(0);
-
-            // leave these two here
-            // these two must be set to the hidden layer when ultrasound is off
-            frontMesh.layers.set(hiddenLayer);
-            backMesh.layers.set(hiddenLayer);
-
-            ultrasoundOverlay.children.forEach(element => {
-                element.layers.set(hiddenLayer);
-            });
-
-            circleMarker.layers.set(hiddenLayer);
-        }
-
-        myocardium.layers.set(layer);
-        ultrasoundGroup.layers.set(layer);
-        ultrasoundProbeHead.layers.set(layer);
-        ultrasoundCamPivot.layers.set(layer);
-        beamMesh.layers.set(layer);
-
-        if (ultrasoundTube) {
-            ultrasoundTube.layers.set(layer);
-        }
     }
 
     function generateTransformControl(mesh) {
@@ -1154,41 +1085,7 @@
     }
     // -----------------END HMOUSE EVENT HELPER FUNCTIONS-----------------
 
-    // -----------------START DISPLAY AND UI HELPER FUNCTIONS-----------------   
-    function displayModelParts(viewState) {
-        modelParts.forEach(part => {
-            if (viewState == 0) {
-                part.material.wireframe = false;
-                part.layers.set(mainCamLayer);
-            } else if(viewState == 1) {
-                part.material.wireframe = true;
-                part.layers.set(mainCamLayer);
-            } else {
-                part.layers.set(hiddenLayer);    
-            }
-        })
-
-        modelControlParams.toggle_all_models = viewState;
-
-        for (let property in partListObject) {
-            partListObject[property] = viewState;
-        }
-    }
-
-    function displayNoClipMyocardium(viewState) {
-        if (viewState == 0) {
-            myocardiumNoClip.material.wireframe = false;
-            myocardiumNoClip.layers.set(mainCamLayer);
-        } else if (viewState == 1) {
-            myocardiumNoClip.material.wireframe = true;
-            myocardiumNoClip.layers.set(mainCamLayer);
-        } else {
-            myocardiumNoClip.layers.set(hiddenLayer);
-        }
-
-        modelControlParams.toggle_myocardium = viewState;
-    }
-
+    // -----------------START MODE SWITCH FUNCTIONS-----------------
     function handleEditMode(isOn) {
         let layer;
 
@@ -1231,6 +1128,180 @@
                 element.dispose();
             }
         })
+    }
+
+    function handleTeeMode(isOn) {
+        splitView = isOn;
+        camera.updateProjectionMatrix();
+
+        modeParams.activate_ultrasound = isOn;
+
+        // deal with the UI
+        bookmarkUiHidden = !isOn;
+        controlUiHidden = !isOn;
+        omniplaneReadoutHidden = !isOn;
+
+        controlOptions.forEach(option => {
+            option.enable(isOn);
+        })
+
+        if (isOn) {
+            controlFolder.open();
+            navBarSize.set('navbar-ultrasound');
+            viewWidth.set('half-more');
+            keyboardControls(true);
+
+            if (isAdmin) {
+                adminFolder.close()
+            }
+        } else {
+            controlFolder.close();
+            navBarSize.set('navbar-viewer');
+            viewWidth.set('full-more');
+            keyboardControls(false);
+
+            if (isAdmin) {
+                adminFolder.open()
+            }
+        }
+
+        // to control the elements of the description box
+        descriptionBox.set(false);
+        btnBoxSize.set('btn-box-hide');
+        titleBoxPosition.set('titleBox-hidden-description')
+        descriptionBoxMax.set(false);
+
+        if (!ultrasoundTube) {
+            spawnUltrasoundTube();
+        }
+
+        toggleEditing.enable(!isOn);
+
+        // default to hiding the non-clippable myocardium when switching modes
+        // to keep it simple
+        // 0: visible, 1: wireframe, 2: hidden
+        displayNoClipMyocardium(2);
+
+        let layer;
+
+        if (isOn) {
+            layer = mainCamLayer;
+            myocardium.material.clippingPlanes = [clippingPlane];
+
+            // 0: visible, 1: wireframe, 2: hidden
+            displayModelParts(2);
+
+            // leave these two here
+            // these two must be set to the ultrasoundCamLayer when ultrasound is on
+            frontMesh.layers.set(ultrasoundCamLayer);
+            backMesh.layers.set(ultrasoundCamLayer);
+            
+            // remove existing transform controls in the scene when entering ultrasound mode
+            scene.children.forEach(element => {
+                if (element.name == 'transform_controls') {
+                    element.detach();
+                }
+            })
+            
+            controlSphereList.forEach(sphere => {
+                sphere.layers.set(hiddenLayer);
+            });
+
+            // the ultrasound overlay contains two elements:
+            // extruded shapes for the overlay shape(two triangles and one rectangle)
+            // and two lines to highlight the edges of the ultrasound beam
+            // these elements go on two different layers -- the lines are visible by the main cam and the ultrasound cam
+            // the overlay shapes are just to the ultrasound layer
+            ultrasoundOverlay.children.forEach(element => {
+                if (element.type == 'Line') {
+                    element.layers.set(ultrasoundCamLayer);
+                } else {
+                    element.layers.set(ultrasoundOverlayLayer);
+                }
+            });
+
+            if (path) {
+                ultrasoundGroup.position.x = points[positionAlongPath].x;
+                ultrasoundGroup.position.y = points[positionAlongPath].y;
+                ultrasoundGroup.position.z = points[positionAlongPath].z;
+                rotateAlongCurve(path);
+                matchCoPlanar(pointA, pointB, pointC);
+            }
+
+            // circleMarker is technically part of the ultrasound beam, but it has to be visible to the main cam and the ultrasound cam
+            circleMarker.layers.set(0);
+        } else {
+            layer = hiddenLayer;
+            myocardium.material.clippingPlanes = [];
+            
+            // 0: visible, 1: wireframe, 2: hidden
+            displayModelParts(0);
+
+            // leave these two here
+            // these two must be set to the hidden layer when ultrasound is off
+            frontMesh.layers.set(hiddenLayer);
+            backMesh.layers.set(hiddenLayer);
+
+            ultrasoundOverlay.children.forEach(element => {
+                element.layers.set(hiddenLayer);
+            });
+
+            circleMarker.layers.set(hiddenLayer);
+        }
+
+        myocardium.layers.set(layer);
+        ultrasoundGroup.layers.set(layer);
+        ultrasoundProbeHead.layers.set(layer);
+        ultrasoundCamPivot.layers.set(layer);
+        beamMesh.layers.set(layer);
+
+        if (ultrasoundTube) {
+            ultrasoundTube.layers.set(layer);
+        }
+    }
+
+    function handleInputControl(controlType) {
+        keyboardControls(true);
+
+        if (controlType != 'keyboard') {
+            controlParams.xtee();   
+        }
+    }
+    // -----------------END MODE SWITCH FUNCTIONS-----------------
+
+    // -----------------START DISPLAY AND UI HELPER FUNCTIONS-----------------   
+    function displayModelParts(viewState) {
+        modelParts.forEach(part => {
+            if (viewState == 0) {
+                part.material.wireframe = false;
+                part.layers.set(mainCamLayer);
+            } else if(viewState == 1) {
+                part.material.wireframe = true;
+                part.layers.set(mainCamLayer);
+            } else {
+                part.layers.set(hiddenLayer);    
+            }
+        })
+
+        modelControlParams.toggle_all_models = viewState;
+
+        for (let property in partListObject) {
+            partListObject[property] = viewState;
+        }
+    }
+
+    function displayNoClipMyocardium(viewState) {
+        if (viewState == 0) {
+            myocardiumNoClip.material.wireframe = false;
+            myocardiumNoClip.layers.set(mainCamLayer);
+        } else if (viewState == 1) {
+            myocardiumNoClip.material.wireframe = true;
+            myocardiumNoClip.layers.set(mainCamLayer);
+        } else {
+            myocardiumNoClip.layers.set(hiddenLayer);
+        }
+
+        modelControlParams.toggle_myocardium = viewState;
     }
 
     // folder contents change if model is or is not heart
@@ -1290,48 +1361,13 @@
         keyboardControls(true);
     }
 
+    let controlOptions;
+    let toggleEditing;
     function handleGUI() {
         gui.title('Model Viewer');
 
         let activateUltrasound = gui.add(modeParams, 'activate_ultrasound').name('Activate Ultrasound').onChange(v => {
             handleTeeMode(v);
-            bottomGuiHidden = !v;
-            omniplaneReadoutHidden = !v;
-
-            controlOptions.forEach(option => {
-                option.enable(v);
-            })
-
-            if (v) {
-                controlFolder.open();
-                navBarSize.set('navbar-ultrasound');
-                viewWidth.set('half-less');
-
-                if (isAdmin) {
-                    adminFolder.close()
-                }
-            } else {
-                controlFolder.close();
-                navBarSize.set('navbar-viewer');
-                viewWidth.set('full-less');
-
-                if (isAdmin) {
-                    adminFolder.open()
-                }
-            }
-
-            // to control the elements of the description box
-            descriptionBox.set(true);
-            btnBoxSize.set('btn-box-min');
-            titleBoxPosition.set('titleBox-min-description')
-            descriptionBoxMax.set(false);
-
-
-            if (!ultrasoundTube) {
-                spawnUltrasoundTube();
-            }
-
-            toggleEditing.enable(!v);
         }).listen();
 
         // only enable ultrasound mode if a path for the probe exists
@@ -1366,20 +1402,17 @@
         }).listen();
 
         let resetControl = controlFolder.add(controlParams, 'reset').name('Reset Probe').enable(false);
-        let xTeeControl = controlFolder.add(controlParams, 'xtee').name('TEE Controller').enable(false);
 
-        let controlOptions = [
+        controlOptions = [
             anteflexControl,
             rightLeftFlexControl,
             twistControl,
             omniplaneControl,
             advanceControl,
             resetControl,
-            xTeeControl
         ];
 
         // keep variables affected by ultrasound mode on/off out of local scope of isAdmin if block
-        let toggleEditing;
         adminFolder;
 
         if (isAdmin) {
@@ -1642,7 +1675,7 @@
 </script>
 
 <div hidden={omniplaneReadoutHidden}>
-    <div id="omniplane-ui-readout">Omniplane rotation: <b>{controlParams.omniplane}°</b></div>
+    <div id="omniplane-ui-readout"><b>{controlParams.omniplane}°</b></div>
 </div>
 
 <div hidden={popupInputUiHidden}>
@@ -1662,15 +1695,47 @@
 
 <div hidden={bottomGuiHidden}>
     <div id="bottom-ui">
-        <div id="bookmark-ui">
-            <select name="bookmark-select" id='bookmark-ui-1' on:change={() => bookmarkMove()}>
-                <option label="Select Saved View"></option>
-                {#each $userBookmarks as bookmark, i}
-                    <option value={i}>{bookmark.name}</option>
-                {/each}
-            </select>
-            <button id='bookmark-ui-2' on:click={() => openInputPopup('input', 'Name your view', saveBookmark, 'Save')}>Save View</button>
-            <button id='bookmark-ui-3' on:click={() => openInputPopup('NA', 'Are you sure you want to delete that view?', deleteBookmark, 'Confirm')}>Delete View</button>
+        <div hidden={bookmarkUiHidden}>
+            <div id="bookmark-ui">
+                <select name="bookmark-select" id='bookmark-ui-1' on:change={() => bookmarkMove()}>
+                    <option label="Select Saved View"></option>
+                    {#each $userBookmarks as bookmark, i}
+                        <option value={i}>{bookmark.name}</option>
+                    {/each}
+                </select>
+                <button id='bookmark-ui-2' on:click={() => openInputPopup('input', 'Name your view', saveBookmark, 'Save')}>Save View</button>
+                <button id='bookmark-ui-3' on:click={() => openInputPopup('NA', 'Are you sure you want to delete that view?', deleteBookmark, 'Confirm')}>Delete View</button>
+            </div>
+        </div>
+        <div hidden={controlUiHidden}>
+            <div id="control-ui">
+                <p id='control-ui-1'><b>Select Input Method</b></p>
+                <label>
+                    <input id='control-ui-2' type=radio bind:group={inputControlOptions} name="input control options" value='keyboard' on:change={handleInputControl(inputControlOptions)}>
+                    Keyboard
+                </label>
+                <label>
+                    <input id='control-ui-3' type=radio bind:group={inputControlOptions} name="input control options" value='mouse' on:change={handleInputControl(inputControlOptions)}>
+                    Mouse
+                </label>
+                <label>
+                    <input id='control-ui-4' type=radio bind:group={inputControlOptions} name="input control options" value='rod controller' on:change={handleInputControl(inputControlOptions)}>
+                    Rod Controller
+                </label>
+                <label>
+                    <input id='control-ui-5' type=radio bind:group={inputControlOptions} name="input control options" value='tee controller' on:change={handleInputControl(inputControlOptions)}>
+                    TEE Controller
+                </label>
+            </div>
+        </div>
+        <div id="mode-switch-ui">
+            <div id="mode-switch-ui-inner">
+                {#if modeParams.activate_ultrasound}
+                    <button id="ultrasoundButton" on:click={() => handleTeeMode(false)}><b>3D View</b></button>
+                {:else}
+                    <button id="ultrasoundButton" on:click={() => handleTeeMode(true)}><b>Ultrasound</b></button>
+                {/if}
+            </div>
         </div>
     </div>
 </div>
@@ -1680,7 +1745,8 @@
         position: absolute;
         z-index: 100;
         top: 13%;
-        left: 42%;
+        left: 50%;
+        font-size: 2rem;
     }
 
     #popup-input-ui-outer {
@@ -1703,31 +1769,50 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
         column-gap: 1%;
-        row-gap: 5%;
+        row-gap: 2%;
     }
 
     #bottom-ui {
         right: 1%;
         /* close enough to the description box? */
         bottom: 5.2%;
-        height: 15%;
-        width: 250px;
-        z-index: 100;
+        height: 12%;
+        width: 58%;
+        z-index: 102;
         position: absolute;
         display: grid;
-        grid-template: 1fr 1fr;
+        grid-template: 1fr 1fr 1fr;
         grid-gap: 1%;
     }
 
     #bookmark-ui {
-        grid-column: 1 / 2;
-        background-color: #121212;
+        grid-column: 1;
         display: grid;
         grid-template-columns: 1fr 1fr;
         height: 100%;
-        z-index: 101;
+        width: 100%;
         column-gap: 1%;
         row-gap: 5%;
+    }
+
+    #control-ui {
+        background-color: #424242;
+        height: 100%;
+        width: 100%;
+        grid-column: 2;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    #mode-switch-ui {
+        grid-column: 3;
+        margin-left: auto;
+        margin-right: 0;
+    }
+
+    #mode-switch-ui-inner {
+        width: 100%;
+        height: 100%;
     }
 
     #bookmark-ui-1 {
@@ -1759,6 +1844,41 @@
     #input-ui-4 {
         grid-column: 2;
         grid-row: 3;
+    }
+
+    #control-ui-1 {
+        grid-column: 1 / 3;
+        text-align: center;
+        grid-row: 1;
+    }
+
+    #control-ui-2 {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    #control-ui-3 {
+        grid-column: 2;
+        grid-row: 2;
+    }
+
+    #control-ui-4 {
+        grid-column: 1;
+        grid-row: 3;
+    }
+
+    #control-ui-5 {
+        grid-column: 2;
+        grid-row: 3;
+    }
+
+    #ultrasoundButton {
+        width: 250px;
+        height: 100%;
+        border-radius: 5px;
+        color: #fff;
+        font-size: 1.5rem;
+        background-color: #e62e2e;
     }
 
     select {

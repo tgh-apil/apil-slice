@@ -5,50 +5,21 @@
         // splits the possibly long description text to paragraphs
         let descriptionParagraphs  = $modelDescription.split('\n');
 
-        // todo: re-write this shit        
-        function changeDescriptionBoxSize() {
-            descriptionBoxMax.set(!$descriptionBoxMax);
-            descriptionBox.set(true);
-
-            // holy shit ew
-            if ($descriptionBoxMax) {
-                btnBoxSize.set('btn-box-max');
-
-                if ($viewWidth.includes('full')) {
-                    viewWidth.set('full-more')
-                } else {
-                    viewWidth.set('half-more')
-                }
-
-                titleBoxPosition.set('titleBox-max-description');
-            } else {
-                btnBoxSize.set('btn-box-min');
-
-                if ($viewWidth.includes('full')) {
-                    viewWidth.set('full-less')
-                } else {
-                    viewWidth.set('half-less')
-                }
-
-                titleBoxPosition.set('titleBox-min-description');
-            }
-        }
-
         // EW EW EW
         function hideDescriptionBox() {
             descriptionBox.set(!$descriptionBox);
 
             if ($descriptionBox) {
                 descriptionBoxMax.set(false);
-                btnBoxSize.set('btn-box-min');
+                btnBoxSize.set('btn-box-show');
 
                 if ($viewWidth.includes('full')) {
-                    viewWidth.set('full-less')
+                    viewWidth.set('full-more')
                 } else {
-                    viewWidth.set('half-less')
+                    viewWidth.set('full-more')
                 }
 
-                titleBoxPosition.set('titleBox-min-description');
+                titleBoxPosition.set('titleBox-show-description');
             } else {
                 btnBoxSize.set('btn-box-hide');
                 titleBoxPosition.set('titleBox-hidden-description');
@@ -60,14 +31,7 @@
 
         <div hidden={!$btnBoxSizeShow}>
             <div id={$btnBoxSize}>
-                <button class="col1" on:click={() => changeDescriptionBoxSize()}>
-                    {#if $descriptionBoxMax}
-                        Show Less
-                    {:else}
-                        Show More
-                    {/if}
-                </button>
-                <button class="col2" on:click={() => hideDescriptionBox()}>
+                <button on:click={() => hideDescriptionBox()}>
                     {#if $descriptionBox}
                         Hide Description
                     {:else}
@@ -87,78 +51,41 @@
 
     <style>       
         #descriptionBoxInner {
-            background: rgba(0, 0, 0, 0.80);
+            background: rgba(0, 0, 0, 0.7);
             width: 100%;
             height: 90%;
             margin: 0 auto;
         }
 
-        /* half width, "less" height */
-        #half-less {
-            position: absolute;
-            bottom: 5%;
-            height: 15%;
-            text-align: left;
-            z-index: 100;
-            width: 40%;
-            overflow: auto;
-        }
-
         /* half width, "more" height */
         #half-more {
             position: absolute;
-            bottom: 5%;
+            bottom: 2%;
             height: 35%;
             text-align: left;
             z-index: 100;
             width: 40%;
-            overflow: auto;
-        }
-
-        /* full width, "less" height */
-        #full-less {
-            position: absolute;
-            bottom: 5%;
-            height: 15%;
-            text-align: left;
-            z-index: 100;
-            width: 100%;
             overflow: auto;
         }
 
         /* full width, "more" height */
         #full-more {
             position: absolute;
-            bottom: 5%;
+            bottom: 2%;
             height: 35%;
             text-align: left;
             z-index: 100;
-            width: 100%;
+            width: 78%;
             overflow: auto;
         }
 
         /* Ewwwwwwwwwwwwwwwwwwwwwwwwwwww */
-        #btn-box-max {
+        #btn-box-show {
             position: absolute;
             z-index: 101;
-            bottom: 42%;
+            bottom: 40%;
             display: grid;
             grid-template: repeat(2, 1fr);
-            grid-gap: 1%;
-            width: 35%;
-            height: 3%;
-            grid-auto-rows: auto;
-            justify-items: center;
-            align-items: center;
-            text-align: center;
-        }
-
-        #btn-box-min {
-            position: absolute;
-            z-index: 101;
-            bottom: 22%;
-            display: grid;
-            grid-template: repeat(3, 1fr);
             grid-gap: 1%;
             width: 35%;
             height: 3%;
@@ -183,14 +110,6 @@
             text-align: center;
         }
         /* end ewwwwwww */
-
-        .col1 {
-            grid-column: 1;
-        }
-
-        .col2 {
-            grid-column: 2;
-        }
 
     button {
         background-color: #007070;

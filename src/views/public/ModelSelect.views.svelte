@@ -1,7 +1,7 @@
 <script>
     import { onMount } from 'svelte';
     import { replace } from 'svelte-spa-router';
-    import { currentView, modelPath, modelTitle, modelPoster, modelDescription, navBarSize, controlSpherePostionList, userBookmarks } from '../../stores.js';
+    import { currentView, modelPath, modelTitle, modelPoster, modelDescription, navBarSize, controlSpherePostionList, userBookmarks, modelType } from '../../stores.js';
 
     // -----------------STARTFIREBASE IMPORTS---------------
     import { app } from '../../firebase.js';
@@ -17,6 +17,7 @@
     // get all models from the firestore directory and load the model select page with their name
     // reads the firestore db and populates the model select page with all the models
     // on page load, populates dbData;
+    // PAGINATE ME!
     onMount(async function () {
         let docSnap = await getDocs(collection(db, 'modelDb'));
 
@@ -39,9 +40,9 @@
         modelPoster.set(modelInfo.poster)
         modelDescription.set(modelInfo.description);
         modelPath.set(modelInfo.fileName);
+        modelType.set(modelInfo.modelType);
         userBookmarks.set(modelInfo.bookmarks);
         controlSpherePostionList.set(modelInfo.controlSpheres);
-
         replace('/viewer')
         currentView.set('viewer');
         navBarSize.set('navbar-viewer');

@@ -7,14 +7,14 @@ export const descriptionBoxGroupShow = writable(true);
 export const helpBox = writable(false);
 
 export const btnBoxSizeShow = writable(true);
-export const btnBoxSize = writable('btn-box-min');
+export const btnBoxSize = writable('btn-box-hide');
 
-export const descriptionBox = writable(true);
+export const descriptionBox = writable(false);
 export const descriptionBoxMax = writable(false);
-export const viewWidth = writable('full-less');
+export const viewWidth = writable('full-more');
 
 export const titleBox = writable(true);
-export const titleBoxPosition = writable('titleBox-min-description');
+export const titleBoxPosition = writable('titleBox-hidden-description');
 
 export const navBarSize = writable('navbar-full');
 
@@ -28,6 +28,24 @@ export const modelPoster = writable('Default User');
 export const modelDescription = writable('Default Description');
 export const modelPath = writable('normal_heart.glb');
 export const modelType = writable('heart');
-export const controlSpherePostionList = writable([]);
+export const controlSpherePostionList = writable(
+    [
+        {
+            x: 25.3,
+            y: 119.74,
+            z: 63.12,
+        },
+        {
+            x: 13.2,
+            y: 25.0,
+            z: 46.83,
+        },
+        {
+            x: -52.74,
+            y: -10.8,
+            z: -70.77,
+        }
+    ]
+);
 export const userBookmarks = writable([]);
 export const activateUltrasoundGlobal = writable(false);
