@@ -488,25 +488,25 @@
         if (isOn) {
             document.onkeydown = function(e) {
             switch (e.key) {
-                case 'w':
+                case 'ArrowUp':
                     if (controlParams.advance < 100) {
                         probeControls.advance(controlParams.advance += 1);
                     }
                 break;
 
-                case 's':
+                case 'ArrowDown':
                     if (controlParams.advance > 0) {
                         probeControls.advance(controlParams.advance -= 1);
                     }
                 break;
 
-                case 'a':
+                case 'ArrowLeft':
                     if (controlParams.twist > ultrasoundStartMaxValues.twistMin) {
                         probeControls.twist(controlParams.twist -= 1);
                     }
                 break;
 
-                case 'd':
+                case 'ArrowRight':
                     if (controlParams.twist < ultrasoundStartMaxValues.twistMax) {
                         probeControls.twist(controlParams.twist += 1);
                     }
@@ -524,28 +524,28 @@
                     }
                 break;
 
-                case 'ArrowUp':
+                case 'w':
                     if (controlParams.anteflex < ultrasoundStartMaxValues.anteflexMax) {
                         e.preventDefault();
                         probeControls.anteflex(controlParams.anteflex += 1);                        
                     }
                 break;
 
-                case 'ArrowDown':
+                case 's':
                     if (controlParams.anteflex > ultrasoundStartMaxValues.anteflexMin) {
                         e.preventDefault();
                         probeControls.anteflex(controlParams.anteflex -= 1);                        
                     }
                 break;
 
-                case 'ArrowLeft':
+                case 'a':
                     if (controlParams.rightLeftFlex > ultrasoundStartMaxValues.rightLeftFlexMin) {
                         e.preventDefault();
                         probeControls.rightLeftFlex(controlParams.rightLeftFlex -= 1);                        
                     }
                 break;
 
-                case 'ArrowRight':
+                case 'd':
                     if (controlParams.rightLeftFlex < ultrasoundStartMaxValues.rightLeftFlexMax) {
                         e.preventDefault();
                         probeControls.rightLeftFlex(controlParams.rightLeftFlex += 1);                        

@@ -54,25 +54,25 @@
 
                 <tr>
                     <td>Advance</td>
-                    <td>W</td>
+                    <td>Arrow Up</td>
                     <td>Push forward</td>
                     <td>Push forward</td>
                 </tr>
                 <tr>
                     <td>Retract</td>
-                    <td>S</td>
+                    <td>Arrow Down</td>
                     <td>Pull backward</td>
                     <td>Pull backward</td>
                 </tr>
                 <tr>
                     <td>Twist Left</td>
-                    <td>A</td>
+                    <td>Arrow Left</td>
                     <td>Turn handle left</td>
                     <td>Turn handle left</td>
                 </tr>
                 <tr>
                     <td>Twist Right</td>
-                    <td>D</td>
+                    <td>Arrow Right</td>
                     <td>Turn handle right</td>
                     <td>Turn handle right</td>
                 </tr>
@@ -90,19 +90,19 @@
                 </tr>
                 <tr>
                     <td>Anteflex</td>
-                    <td>Arrow up</td>
+                    <td>W</td>
                     <td>Mousewheel forward</td>
                     <td>Wheel up</td>
                 </tr>
                 <tr>
                     <td>Probe Head Left</td>
-                    <td>Arrow left</td>
+                    <td>A</td>
                     <td>Unbound</td>
                     <td>Unbound</td>
                 </tr>
                 <tr>
                     <td>Probe Head Right</td>
-                    <td>Arrow right</td>
+                    <td>D</td>
                     <td>Unbound</td>
                     <td>Unbound</td>
                 </tr>
