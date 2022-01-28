@@ -7,8 +7,9 @@
     import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
     import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
     
-    import { viewWidth, descriptionBox, descriptionBoxMax, titleBoxPosition, btnBoxSize, modelPath, navBarSize, 
-            controlSpherePostionList, userBookmarks, modelType } from '../stores.js';
+    import { viewWidth, descriptionBox, descriptionBoxMax, titleBoxPosition, 
+            btnBoxSize, modelPath, navBarSize, helpBox,
+            savedControlSphereList, userBookmarks, modelType, userData } from '../stores.js';
     
     // -----------------STARTFIREBASE IMPORTS---------------
     import { app } from '../firebase.js';
@@ -26,7 +27,17 @@
 
     // FOR USER PERMISSIONS
     // TODO: This flag will be handled by firebase if the logged in user is/is not an admin
-    let isAdmin = true;
+    let isAdmin;
+
+    if ($userData) {
+        if ($userData.email == 'apiltgh@gmail.com') {
+            isAdmin = true;
+        } else {
+            isAdmin = false;
+        }        
+    } else {
+        console.log('user not logged in!');
+    }
 
     // FOR ITEM SELECTION
     let raycaster = new THREE.Raycaster();
@@ -39,7 +50,7 @@
     // FOR SPLINE EDITING
     let path, pointCount, points, controlSphere, splineObject;
 
-    let controlSphereList = [];
+    let localControlSphereList = [];
 
     // number of points between each control sphere
     let numPathPoints = 50;
@@ -162,7 +173,7 @@
         }
     }
 
-    // default to allow keyboard controls for input
+    // default control mode is keyboard (and the UI sliders which are always on)
     let inputControlOptions = 'keyboard';
 
     let adminParams = {
@@ -304,9 +315,6 @@
                 }
 
                 modelParts.push(model);
-                
-                // // 0: visible, 1: wireframe, 2: hidden
-                // displayModelParts(0);
             }
         })
 
@@ -481,33 +489,33 @@
     }
 
     function keyboardControls(isOn) {
-        if (inputControlOptions == 'keyboard') {
-            isOn = true;
-        }
-
         if (isOn) {
             document.onkeydown = function(e) {
             switch (e.key) {
                 case 'ArrowUp':
                     if (controlParams.advance < 100) {
+                        e.preventDefault();
                         probeControls.advance(controlParams.advance += 1);
                     }
                 break;
 
                 case 'ArrowDown':
                     if (controlParams.advance > 0) {
+                        e.preventDefault();
                         probeControls.advance(controlParams.advance -= 1);
                     }
                 break;
 
                 case 'ArrowLeft':
                     if (controlParams.twist > ultrasoundStartMaxValues.twistMin) {
+                        e.preventDefault();
                         probeControls.twist(controlParams.twist -= 1);
                     }
                 break;
 
                 case 'ArrowRight':
                     if (controlParams.twist < ultrasoundStartMaxValues.twistMax) {
+                        e.preventDefault();
                         probeControls.twist(controlParams.twist += 1);
                     }
                 break;
@@ -526,34 +534,31 @@
 
                 case 'w':
                     if (controlParams.anteflex < ultrasoundStartMaxValues.anteflexMax) {
-                        e.preventDefault();
                         probeControls.anteflex(controlParams.anteflex += 1);                        
                     }
                 break;
 
                 case 's':
                     if (controlParams.anteflex > ultrasoundStartMaxValues.anteflexMin) {
-                        e.preventDefault();
                         probeControls.anteflex(controlParams.anteflex -= 1);                        
                     }
                 break;
 
                 case 'a':
                     if (controlParams.rightLeftFlex > ultrasoundStartMaxValues.rightLeftFlexMin) {
-                        e.preventDefault();
                         probeControls.rightLeftFlex(controlParams.rightLeftFlex -= 1);                        
                     }
                 break;
 
                 case 'd':
                     if (controlParams.rightLeftFlex < ultrasoundStartMaxValues.rightLeftFlexMax) {
-                        e.preventDefault();
                         probeControls.rightLeftFlex(controlParams.rightLeftFlex += 1);                        
                     }
                 break;
 
                 case 't' || 'Escape':
                     controlParams.xtee();
+                    inputControlOptions = 'keyboard';
                 break;
 
                 case 'z':
@@ -612,6 +617,8 @@
     }
 
     async function saveBookmark() {
+        keyboardControls(false);
+
         let bookmarkName = document.getElementById('input-ui-2').value;
 
         if (bookmarkName !== "") {
@@ -626,7 +633,6 @@
             popupInputUiHidden = true;
     
             localBookmarks = [...localBookmarks, {name: bookmarkName, value: newVal}]
-            console.log(localBookmarks);
     
             // since we are using the index of the bookmark as the value in bookmarkMove() to choose the correct value of moves
             // and since we are appending to the userBookmarks by 1 every time this function is called
@@ -652,14 +658,74 @@
         }
     }
 
+    async function updateBookmark() {
+        // reference the currently selected bookmark
+        let bookmarkToUpdate = document.getElementById('bookmark-ui-1');
+        keyboardControls(false);
+
+        // this index starts at 1...
+        let bookmarkIndex = bookmarkToUpdate.selectedIndex;
+        let bookmarkName = bookmarkToUpdate.options[bookmarkIndex].text;
+
+        // get current probe control values
+        let currentVal;
+        if (bookmarkName !== "") {
+            currentVal = localBookmarks[bookmarkToUpdate.selectedIndex - 1].value;
+        }
+        
+        // get updated values
+        let newVal;
+        if (bookmarkName !== "") {
+            newVal = {
+                retroAnteflex: controlParams.anteflex,
+                leftRightFlex: controlParams.rightLeftFlex,
+                leftRightTwist: controlParams.twist,
+                omniplaneRot: controlParams.omniplane,
+                advanceRetract: controlParams.advance,  
+            }
+        }
+
+        let bookmarkToDelete = {name: bookmarkName, value: currentVal};
+
+        console.log(bookmarkToDelete);
+
+        localBookmarks.splice(bookmarkIndex - 1, 1, {name: bookmarkName, value: newVal});
+
+        popupInputUiHidden = true;
+
+        let docName = $modelPath;
+        docName = docName.slice(0, -4);
+        
+        // get reference to this specific bookmark from firebase
+        // database, collection, document
+        let bookmarkRef = doc(db, 'modelDb', docName);
+
+        // delete the previous entry of the bookmark
+        await updateDoc(bookmarkRef, {
+            // does this shit count as two document write events?  It does, right?
+            // why is there no direct arrayUpdate method??
+            bookmarks: arrayRemove(bookmarkToDelete),
+        })
+
+        // add our newly updated bookmark back
+        await updateDoc(bookmarkRef, {
+            // bookmark we've modified
+            bookmarks: arrayUnion(localBookmarks[bookmarkIndex - 1]),
+        })
+        
+        openInputPopup('NA', 'View updated!', closeInputPopup, 'Close');
+    }
+
     async function deleteBookmark() {
         let bookmarkToRemove = document.getElementById('bookmark-ui-1');
 
         // this index starts at 1...
+        // removes the bookmark as an option in dropdown
         let bookmarkIndex = bookmarkToRemove.selectedIndex
         bookmarkToRemove.remove(bookmarkIndex);
         popupInputUiHidden = true;
 
+        // returns as an array of a single value
         let bookmarkToRemoveFirestore = localBookmarks.slice(bookmarkIndex - 1);
 
         let docName = $modelPath;
@@ -674,6 +740,8 @@
             // it should be the only entry in the array
             bookmarks: arrayRemove(bookmarkToRemoveFirestore[0]),
         })
+
+        openInputPopup('NA', 'View deleted!', closeInputPopup, 'Close');
     }
     // -----------------END BOOKMARK CONTROL FUNCTIONS-----------------
 
@@ -739,13 +807,13 @@
 
         controlSphere.layers.set(mainCamLayer);
         scene.add(controlSphere);
-        controlSphereList.push(controlSphere);
+        localControlSphereList.push(controlSphere);
     }
 
     function generateSpline() {
         let splinePoints = [];
 
-        if (controlSphereList.length <= 1) {
+        if (localControlSphereList.length <= 1) {
             console.log(`more spheres required`);
         }
         else {
@@ -753,10 +821,10 @@
 
             scene.remove(scene.getObjectByName('splinePath'));
 
-            for (let i = 0; i < controlSphereList.length; i++) {
-                let xPos = controlSphereList[i].position.x;
-                let yPos = controlSphereList[i].position.y;
-                let zPos = controlSphereList[i].position.z;
+            for (let i = 0; i < localControlSphereList.length; i++) {
+                let xPos = localControlSphereList[i].position.x;
+                let yPos = localControlSphereList[i].position.y;
+                let zPos = localControlSphereList[i].position.z;
                 splinePoints.push(new THREE.Vector3(xPos, yPos, zPos));
             }
 
@@ -765,7 +833,7 @@
             path.tension = 0.25;
 
             // scale the number of points between controls
-            pointCount = controlSphereList.length * numPathPoints;
+            pointCount = localControlSphereList.length * numPathPoints;
 
             points = path.getPoints(pointCount);
             let curveGeometry = new THREE.BufferGeometry().setFromPoints(points);
@@ -782,14 +850,26 @@
         }
     }
 
-    // point me to firebase
-    function saveControlSpherePosition() {
+    async function saveControlSpherePosition() {
+        // take the current local control spheres and update the entry on firebase with their positions
         if (path) {
-            // clear the list every time we save
-            controlSpherePostionList.set([]);
+            // convert our array of control sphere positions back into an object to be saved to firebase
+            let toControlSphereObj = {};
 
-            controlSphereList.forEach(element => {
-                controlSpherePostionList.push(element.position);
+            localControlSphereList.forEach((controlSphereVec, i) => {
+                let positionObj = {};
+                positionObj = Object.assign({x: controlSphereVec.position.x, y: controlSphereVec.position.y, z: controlSphereVec.position.z})
+
+                toControlSphereObj[i] = positionObj;
+            })
+
+            // write new data to firebase
+            let docName = $modelPath;
+            docName = docName.slice(0, -4);
+            let docRef = doc(db, 'modelDb', docName);
+
+            await updateDoc(docRef, {
+                controlSpheres: toControlSphereObj,
             })
 
         } else {
@@ -1095,8 +1175,8 @@
             layer = hiddenLayer;
         }
         
-        if (controlSphereList.length > 0) {
-            controlSphereList.forEach(sphere => {
+        if (localControlSphereList.length > 0) {
+            localControlSphereList.forEach(sphere => {
                 sphere.layers.set(layer);
             });            
         }
@@ -1146,6 +1226,7 @@
         })
 
         if (isOn) {
+            helpBox.set(true);
             controlFolder.open();
             navBarSize.set('navbar-ultrasound');
             viewWidth.set('half-more');
@@ -1153,6 +1234,7 @@
 
             if (isAdmin) {
                 adminFolder.close()
+                toggleEditing.enable(false);
             }
         } else {
             controlFolder.close();
@@ -1161,7 +1243,8 @@
             keyboardControls(false);
 
             if (isAdmin) {
-                adminFolder.open()
+                adminFolder.open();
+                toggleEditing.enable(true);
             }
         }
 
@@ -1174,9 +1257,7 @@
         if (!ultrasoundTube) {
             spawnUltrasoundTube();
         }
-
-        toggleEditing.enable(!isOn);
-
+        
         // default to hiding the non-clippable myocardium when switching modes
         // to keep it simple
         // 0: visible, 1: wireframe, 2: hidden
@@ -1203,7 +1284,7 @@
                 }
             })
             
-            controlSphereList.forEach(sphere => {
+            localControlSphereList.forEach(sphere => {
                 sphere.layers.set(hiddenLayer);
             });
 
@@ -1413,8 +1494,6 @@
         ];
 
         // keep variables affected by ultrasound mode on/off out of local scope of isAdmin if block
-        adminFolder;
-
         if (isAdmin) {
             adminFolder = gui.addFolder('Admin Functions');
 
@@ -1567,18 +1646,19 @@
         orbitControls = new OrbitControls(camera, renderer.domElement);
         teeMouseControls = new PointerLockControls(pointerLockCam, renderer.domElement);
 
-        // SPAWN PATH IF PATH CONTROL SPHERES HAVE BEEN SET
-        // probably needs to be wrapped in an async function
-        // read from firebase
-        if ($controlSpherePostionList.length > 0) {
+        // SPAWN PATH IF PATH CONTROL SPHERES HAVE BEEN PREVIOUSLY SAVED
+        // convert the incoming map of control spheres from firebase to an array
+        let savedControlSphereArr = Object.values($savedControlSphereList);
+
+        if (savedControlSphereArr.length > 0) {
             console.log('regenerating probe path from saved control points!')
 
-            for (let i = 0; i < $controlSpherePostionList.length; i++) {
+            for (let i = 0; i < savedControlSphereArr.length; i++) {
                 generateControlSphere();
-                controlSphereList[i].position.x = $controlSpherePostionList[i].x;
-                controlSphereList[i].position.y = $controlSpherePostionList[i].y;
-                controlSphereList[i].position.z = $controlSpherePostionList[i].z;
-                controlSphereList[i].layers.set(hiddenLayer);
+                localControlSphereList[i].position.x = savedControlSphereArr[i].x;
+                localControlSphereList[i].position.y = savedControlSphereArr[i].y;
+                localControlSphereList[i].position.z = savedControlSphereArr[i].z;
+                localControlSphereList[i].layers.set(hiddenLayer);
             }
             
             generateSpline();
@@ -1704,7 +1784,8 @@
                     {/each}
                 </select>
                 <button id='bookmark-ui-2' on:click={() => openInputPopup('input', 'Name your view', saveBookmark, 'Save')}>Save View</button>
-                <button id='bookmark-ui-3' on:click={() => openInputPopup('NA', 'Are you sure you want to delete that view?', deleteBookmark, 'Confirm')}>Delete View</button>
+                <button id='bookmark-ui-3' on:click={() => openInputPopup('NA', 'Are you sure you want to update this view?', updateBookmark, 'Update')}>Update View</button>
+                <button id='bookmark-ui-4' on:click={() => openInputPopup('NA', 'Are you sure you want to delete this view?', deleteBookmark, 'Confirm')}>Delete View</button>
             </div>
         </div>
         <div hidden={controlUiHidden}>
@@ -1769,7 +1850,7 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
         column-gap: 1%;
-        row-gap: 2%;
+        row-gap: 1%;
     }
 
     #bottom-ui {
@@ -1788,7 +1869,7 @@
     #bookmark-ui {
         grid-column: 1;
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr 1fr 1fr;
         height: 100%;
         width: 100%;
         column-gap: 1%;
@@ -1796,7 +1877,7 @@
     }
 
     #control-ui {
-        background-color: #424242;
+        background-color: #121212;
         height: 100%;
         width: 100%;
         grid-column: 2;
@@ -1816,7 +1897,7 @@
     }
 
     #bookmark-ui-1 {
-        grid-column: 1 / 3;
+        grid-column: 1 / 4;
 
         /* forces the dropdown to open upwards if # of entries forces it to touch the bottom of the screen */
         bottom: 100%;

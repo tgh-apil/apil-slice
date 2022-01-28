@@ -1,11 +1,6 @@
 <script>
     import LoginButton from './LoginButton.component.svelte';
-    import { currentView, descriptionBoxGroupShow, helpBox, navBarSize } from '../stores.js';
-
-
-    function goViewer() {
-        console.log('not set')
-    }
+    import { descriptionBoxGroupShow, helpBox, navBarSize } from '../stores.js';
 
     function goAtlasHome() {
         navBarSize.set('navbar-full');
@@ -28,15 +23,6 @@
     <div class="col1">
         <button class="logo" on:click={goAtlasHome}>APIL SLICE</button>
     </div>
-
-    <!-- {#if $currentView == 'viewer'}
-        <div class="col2">
-            <button class="navItem" on:click={goViewer}>3D View</button>
-        </div>
-        <div class="col3">
-            <button class="navItem" on:click={goViewer}>U/S View</button>
-        </div>
-    {/if} -->
 
     <div class="col4">
         <button class="navItem" on:click={goAtlasHome}>Atlas Home</button>

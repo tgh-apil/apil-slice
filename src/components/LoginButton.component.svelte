@@ -10,7 +10,7 @@
         if (user) {
             userData.set(user);
         } else {
-            userData.set(null)
+            userData.set(false);
         }
     })
 

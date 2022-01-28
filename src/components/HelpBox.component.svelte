@@ -48,13 +48,15 @@
                 <tr>
                     <th>Action</th>
                     <th>Keyboard</th>
-                    <th>Mouse Box</th>
-                    <th>High-fidelity</th>
+                    <th>Mouse</th>
+                    <th>Rod</th>
+                    <th>TEE Probe</th>
                 </tr>
 
                 <tr>
                     <td>Advance</td>
                     <td>Arrow Up</td>
+                    <td>Push forward</td>
                     <td>Push forward</td>
                     <td>Push forward</td>
                 </tr>
@@ -63,16 +65,19 @@
                     <td>Arrow Down</td>
                     <td>Pull backward</td>
                     <td>Pull backward</td>
+                    <td>Pull backward</td>
                 </tr>
                 <tr>
                     <td>Twist Left</td>
                     <td>Arrow Left</td>
+                    <td>Move mouse left</td>
                     <td>Turn handle left</td>
                     <td>Turn handle left</td>
                 </tr>
                 <tr>
                     <td>Twist Right</td>
                     <td>Arrow Right</td>
+                    <td>Move mouse right</td>
                     <td>Turn handle right</td>
                     <td>Turn handle right</td>
                 </tr>
@@ -80,17 +85,20 @@
                     <td>Omniplane Counter-clockwise</td>
                     <td>Q</td>
                     <td>Left mouse button</td>
+                    <td>Left mouse button</td>
                     <td>Button 1</td>
                 </tr>
                 <tr>
                     <td>Omniplane Clockwise</td>
                     <td>E</td>
                     <td>Right mouse button</td>
+                    <td>Right mouse button</td>
                     <td>Button 2</td>
                 </tr>
                 <tr>
                     <td>Anteflex</td>
                     <td>W</td>
+                    <td>Mousewheel forward</td>
                     <td>Mousewheel forward</td>
                     <td>Wheel up</td>
                 </tr>
@@ -99,10 +107,12 @@
                     <td>A</td>
                     <td>Unbound</td>
                     <td>Unbound</td>
+                    <td>Unbound</td>
                 </tr>
                 <tr>
                     <td>Probe Head Right</td>
                     <td>D</td>
+                    <td>Unbound</td>
                     <td>Unbound</td>
                     <td>Unbound</td>
                 </tr>
@@ -128,7 +138,7 @@
         width: 100%;
         height: 100%;
         text-align: left;
-        z-index: 100;
+        z-index: 102;
     }
 
     #instructionBoxInner {

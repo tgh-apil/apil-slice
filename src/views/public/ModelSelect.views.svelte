@@ -1,7 +1,7 @@
 <script>
     import { onMount } from 'svelte';
     import { replace } from 'svelte-spa-router';
-    import { currentView, modelPath, modelTitle, modelPoster, modelDescription, navBarSize, controlSpherePostionList, userBookmarks, modelType } from '../../stores.js';
+    import { currentView, modelPath, modelTitle, modelPoster, modelDescription, navBarSize, savedControlSphereList, userBookmarks, modelType } from '../../stores.js';
 
     // -----------------STARTFIREBASE IMPORTS---------------
     import { app } from '../../firebase.js';
@@ -42,7 +42,7 @@
         modelPath.set(modelInfo.fileName);
         modelType.set(modelInfo.modelType);
         userBookmarks.set(modelInfo.bookmarks);
-        controlSpherePostionList.set(modelInfo.controlSpheres);
+        savedControlSphereList.set(modelInfo.controlSpheres);
         replace('/viewer')
         currentView.set('viewer');
         navBarSize.set('navbar-viewer');
