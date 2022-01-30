@@ -237,6 +237,7 @@
 
     // -----------------START GLOBAL SCENE HELPER FUNCTIONS-----------------
     // responsible for getting the selected 3D model from firebase storage
+    let loadingBarHidden = false;
     function modelLoader(path) {
         // get reference to storage service used to create references in storage bucket
         let storage = getStorage(app);
@@ -254,8 +255,8 @@
                 .then((url) => {
                     // args: file path, returns a promise on resolve, shows progress of the load, reject the promise if there's an error
                     loader.load(url, 
-                                res => resolve(res), 
-                                xhr => console.log((xhr.loaded / xhr.total * 100)), 
+                                res => resolve(res),
+                                xhr => ((xhr.loaded / xhr.total * 100) < 99) ? loadingBarHidden = false : loadingBarHidden = true,
                                 reject);
                 })
         });
@@ -558,7 +559,12 @@
 
                 case 't' || 'Escape':
                     controlParams.xtee();
-                    inputControlOptions = 'keyboard';
+
+                    if (inputControlOptions != 'keyboard') {
+                        inputControlOptions = 'keyboard';
+                    } else {
+                        inputControlOptions = 'mouse';
+                    }
                 break;
 
                 case 'z':
@@ -1754,6 +1760,12 @@
     animate();
 </script>
 
+<div hidden={loadingBarHidden}>
+    <div id="loadingBarUi">
+        <h1>Loading model...</h1>
+    </div>
+</div>
+
 <div hidden={omniplaneReadoutHidden}>
     <div id="omniplane-ui-readout"><b>{controlParams.omniplane}°</b></div>
 </div>
@@ -1770,6 +1782,12 @@
             <button id='input-ui-3' on:click={popupFunction()}>{popupConfirmButtonText}</button>
             <button id='input-ui-4'on:click={() => closeInputPopup()}>Cancel</button>
         </div>
+    </div>
+</div>
+
+<div hidden={!bottomGuiHidden}>
+    <div id="bottom-message-ui">
+        <p>Press <b>"T"</b> on your keyboard to exit <b>{inputControlOptions}</b> control mode!</p>
     </div>
 </div>
 
@@ -1822,6 +1840,18 @@
 </div>
 
 <style>
+    #loadingBarUi {
+        background: #0000008c;
+        position: absolute;
+        z-index: 105;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
     #omniplane-ui-readout {
         position: absolute;
         z-index: 100;
@@ -1851,6 +1881,27 @@
         grid-template-columns: 1fr 1fr;
         column-gap: 1%;
         row-gap: 1%;
+    }
+
+    #bottom-message-ui {
+        right: 1%;
+        /* close enough to the description box? */
+        bottom: 5.2%;
+        height: 12%;
+        width: 58%;
+        z-index: 102;
+        position: absolute;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    #bottom-message-ui b {
+        color: #00acac;
+    }
+
+    #bottom-message-ui p {
+        font-size: 1.5rem;
     }
 
     #bottom-ui {

@@ -23,14 +23,16 @@
     <div class="col1">
         <button class="logo" on:click={goAtlasHome}>APIL SLICE</button>
     </div>
-
     <div class="col4">
         <button class="navItem" on:click={goAtlasHome}>Atlas Home</button>
     </div>
     <div class="col5">
-        <button class="navItem" on:click={goHelp}>Help</button>
+        <button class="navItem" on:click={() => console.log('not implemented')}>About</button>
     </div>
     <div class="col6">
+        <button class="navItem" on:click={goHelp}>Help</button>
+    </div>
+    <div class="col7">
         <LoginButton />
     </div>
 </nav>
@@ -46,7 +48,7 @@
         width: 100%;
         height: 5%;
         display: grid;
-        grid-template: repeat(7, 1fr);
+        grid-template: repeat(8, 1fr);
         grid-auto-rows: auto;
         grid-gap: 1%;
         justify-items: center;
@@ -111,13 +113,6 @@
         grid-column: 1 / 2;
     }
 
-    /* .col2 {
-        grid-column: 3;
-    }
-
-    .col3 {
-        grid-column: 4;
-    } */
 
     .col4 {
         grid-column: 5;
@@ -129,6 +124,10 @@
 
     .col6 {
         grid-column: 7;
+    }
+    
+    .col7 {
+        grid-column: 8;
     }
 
     button {

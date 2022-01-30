@@ -83,7 +83,7 @@
         #btn-box-show {
             position: absolute;
             z-index: 101;
-            bottom: 40%;
+            bottom: 37%;
             display: grid;
             grid-template: repeat(2, 1fr);
             grid-gap: 1%;

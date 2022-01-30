@@ -43,7 +43,8 @@
         modelType.set(modelInfo.modelType);
         userBookmarks.set(modelInfo.bookmarks);
         savedControlSphereList.set(modelInfo.controlSpheres);
-        replace('/viewer')
+        
+        replace('/viewer');
         currentView.set('viewer');
         navBarSize.set('navbar-viewer');
     }

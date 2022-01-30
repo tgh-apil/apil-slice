@@ -4,19 +4,19 @@
 
 <div id="{$titleBoxPosition}">
     <div id="titleBoxInner" hidden={!$titleBox}>
-        <h1>
+        <h2>
             {$modelTitle}
-        </h1>
-        <h3>
-            Posted by: {$modelPoster}
-        </h3>
+        </h2>
+        <p>
+            Posted by: <b>{$modelPoster}</b>
+        </p>
     </div>
 </div>
 
 <style>
     #titleBox-show-description {
         position: absolute;
-        bottom: 38%;
+        bottom: 33%;
         height: 20%;
         text-align: left;
         z-index: 100;
@@ -25,7 +25,7 @@
 
     #titleBox-hidden-description {
         position: absolute;
-        bottom: 5%;
+        bottom: 2%;
         height: 20%;
         text-align: left;
         z-index: 100;
@@ -35,5 +35,9 @@
     #titleBoxInner {
         width: 100%;
         margin: 0 auto;
+    }
+
+    #titleBoxInner h2 {
+        color: #00acac;
     }
 </style>
