@@ -68,14 +68,14 @@
                     <td>Pull backward</td>
                 </tr>
                 <tr>
-                    <td>Twist Left</td>
+                    <td>Rotate Left</td>
                     <td>Arrow Left</td>
                     <td>Move mouse left</td>
                     <td>Turn handle left</td>
                     <td>Turn handle left</td>
                 </tr>
                 <tr>
-                    <td>Twist Right</td>
+                    <td>Rotate Right</td>
                     <td>Arrow Right</td>
                     <td>Move mouse right</td>
                     <td>Turn handle right</td>
@@ -101,6 +101,13 @@
                     <td>Mousewheel forward</td>
                     <td>Mousewheel forward</td>
                     <td>Wheel up</td>
+                </tr>
+                <tr>
+                    <td>Retroflex</td>
+                    <td>S</td>
+                    <td>Mousewheel backward</td>
+                    <td>Mousewheel backward</td>
+                    <td>Wheel down</td>
                 </tr>
                 <tr>
                     <td>Probe Head Left</td>

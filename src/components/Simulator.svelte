@@ -101,8 +101,8 @@
         anteflexMax: 45.0,
         rightLeftFlexMin: -30,
         rightLeftFlexMax: 30,
-        twistMin: -35.0,
-        twistMax: 35.0,
+        twistMin: -90.0,
+        twistMax: 90.0,
         omniplaneMin: -180.0,
         omniplaneMax: 180.0,
     }
@@ -1028,6 +1028,7 @@
 
         // must be above 0 to be on top of the ultrasoundOverlay geometry
         circleMarker.translateZ(0.3);
+        circleMarker.layers.set(hiddenLayer);
 
         ultrasoundCamPivot.add(circleMarker)
 
@@ -1421,10 +1422,12 @@
 
             modelControlFolder.add(partListObject, partName, modelVisibilityOptions).name(`${part.name}`).onChange(v => {
                 if (v == 0) {
+                    part.material.wireframe = false;
                     part.layers.set(mainCamLayer);
                 } else if(v == 1) {
                     part.material.wireframe = true;
                     part.layers.set(mainCamLayer);
+                    console.log(part);
                 } else {
                     part.layers.set(hiddenLayer);
                 }
@@ -1473,10 +1476,10 @@
         let anteflexControl = controlFolder.add(controlParams, 'anteflex', ultrasoundStartMaxValues.anteflexMin, ultrasoundStartMaxValues.anteflexMax, 1).name('Retroflex/Anteflex').enable(false).onChange(v => {
             probeControls.anteflex(v);
         }).listen();
-        let rightLeftFlexControl = controlFolder.add(controlParams, 'rightLeftFlex', ultrasoundStartMaxValues.rightLeftFlexMin, ultrasoundStartMaxValues.rightLeftFlexMax, 1).name('Left Flex/Right Flex').enable(false).onChange(v => {
+        let rightLeftFlexControl = controlFolder.add(controlParams, 'rightLeftFlex', ultrasoundStartMaxValues.rightLeftFlexMin, ultrasoundStartMaxValues.rightLeftFlexMax, 1).name('Left/Right Flex').enable(false).onChange(v => {
             probeControls.rightLeftFlex(v);
         }).listen();
-        let twistControl = controlFolder.add(controlParams, 'twist', ultrasoundStartMaxValues.twistMin, ultrasoundStartMaxValues.twistMax, 1).name('Left Twist/Right Twist').enable(false).onChange(v => {
+        let twistControl = controlFolder.add(controlParams, 'twist', ultrasoundStartMaxValues.twistMin, ultrasoundStartMaxValues.twistMax, 1).name('Left/Right Rotation').enable(false).onChange(v => {
             probeControls.twist(v);
         }).listen();        
         let omniplaneControl = controlFolder.add(controlParams, 'omniplane', ultrasoundStartMaxValues.omniplaneMin, ultrasoundStartMaxValues.omniplaneMax, 1.).name('Omniplane Rotation').enable(false).onChange(v => {
