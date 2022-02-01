@@ -9,7 +9,6 @@ export const helpBox = writable(false);
 export const btnBoxSizeShow = writable(true);
 export const btnBoxSize = writable('btn-box-hide');
 
-export const descriptionBox = writable('descriptionBoxInner-hidden');
 export const descriptionBoxShow = writable(false);
 export const descriptionBoxMax = writable(false);
 export const viewWidth = writable('full-more');

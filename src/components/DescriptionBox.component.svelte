@@ -1,5 +1,5 @@
     <script>
-        import { descriptionBox, descriptionBoxGroupShow, descriptionBoxMax, descriptionBoxShow,
+        import { descriptionBoxGroupShow, descriptionBoxMax, descriptionBoxShow,
                 viewWidth, titleBoxPosition, btnBoxSize, btnBoxSizeShow, modelDescription } from '../stores.js';
         import TitleBox from './TitleBox.component.svelte';
 
@@ -15,9 +15,9 @@
                 btnBoxSize.set('btn-box-show');
 
                 if ($viewWidth.includes('full')) {
-                    viewWidth.set('full-more')
+                    viewWidth.set('full')
                 } else {
-                    viewWidth.set('full-more')
+                    viewWidth.set('half')
                 }
 
                 titleBoxPosition.set('titleBox-show-description');
@@ -45,8 +45,8 @@
                 </button>
             </div>
         </div>
-        <div id={$viewWidth} hidden={!$descriptionBoxShow}>
-            <div id={$descriptionBox} >
+        <div hidden={!$descriptionBoxShow}>
+            <div id={$viewWidth} >
                 {#each descriptionParagraphs as paragraph}
                     <p>{paragraph}</p>
                 {/each}
@@ -63,19 +63,18 @@
             overflow: auto;
         }
 
-        /* half width, "more" height */
-        #half-more {
+        /* half width*/
+        #half {
             position: absolute;
             bottom: 5%;
-            height: 0%;
+            height: 30%;
             text-align: left;
-            z-index: -1;
             width: 40%;
             overflow: auto;
         }
 
-        /* full width, "more" height */
-        #full-more {
+        /* full width */
+        #full {
             position: absolute;
             bottom: 5%;
             height: 30%;

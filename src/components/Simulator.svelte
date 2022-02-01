@@ -1236,7 +1236,7 @@
             helpBox.set(true);
             controlFolder.open();
             navBarSize.set('navbar-ultrasound');
-            viewWidth.set('half-more');
+            viewWidth.set('half');
             keyboardControls(true);
 
             if (isAdmin) {
@@ -1246,7 +1246,7 @@
         } else {
             controlFolder.close();
             navBarSize.set('navbar-viewer');
-            viewWidth.set('full-more');
+            viewWidth.set('full');
             keyboardControls(false);
 
             if (isAdmin) {
