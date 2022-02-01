@@ -125,6 +125,8 @@
                 </tr>
             </table>
             <br>
+        </div>
+        <div id='instruction-box-button-container'>
             <button id="instructionsCloseBtn" on:click={() => closeHelp()}>
                 Close
             </button>
@@ -139,7 +141,7 @@
     }
     
     #instructionBox {
-        background-color: rgba(0, 0, 0, 0.8);
+        background-color: rgba(0, 0, 0, 0.95);
         position: absolute;
         top: 0%;
         width: 100%;
@@ -151,8 +153,17 @@
     #instructionBoxInner {
         height: auto;
         width: 70%;
+        height: 90%;
+        margin-left: 5%;
+        overflow: auto;
+    }
+
+    #instruction-box-button-container {
+        height: auto;
+        width: 70%;
         height: 100%;
-        margin: 0 auto;
+        margin-left: 5%;
+        margin-top: 2%;
     }
 
     #instructionsCloseBtn {

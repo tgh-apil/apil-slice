@@ -1476,7 +1476,7 @@
         let anteflexControl = controlFolder.add(controlParams, 'anteflex', ultrasoundStartMaxValues.anteflexMin, ultrasoundStartMaxValues.anteflexMax, 1).name('Retroflex/Anteflex').enable(false).onChange(v => {
             probeControls.anteflex(v);
         }).listen();
-        let rightLeftFlexControl = controlFolder.add(controlParams, 'rightLeftFlex', ultrasoundStartMaxValues.rightLeftFlexMin, ultrasoundStartMaxValues.rightLeftFlexMax, 1).name('Left/Right Flex').enable(false).onChange(v => {
+        let rightLeftFlexControl = controlFolder.add(controlParams, 'rightLeftFlex', ultrasoundStartMaxValues.rightLeftFlexMin, ultrasoundStartMaxValues.rightLeftFlexMax, 1).name('Left/Right Lat. Flex').enable(false).onChange(v => {
             probeControls.rightLeftFlex(v);
         }).listen();
         let twistControl = controlFolder.add(controlParams, 'twist', ultrasoundStartMaxValues.twistMin, ultrasoundStartMaxValues.twistMax, 1).name('Left/Right Rotation').enable(false).onChange(v => {
@@ -1831,13 +1831,15 @@
             </div>
         </div>
         <div id="mode-switch-ui">
-            <div id="mode-switch-ui-inner">
-                {#if modeParams.activate_ultrasound}
-                    <button id="ultrasoundButton" on:click={() => handleTeeMode(false)}><b>3D View</b></button>
-                {:else}
-                    <button id="ultrasoundButton" on:click={() => handleTeeMode(true)}><b>Ultrasound</b></button>
-                {/if}
-            </div>
+            {#if localControlSphereList.length > 0}
+                <div id="mode-switch-ui-inner">
+                    {#if modeParams.activate_ultrasound}
+                        <button id="ultrasoundButton" on:click={() => handleTeeMode(false)}><b>3D View</b></button>
+                    {:else}
+                        <button id="ultrasoundButton" on:click={() => handleTeeMode(true)}><b>Ultrasound</b></button>
+                    {/if}
+                </div>
+            {/if}
         </div>
     </div>
 </div>
@@ -2014,6 +2016,12 @@
         color: #fff;
         font-size: 1.5rem;
         background-color: #e62e2e;
+        transition: background-color .1s ease-in;
+        z-index: 102;
+    }
+
+    #ultrasoundButton:hover {
+        background-color: #ff0000;
     }
 
     select {

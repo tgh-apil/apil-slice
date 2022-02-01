@@ -9,14 +9,15 @@ export const helpBox = writable(false);
 export const btnBoxSizeShow = writable(true);
 export const btnBoxSize = writable('btn-box-hide');
 
-export const descriptionBox = writable(false);
+export const descriptionBox = writable('descriptionBoxInner-hidden');
+export const descriptionBoxShow = writable(false);
 export const descriptionBoxMax = writable(false);
 export const viewWidth = writable('full-more');
 
 export const titleBox = writable(true);
 export const titleBoxPosition = writable('titleBox-hidden-description');
 
-export const navBarSize = writable('navbar-viewer');
+export const navBarSize = writable('navbar-full');
 
 // can we set this based on the route?
 export const currentView = writable('home');

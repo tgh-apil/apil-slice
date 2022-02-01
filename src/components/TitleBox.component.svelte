@@ -16,7 +16,7 @@
 <style>
     #titleBox-show-description {
         position: absolute;
-        bottom: 33%;
+        bottom: 35%;
         height: 20%;
         text-align: left;
         z-index: 100;
@@ -25,7 +25,7 @@
 
     #titleBox-hidden-description {
         position: absolute;
-        bottom: 2%;
+        bottom: 5%;
         height: 20%;
         text-align: left;
         z-index: 100;

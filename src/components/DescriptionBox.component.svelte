@@ -1,15 +1,16 @@
     <script>
-        import { descriptionBox, descriptionBoxGroupShow, descriptionBoxMax, viewWidth, titleBoxPosition, btnBoxSize, btnBoxSizeShow, modelDescription } from '../stores.js';
+        import { descriptionBox, descriptionBoxGroupShow, descriptionBoxMax, descriptionBoxShow,
+                viewWidth, titleBoxPosition, btnBoxSize, btnBoxSizeShow, modelDescription } from '../stores.js';
         import TitleBox from './TitleBox.component.svelte';
 
         // splits the possibly long description text to paragraphs
         let descriptionParagraphs  = $modelDescription.split('\n');
 
-        // EW EW EW
+        // FUCKING EW EW EW
         function hideDescriptionBox() {
-            descriptionBox.set(!$descriptionBox);
-
-            if ($descriptionBox) {
+            descriptionBoxShow.set(!$descriptionBoxShow);
+            
+            if ($descriptionBoxShow) {
                 descriptionBoxMax.set(false);
                 btnBoxSize.set('btn-box-show');
 
@@ -24,15 +25,19 @@
                 btnBoxSize.set('btn-box-hide');
                 titleBoxPosition.set('titleBox-hidden-description');
             }
+
+
         }
     </script>
+    
     <div id=descriptionBoxGroup hidden={!$descriptionBoxGroupShow}>
-        <TitleBox />
-
+        <div id="title-container">
+            <TitleBox />
+        </div>
         <div hidden={!$btnBoxSizeShow}>
             <div id={$btnBoxSize}>
                 <button on:click={() => hideDescriptionBox()}>
-                    {#if $descriptionBox}
+                    {#if $descriptionBoxShow}
                         Hide Description
                     {:else}
                         Show Description
@@ -40,8 +45,8 @@
                 </button>
             </div>
         </div>
-        <div id={$viewWidth}>
-            <div id="descriptionBoxInner" hidden={!$descriptionBox}>
+        <div id={$viewWidth} hidden={!$descriptionBoxShow}>
+            <div id={$descriptionBox} >
                 {#each descriptionParagraphs as paragraph}
                     <p>{paragraph}</p>
                 {/each}
@@ -49,21 +54,22 @@
         </div>
     </div>
 
-    <style>       
+    <style>
         #descriptionBoxInner {
             background: rgba(0, 0, 0, 0.7);
             width: 100%;
             height: 90%;
             margin: 0 auto;
+            overflow: auto;
         }
 
         /* half width, "more" height */
         #half-more {
             position: absolute;
-            bottom: 2%;
-            height: 35%;
+            bottom: 5%;
+            height: 0%;
             text-align: left;
-            z-index: 100;
+            z-index: -1;
             width: 40%;
             overflow: auto;
         }
@@ -71,11 +77,10 @@
         /* full width, "more" height */
         #full-more {
             position: absolute;
-            bottom: 2%;
-            height: 35%;
+            bottom: 5%;
+            height: 30%;
             text-align: left;
-            z-index: 100;
-            width: 78%;
+            width: 75%;
             overflow: auto;
         }
 
@@ -83,12 +88,12 @@
         #btn-box-show {
             position: absolute;
             z-index: 101;
-            bottom: 37%;
+            bottom: 35%;
             display: grid;
             grid-template: repeat(2, 1fr);
             grid-gap: 1%;
-            width: 35%;
-            height: 3%;
+            width: 15%;
+            height: 5%;
             grid-auto-rows: auto;
             justify-items: center;
             align-items: center;
@@ -102,8 +107,8 @@
             display: grid;
             grid-template: repeat(3, 1fr);
             grid-gap: 1%;
-            width: 35%;
-            height: 3%;
+            width: 15%;
+            height: 5%;
             grid-auto-rows: auto;
             justify-items: center;
             align-items: center;

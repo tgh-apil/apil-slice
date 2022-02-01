@@ -35,7 +35,7 @@ button:hover {
 
 /* width */
 ::-webkit-scrollbar {
-	width: 25px;
+	width: 1rem;
 }
 
 /* Track */
@@ -46,6 +46,7 @@ button:hover {
 /* Handle */
 ::-webkit-scrollbar-thumb {
 	background: #44857d;
+	width: 0.75rem;
 }
 
 /* Handle on hover */
