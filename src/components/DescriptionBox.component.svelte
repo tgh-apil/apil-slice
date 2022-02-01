@@ -1,5 +1,5 @@
     <script>
-        import { descriptionBoxGroupShow, descriptionBoxMax, descriptionBoxShow,
+        import { descriptionBoxGroupShow, descriptionBoxShow,
                 viewWidth, titleBoxPosition, btnBoxSize, btnBoxSizeShow, modelDescription } from '../stores.js';
         import TitleBox from './TitleBox.component.svelte';
 
@@ -11,7 +11,6 @@
             descriptionBoxShow.set(!$descriptionBoxShow);
             
             if ($descriptionBoxShow) {
-                descriptionBoxMax.set(false);
                 btnBoxSize.set('btn-box-show');
 
                 if ($viewWidth.includes('full')) {

@@ -7,7 +7,7 @@
     import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
     import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
     
-    import { viewWidth, descriptionBox, descriptionBoxMax, titleBoxPosition, 
+    import { viewWidth, descriptionBoxShow, titleBoxPosition, 
             btnBoxSize, modelPath, navBarSize, helpBox,
             savedControlSphereList, userBookmarks, modelType, userData } from '../stores.js';
     
@@ -1227,11 +1227,13 @@
         bookmarkUiHidden = !isOn;
         controlUiHidden = !isOn;
         omniplaneReadoutHidden = !isOn;
+        descriptionBoxShow.set(false);
 
         controlOptions.forEach(option => {
             option.enable(isOn);
         })
 
+        
         if (isOn) {
             helpBox.set(true);
             controlFolder.open();
@@ -1256,10 +1258,8 @@
         }
 
         // to control the elements of the description box
-        descriptionBox.set(false);
         btnBoxSize.set('btn-box-hide');
         titleBoxPosition.set('titleBox-hidden-description')
-        descriptionBoxMax.set(false);
 
         if (!ultrasoundTube) {
             spawnUltrasoundTube();

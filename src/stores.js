@@ -10,7 +10,6 @@ export const btnBoxSizeShow = writable(true);
 export const btnBoxSize = writable('btn-box-hide');
 
 export const descriptionBoxShow = writable(false);
-export const descriptionBoxMax = writable(false);
 export const viewWidth = writable('full-more');
 
 export const titleBox = writable(true);
