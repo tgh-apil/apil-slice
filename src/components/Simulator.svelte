@@ -43,7 +43,8 @@
     let mouse = new THREE.Vector2();
 
     // FOR MESH DATA
-    let myocardium, myocardiumNoClip;
+    let myocardium = null;
+    let myocardiumNoClip = null;
     let modelParts = [];
 
     // FOR SPLINE EDITING
@@ -317,9 +318,10 @@
                 modelParts.push(model);
             }
         })
-
+        
         addModelControlFolder();
-
+        
+        console.log(myocardium);
         console.log(`all models loaded!`);
     }
 
@@ -1215,9 +1217,11 @@
             // clear references to the tube for garbage collection
             ultrasoundTube = undefined;
         } else {
-            spawnUltrasoundTube();
-            ultrasoundTube.layers.set(layer);
-            console.log('regenerating ultrasound tube');
+            if (localControlSphereList.length > 0) {
+                spawnUltrasoundTube();
+                ultrasoundTube.layers.set(layer);
+                console.log('regenerating ultrasound tube');
+            }
         }
 
         // remove existing transform controls in the scene before adding a new one
@@ -1468,17 +1472,6 @@
     function handleGUI() {
         gui.title('Model Viewer');
 
-        let activateUltrasound = gui.add(modeParams, 'activate_ultrasound').name('Activate Ultrasound').onChange(v => {
-            handleTeeMode(v);
-        }).listen();
-
-        // only enable ultrasound mode if a path for the probe exists
-        if (path) {
-            activateUltrasound.enable(true);
-        } else {
-            activateUltrasound.enable(false);
-        }
-
         // deals with all probe control options
         controlFolder = gui.addFolder('TEE Probe Controls');
         controlFolder.close();
@@ -1520,14 +1513,6 @@
 
             toggleEditing = adminFolder.add(adminParams, 'toggle_editing').name('Edit Scene').onChange(v => {
                 handleEditMode(v);
-
-                // don't allow ultrasound mode while editing and only if a probe path has been generated!
-                if (path && !v) {
-                    console.log('path set and exiting edit mode: utlrasound mode now available');
-                    activateUltrasound.enable(true);
-                } else {
-                    activateUltrasound.enable(false);
-                }
 
                 adminOptions.forEach(option => {
                     option.enable(v);

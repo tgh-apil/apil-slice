@@ -1,6 +1,6 @@
 <script>
     import LoginButton from './LoginButton.component.svelte';
-    import { userData, descriptionBoxGroupShow, helpBox, navBarSize, uploadPanelShow } from '../stores.js';
+    import { currentView, userData, descriptionBoxGroupShow, helpBox, navBarSize, uploadPanelShow } from '../stores.js';
 
 
     function goAtlasHome() {
@@ -30,9 +30,11 @@
     </div>
     {#if $userData}
         {#if $userData.email == 'apiltgh@gmail.com'}
-            <div class="col3">
-                <button class="navItem" on:click={() => uploadModel()}>Upload Model</button>
-            </div>
+            {#if $currentView == 'home'}
+                <div class="col3">
+                    <button class="navItem" on:click={() => uploadModel()}>Upload Model</button>
+                </div>
+            {/if}
         {/if}
     {/if}
     <div class="col4">
