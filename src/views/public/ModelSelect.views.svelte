@@ -1,8 +1,9 @@
 <script>
     import { onMount } from 'svelte';
     import { replace } from 'svelte-spa-router';
-    import { currentView, modelPath, modelTitle, modelPoster, modelDescription, navBarSize, savedControlSphereList, userBookmarks, modelType } from '../../stores.js';
+    import { currentView, modelPath, modelTitle, modelPoster, modelDescription, navBarSize, savedControlSphereList, userBookmarks, modelType, uploadPanelShow } from '../../stores.js';
     import ModelCard from '../../components/ModelCard.component.svelte';
+    import UploadModelData from '../../components/UploadModelData.component.svelte';
 
     // -----------------STARTFIREBASE IMPORTS---------------
     import { app } from '../../firebase.js';
@@ -74,12 +75,19 @@
     }
 </script>
 
-<div id="modelSelectBox">
-    {#each dbData as modelData, i}
-        <ModelCard modelTitle={modelData.modelTitle} modelPoster={modelData.poster}  modelDescription={modelData.description} modelThumbnailUrl={modelData.thumbnailUrl} 
-        buttonFunction={() => loadModelInfo(i)} />
-    {/each}
-</div>
+
+{#if $uploadPanelShow}
+    <div>
+        <UploadModelData />
+    </div>
+{:else}
+    <div id="modelSelectBox">
+        {#each dbData as modelData, i}
+            <ModelCard modelTitle={modelData.modelTitle} modelPoster={modelData.poster}  modelDescription={modelData.description} modelThumbnailUrl={modelData.thumbnailUrl} 
+            buttonFunction={() => loadModelInfo(i)} />
+        {/each}
+    </div>
+{/if}
 
 <style>
     #modelSelectBox {

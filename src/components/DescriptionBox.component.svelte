@@ -54,6 +54,10 @@
     </div>
 
     <style>
+        #descriptionBoxGroup {
+            left: 5%;
+        }
+
         #descriptionBoxInner {
             background: rgba(0, 0, 0, 0.7);
             width: 100%;

@@ -32,11 +32,10 @@
     if ($userData) {
         if ($userData.email == 'apiltgh@gmail.com') {
             isAdmin = true;
+            console.log('admin logged in');
         } else {
             isAdmin = false;
         }        
-    } else {
-        console.log('user not logged in!');
     }
 
     // FOR ITEM SELECTION
@@ -623,29 +622,126 @@
     }
 
     async function saveBookmark() {
-        keyboardControls(false);
+        if ($userData) {
+            keyboardControls(false);
+            let bookmarkName = document.getElementById('input-ui-2').value;
 
-        let bookmarkName = document.getElementById('input-ui-2').value;
+            if (bookmarkName !== "") {
+                let newVal = {
+                    retroAnteflex: controlParams.anteflex,
+                    leftRightFlex: controlParams.rightLeftFlex,
+                    leftRightTwist: controlParams.twist,
+                    omniplaneRot: controlParams.omniplane,
+                    advanceRetract: controlParams.advance,  
+                }
+        
+                popupInputUiHidden = true;
+        
+                localBookmarks = [...localBookmarks, {name: bookmarkName, value: newVal}]
+        
+                // since we are using the index of the bookmark as the value in bookmarkMove() to choose the correct value of moves
+                // and since we are appending to the userBookmarks by 1 every time this function is called
+                // we can use userBookmarks.length - 1 as the new value to the new option being added to the dropdown
+                document.getElementById('bookmark-ui-1').add(new Option(bookmarkName, localBookmarks.length - 1))
 
-        if (bookmarkName !== "") {
-            let newVal = {
-                retroAnteflex: controlParams.anteflex,
-                leftRightFlex: controlParams.rightLeftFlex,
-                leftRightTwist: controlParams.twist,
-                omniplaneRot: controlParams.omniplane,
-                advanceRetract: controlParams.advance,  
+                // write new data to firebase
+                let docName = $modelPath;
+                docName = docName.slice(0, -4);
+                
+                // get reference to this specific bookmark from firebase
+                // database, collection, document
+                let bookmarkRef = doc(db, 'modelDb', docName);
+
+                await updateDoc(bookmarkRef, {
+                    // newest entry to the local bookmarks is always going to be the last one
+                    bookmarks: arrayUnion(localBookmarks.at(-1)),
+                })
+
+                openInputPopup('NA', 'View saved!', closeInputPopup, 'Close');
+            } else {
+                openInputPopup('input', 'Must enter a name to save a view!',  saveBookmark, 'Save View')
+            }            
+        } else {
+            openInputPopup('NA', 'Must be logged in to save a view!',  null, 'Okay')
+        }
+
+    }
+
+    async function updateBookmark() {
+        if ($userData) {
+            // reference the currently selected bookmark
+            let bookmarkToUpdate = document.getElementById('bookmark-ui-1');
+            keyboardControls(false);
+
+            // this index starts at 1...
+            let bookmarkIndex = bookmarkToUpdate.selectedIndex;
+            let bookmarkName = bookmarkToUpdate.options[bookmarkIndex].text;
+
+            // get current probe control values
+            let currentVal;
+            if (bookmarkName !== "") {
+                currentVal = localBookmarks[bookmarkToUpdate.selectedIndex - 1].value;
             }
-    
-            popupInputUiHidden = true;
-    
-            localBookmarks = [...localBookmarks, {name: bookmarkName, value: newVal}]
-    
-            // since we are using the index of the bookmark as the value in bookmarkMove() to choose the correct value of moves
-            // and since we are appending to the userBookmarks by 1 every time this function is called
-            // we can use userBookmarks.length - 1 as the new value to the new option being added to the dropdown
-            document.getElementById('bookmark-ui-1').add(new Option(bookmarkName, localBookmarks.length - 1))
+            
+            // get updated values
+            let newVal;
+            if (bookmarkName !== "") {
+                newVal = {
+                    retroAnteflex: controlParams.anteflex,
+                    leftRightFlex: controlParams.rightLeftFlex,
+                    leftRightTwist: controlParams.twist,
+                    omniplaneRot: controlParams.omniplane,
+                    advanceRetract: controlParams.advance,  
+                }
+            }
 
-            // write new data to firebase
+            let bookmarkToDelete = {name: bookmarkName, value: currentVal};
+
+            console.log(bookmarkToDelete);
+
+            localBookmarks.splice(bookmarkIndex - 1, 1, {name: bookmarkName, value: newVal});
+
+            popupInputUiHidden = true;
+
+            let docName = $modelPath;
+            docName = docName.slice(0, -4);
+            
+            // get reference to this specific bookmark from firebase
+            // database, collection, document
+            let bookmarkRef = doc(db, 'modelDb', docName);
+
+            // delete the previous entry of the bookmark
+            await updateDoc(bookmarkRef, {
+                // does this shit count as two document write events?  It does, right?
+                // why is there no direct arrayUpdate method??
+                bookmarks: arrayRemove(bookmarkToDelete),
+            })
+
+            // add our newly updated bookmark back
+            await updateDoc(bookmarkRef, {
+                // bookmark we've modified
+                bookmarks: arrayUnion(localBookmarks[bookmarkIndex - 1]),
+            })
+            
+            openInputPopup('NA', 'View updated!', closeInputPopup, 'Close');
+        } else {
+            openInputPopup('NA', 'Must be logged in to update a view!',  null, 'Okay')
+        }
+    }
+
+    async function deleteBookmark() {
+        if ($userData) {
+            let bookmarkToRemove = document.getElementById('bookmark-ui-1');
+
+            // this index starts at 1...
+            // removes the bookmark as an option in dropdown
+            let bookmarkIndex = bookmarkToRemove.selectedIndex
+            bookmarkToRemove.remove(bookmarkIndex);
+            popupInputUiHidden = true;
+
+            // returns as an array of a single value
+            let bookmarkToRemoveFirestore = localBookmarks.slice(bookmarkIndex - 1);
+
             let docName = $modelPath;
             docName = docName.slice(0, -4);
             
@@ -654,100 +750,16 @@
             let bookmarkRef = doc(db, 'modelDb', docName);
 
             await updateDoc(bookmarkRef, {
-                // newest entry to the local bookmarks is always going to be the last one
-                bookmarks: arrayUnion(localBookmarks.at(-1)),
+                // bookmark to remove is an array and the actual entry we want to remove is in position 0 of the array
+                // it should be the only entry in the array
+                bookmarks: arrayRemove(bookmarkToRemoveFirestore[0]),
             })
 
-            openInputPopup('NA', 'View saved!', closeInputPopup, 'Close');
+            openInputPopup('NA', 'View deleted!', closeInputPopup, 'Close');
         } else {
-            openInputPopup('input', 'Must enter a name to save a view!',  saveBookmark, 'Save View')
+            openInputPopup('NA', 'Must be logged in to delete a view!',  null, 'Okay')
+
         }
-    }
-
-    async function updateBookmark() {
-        // reference the currently selected bookmark
-        let bookmarkToUpdate = document.getElementById('bookmark-ui-1');
-        keyboardControls(false);
-
-        // this index starts at 1...
-        let bookmarkIndex = bookmarkToUpdate.selectedIndex;
-        let bookmarkName = bookmarkToUpdate.options[bookmarkIndex].text;
-
-        // get current probe control values
-        let currentVal;
-        if (bookmarkName !== "") {
-            currentVal = localBookmarks[bookmarkToUpdate.selectedIndex - 1].value;
-        }
-        
-        // get updated values
-        let newVal;
-        if (bookmarkName !== "") {
-            newVal = {
-                retroAnteflex: controlParams.anteflex,
-                leftRightFlex: controlParams.rightLeftFlex,
-                leftRightTwist: controlParams.twist,
-                omniplaneRot: controlParams.omniplane,
-                advanceRetract: controlParams.advance,  
-            }
-        }
-
-        let bookmarkToDelete = {name: bookmarkName, value: currentVal};
-
-        console.log(bookmarkToDelete);
-
-        localBookmarks.splice(bookmarkIndex - 1, 1, {name: bookmarkName, value: newVal});
-
-        popupInputUiHidden = true;
-
-        let docName = $modelPath;
-        docName = docName.slice(0, -4);
-        
-        // get reference to this specific bookmark from firebase
-        // database, collection, document
-        let bookmarkRef = doc(db, 'modelDb', docName);
-
-        // delete the previous entry of the bookmark
-        await updateDoc(bookmarkRef, {
-            // does this shit count as two document write events?  It does, right?
-            // why is there no direct arrayUpdate method??
-            bookmarks: arrayRemove(bookmarkToDelete),
-        })
-
-        // add our newly updated bookmark back
-        await updateDoc(bookmarkRef, {
-            // bookmark we've modified
-            bookmarks: arrayUnion(localBookmarks[bookmarkIndex - 1]),
-        })
-        
-        openInputPopup('NA', 'View updated!', closeInputPopup, 'Close');
-    }
-
-    async function deleteBookmark() {
-        let bookmarkToRemove = document.getElementById('bookmark-ui-1');
-
-        // this index starts at 1...
-        // removes the bookmark as an option in dropdown
-        let bookmarkIndex = bookmarkToRemove.selectedIndex
-        bookmarkToRemove.remove(bookmarkIndex);
-        popupInputUiHidden = true;
-
-        // returns as an array of a single value
-        let bookmarkToRemoveFirestore = localBookmarks.slice(bookmarkIndex - 1);
-
-        let docName = $modelPath;
-        docName = docName.slice(0, -4);
-        
-        // get reference to this specific bookmark from firebase
-        // database, collection, document
-        let bookmarkRef = doc(db, 'modelDb', docName);
-
-        await updateDoc(bookmarkRef, {
-            // bookmark to remove is an array and the actual entry we want to remove is in position 0 of the array
-            // it should be the only entry in the array
-            bookmarks: arrayRemove(bookmarkToRemoveFirestore[0]),
-        })
-
-        openInputPopup('NA', 'View deleted!', closeInputPopup, 'Close');
     }
     // -----------------END BOOKMARK CONTROL FUNCTIONS-----------------
 

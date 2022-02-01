@@ -1,6 +1,7 @@
 <script>
     import LoginButton from './LoginButton.component.svelte';
-    import { descriptionBoxGroupShow, helpBox, navBarSize } from '../stores.js';
+    import { userData, descriptionBoxGroupShow, helpBox, navBarSize, uploadPanelShow } from '../stores.js';
+
 
     function goAtlasHome() {
         navBarSize.set('navbar-full');
@@ -17,20 +18,31 @@
         descriptionBoxGroupShow.set(false);
     }
 
+    function uploadModel() {
+        uploadPanelShow.set(true);
+    }
+
 </script>
 
 <nav id={$navBarSize}>
     <div class="col1">
-        <button class="logo" on:click={goAtlasHome}>APIL SLICE</button>
+        <button class="logo" on:click={() => goAtlasHome()}>APIL SLICE</button>
     </div>
+    {#if $userData}
+        {#if $userData.email == 'apiltgh@gmail.com'}
+            <div class="col3">
+                <button class="navItem" on:click={() => uploadModel()}>Upload Model</button>
+            </div>
+        {/if}
+    {/if}
     <div class="col4">
-        <button class="navItem" on:click={goAtlasHome}>Atlas Home</button>
+        <button class="navItem" on:click={() => goAtlasHome()}>Atlas Home</button>
     </div>
     <div class="col5">
         <button class="navItem" on:click={() => console.log('not implemented')}>About</button>
     </div>
     <div class="col6">
-        <button class="navItem" on:click={goHelp}>Help</button>
+        <button class="navItem" on:click={() => goHelp()}>Help</button>
     </div>
     <div class="col7">
         <LoginButton />
@@ -111,6 +123,10 @@
 
     .col1 {
         grid-column: 1 / 2;
+    }
+
+    .col3 {
+        grid-column: 4;
     }
 
 
