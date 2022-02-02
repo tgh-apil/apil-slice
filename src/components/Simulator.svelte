@@ -1828,7 +1828,7 @@
             </div>
         </div>
         <div id="mode-switch-ui">
-            {#if localControlSphereList.length > 0}
+            {#if localControlSphereList.length > 0 && myocardium != null}
                 <div id="mode-switch-ui-inner">
                     {#if modeParams.activate_ultrasound}
                         <button id="ultrasoundButton" on:click={() => handleTeeMode(false)}><b>3D View</b></button>
