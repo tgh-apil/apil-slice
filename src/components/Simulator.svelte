@@ -1491,7 +1491,7 @@
             displayClippingPlanes(axClippingPlane, v);
         }).listen();
 
-        let toggelSagPlane = clippingPlaneFolder.add(modelControlParams, 'toggle_sag_clipping', false).name('Enable Saggital Clipping').enable(true).onChange(v => {
+        let toggelSagPlane = clippingPlaneFolder.add(modelControlParams, 'toggle_sag_clipping', false).name('Enable Sagittal Clipping').enable(true).onChange(v => {
             sagPlaneHelper.visible = v;
             moveSagPlane.enable(v);
             sagPlaneNegate.enable(v);
@@ -1519,7 +1519,7 @@
             }
         }).listen();
         
-        let moveSagPlane = clippingPlaneFolder.add(modelControlParams, 'sag_pos', -sagMax, sagMax, 1).name('Saggital Clipping Plane').enable(false).onChange(v => {
+        let moveSagPlane = clippingPlaneFolder.add(modelControlParams, 'sag_pos', -sagMax, sagMax, 1).name('Sagittal Clipping Plane').enable(false).onChange(v => {
             if (modelControlParams.sag_negate) {
                 sagClippingPlane.constant = -v;
             } else {
@@ -1540,7 +1540,7 @@
             axClippingPlane.negate();
         })
 
-        let sagPlaneNegate = clippingPlaneFolder.add(modelControlParams, 'sag_negate', false).name('Flip Saggital Clipping Direction').enable(false).onChange(v => {
+        let sagPlaneNegate = clippingPlaneFolder.add(modelControlParams, 'sag_negate', false).name('Flip Sagittal Clipping Direction').enable(false).onChange(v => {
             modelControlParams.sag_negate = v;
             sagClippingPlane.negate();
         })
