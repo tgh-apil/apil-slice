@@ -32,7 +32,6 @@
     if ($userData) {
         if ($userData.email == 'apiltgh@gmail.com') {
             isAdmin = true;
-            console.log('admin logged in');
         } else {
             isAdmin = false;
         }        
@@ -86,6 +85,10 @@
     // FOR CLIPPING PLANE
     let pointA, pointB, pointC;
     let clippingPlane, tubeClippingPlane;
+    let axClippingPlane, sagClippingPlane, corClippingPlane;
+    let axPlaneHelper, sagPlaneHelper, corPlaneHelper;
+
+    let sceneClippingPlanes = [];
 
     // FOR OBJECT RENDERING VIA LAYERS
     // subscribing to layer 0 means every camera sees it -- just don't use it for this
@@ -126,8 +129,9 @@
     let popupConfirmButtonText = 'Save';
     let omniplaneReadoutHidden = true;
 
-    let modelControlFolder, controlFolder, adminFolder;
+    let modelControlFolder, controlFolder, adminFolder, clippingPlaneFolder;
 
+    // do we need this?
     let modeParams = {
         activate_ultrasound: false,
     }
@@ -141,6 +145,12 @@
     let modelControlParams = {
         toggle_myocardium: 2,
         toggle_all_models: 0,
+        toggle_ax_clipping: false,
+        toggle_sag_clipping: false,
+        toggle_cor_clipping: false,
+        ax_pos: 50,
+        sag_pos: 0,
+        cor_pos: 0,
     }
 
     // object for probe controls in the GUI
@@ -292,6 +302,7 @@
                     
                     myocardiumNoClip.material = modelMat(0xb50d0d);
                     myocardiumNoClip.layers.set(hiddenLayer);
+                    myocardiumNoClip.material.clippingPlanes = sceneClippingPlanes;
                     scene.add(myocardiumNoClip);
                 } else {
                     console.log('model is a heart, but no myocardium model');
@@ -315,14 +326,12 @@
                     model.material = modelMat('white');
                 }
 
+                model.material.clippingPlanes = sceneClippingPlanes;
                 modelParts.push(model);
             }
         })
         
         addModelControlFolder();
-        
-        console.log(myocardium);
-        console.log(`all models loaded!`);
     }
 
     function handleRaycast(e) {
@@ -347,8 +356,7 @@
             if (target.object.name == 'control_sphere') {
                 generateTransformControl(target.object);
                 previousObject = target.object;
-            } else {
-                console.log('object not setup as raycast target');
+                previousObject.material = new THREE.LineBasicMaterial({color: 'pink'});
             }
 
             // for annotations -- not quite working ignore for now
@@ -357,7 +365,6 @@
             //     console.log(target.point);
             // }
 
-            previousObject.material = new THREE.LineBasicMaterial({color: 'pink'});
         }
     }
 
@@ -595,8 +602,6 @@
             probeControls.rightLeftFlex(controlParams.rightLeftFlex);
             probeControls.twist(controlParams.twist);
             probeControls.advance(controlParams.advance);
-
-            console.log('probe reset to initial conditions');
     }
     // -----------------END ULTRASOUND CONTROL FUNCTIONS-----------------
 
@@ -698,8 +703,6 @@
             }
 
             let bookmarkToDelete = {name: bookmarkName, value: currentVal};
-
-            console.log(bookmarkToDelete);
 
             localBookmarks.splice(bookmarkIndex - 1, 1, {name: bookmarkName, value: newVal});
 
@@ -837,8 +840,6 @@
             console.log(`more spheres required`);
         }
         else {
-            console.log(`removing previous splines and updating`);
-
             scene.remove(scene.getObjectByName('splinePath'));
 
             for (let i = 0; i < localControlSphereList.length; i++) {
@@ -1209,20 +1210,20 @@
         // remove instances of the ultrasound tube
         // since it won't regenerate on the fly when the path is updated
         // WATCH THIS!! MIGHT BE CAUSING A MEMORY LEAK!!
-        if (ultrasoundTube) {
-            scene.remove(ultrasoundTube);
-            ultrasoundTube.geometry.dispose();
-            ultrasoundTube.material.dispose();
+        // if (ultrasoundTube) {
+        //     scene.remove(ultrasoundTube);
+        //     ultrasoundTube.geometry.dispose();
+        //     ultrasoundTube.material.dispose();
 
-            // clear references to the tube for garbage collection
-            ultrasoundTube = undefined;
-        } else {
-            if (localControlSphereList.length > 0) {
-                spawnUltrasoundTube();
-                ultrasoundTube.layers.set(layer);
-                console.log('regenerating ultrasound tube');
-            }
-        }
+        //     // clear references to the tube for garbage collection
+        //     ultrasoundTube = undefined;
+        // } else {
+        //     if (localControlSphereList.length > 0) {
+        //         spawnUltrasoundTube();
+        //         ultrasoundTube.layers.set(layer);
+        //         console.log('regenerating ultrasound tube');
+        //     }
+        // }
 
         // remove existing transform controls in the scene before adding a new one
         scene.children.forEach(element => {
@@ -1244,29 +1245,52 @@
         controlUiHidden = !isOn;
         omniplaneReadoutHidden = !isOn;
         descriptionBoxShow.set(false);
-
+        
         controlOptions.forEach(option => {
             option.enable(isOn);
         })
 
-        
+        // deal with the scene clipping planes
+        clippingPlaneOptions.forEach(option => {
+            option.enable(false);
+        })
+
+        displayClippingPlanes(axClippingPlane, false);
+        displayClippingPlanes(sagClippingPlane, false);
+        displayClippingPlanes(corClippingPlane, false);
+
+        modelControlParams.toggle_ax_clipping = false;
+        modelControlParams.toggle_sag_clipping = false;
+        modelControlParams.toggle_cor_clipping = false;
+
+        axPlaneHelper.visible = false;
+        sagPlaneHelper.visible = false;
+        corPlaneHelper.visible = false;
+
         if (isOn) {
             helpBox.set(true);
             controlFolder.open();
             navBarSize.set('navbar-ultrasound');
             viewWidth.set('half');
             keyboardControls(true);
+            clippingPlaneFolder.close();
 
             if (isAdmin) {
                 adminFolder.close()
                 toggleEditing.enable(false);
             }
+
         } else {
             controlFolder.close();
             navBarSize.set('navbar-viewer');
             viewWidth.set('full');
             keyboardControls(false);
+            clippingPlaneFolder.open();
 
+            clippingPlaneOptions[0].enable(true);
+            clippingPlaneOptions[1].enable(true);
+            clippingPlaneOptions[2].enable(true);
+            
             if (isAdmin) {
                 adminFolder.open();
                 toggleEditing.enable(true);
@@ -1277,9 +1301,9 @@
         btnBoxSize.set('btn-box-hide');
         titleBoxPosition.set('titleBox-hidden-description')
 
-        if (!ultrasoundTube) {
-            spawnUltrasoundTube();
-        }
+        // if (!ultrasoundTube) {
+        //     spawnUltrasoundTube();
+        // }
         
         // default to hiding the non-clippable myocardium when switching modes
         // to keep it simple
@@ -1359,9 +1383,9 @@
         ultrasoundCamPivot.layers.set(layer);
         beamMesh.layers.set(layer);
 
-        if (ultrasoundTube) {
-            ultrasoundTube.layers.set(layer);
-        }
+        // if (ultrasoundTube) {
+        //     ultrasoundTube.layers.set(layer);
+        // }
     }
 
     function handleInputControl(controlType) {
@@ -1408,10 +1432,20 @@
         modelControlParams.toggle_myocardium = viewState;
     }
 
+    function displayClippingPlanes(plane, isOn) {
+        if (isOn) {
+            sceneClippingPlanes.push(plane);
+        } else {
+            let planeIndex = sceneClippingPlanes.indexOf(plane);
+            sceneClippingPlanes.splice(planeIndex, 1);
+        }
+    }
+
     // folder contents change if model is or is not heart
     // call it outside the main GUI function AFTER all models have been loaded
     // so it doesn't have to be async
     // only call this once in modelParser()
+    let clippingPlaneOptions
     function addModelControlFolder() {
         // deals with model visibility
         modelControlFolder = gui.addFolder('Model Control');
@@ -1443,12 +1477,55 @@
                 } else if(v == 1) {
                     part.material.wireframe = true;
                     part.layers.set(mainCamLayer);
-                    console.log(part);
                 } else {
                     part.layers.set(hiddenLayer);
                 }
             }).listen();
         })
+
+        clippingPlaneFolder = gui.addFolder('Clipping Plane Control');
+
+        let toggelAxPlane = clippingPlaneFolder.add(modelControlParams, 'toggle_ax_clipping', false).name('Enable Axial Clipping').enable(true).onChange(v => {
+            axPlaneHelper.visible = v;
+            moveAxPlane.enable(v);
+
+            displayClippingPlanes(axClippingPlane, v);
+        }).listen();
+
+        let toggelSagPlane = clippingPlaneFolder.add(modelControlParams, 'toggle_sag_clipping', false).name('Enable Saggital Clipping').enable(true).onChange(v => {
+            sagPlaneHelper.visible = v;
+            moveSagPlane.enable(v);
+
+            displayClippingPlanes(sagClippingPlane, v);
+        }).listen();
+
+        let toggelCorPlane = clippingPlaneFolder.add(modelControlParams, 'toggle_cor_clipping', false).name('Enable Coronal Clipping').enable(true).onChange(v => {
+            corPlaneHelper.visible = v;
+            moveCorPlane.enable(v);
+
+            displayClippingPlanes(corClippingPlane, v);
+        }).listen();
+
+        let moveAxPlane = clippingPlaneFolder.add(modelControlParams, 'ax_pos', -200, 200, 1).name('Axial Clipping Plane').enable(false).onChange(v => {
+            axClippingPlane.constant = v;
+        }).listen();
+        
+        let moveSagPlane = clippingPlaneFolder.add(modelControlParams, 'sag_pos', -200, 200, 1).name('Saggital Clipping Plane').enable(false).onChange(v => {
+            sagClippingPlane.constant = v;
+        }).listen();
+
+        let moveCorPlane = clippingPlaneFolder.add(modelControlParams, 'cor_pos', -200, 200, 1).name('Coronal Clipping Plane').enable(false).onChange(v => {
+            corClippingPlane.constant = v;
+        }).listen();
+
+        clippingPlaneOptions = [
+            toggelAxPlane,
+            toggelSagPlane,
+            toggelCorPlane,
+            moveAxPlane, 
+            moveSagPlane, 
+            moveCorPlane,
+        ]
     }
 
     function openInputPopup(type, label, fn, confirmText) {
@@ -1481,12 +1558,15 @@
         let anteflexControl = controlFolder.add(controlParams, 'anteflex', ultrasoundStartMaxValues.anteflexMin, ultrasoundStartMaxValues.anteflexMax, 1).name('Retroflex/Anteflex').enable(false).onChange(v => {
             probeControls.anteflex(v);
         }).listen();
+
         let rightLeftFlexControl = controlFolder.add(controlParams, 'rightLeftFlex', ultrasoundStartMaxValues.rightLeftFlexMin, ultrasoundStartMaxValues.rightLeftFlexMax, 1).name('Left/Right Lat. Flex').enable(false).onChange(v => {
             probeControls.rightLeftFlex(v);
         }).listen();
+
         let twistControl = controlFolder.add(controlParams, 'twist', ultrasoundStartMaxValues.twistMin, ultrasoundStartMaxValues.twistMax, 1).name('Left/Right Rotation').enable(false).onChange(v => {
             probeControls.twist(v);
-        }).listen();        
+        }).listen();     
+
         let omniplaneControl = controlFolder.add(controlParams, 'omniplane', ultrasoundStartMaxValues.omniplaneMin, ultrasoundStartMaxValues.omniplaneMax, 1.).name('Omniplane Rotation').enable(false).onChange(v => {
             probeControls.omniplane(v);
         }).listen();
@@ -1593,6 +1673,25 @@
         clippingPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
         // for the ultrasound tube
         tubeClippingPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+        // for the axial, coronal, saggital planes
+        axClippingPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), modelControlParams.ax_pos);
+        sagClippingPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), modelControlParams.sag_pos);
+        corClippingPlane = new THREE.Plane(new THREE.Vector3(-1, 0, 0), modelControlParams.cor_pos);
+
+        // by default the models in the scene are not clipped by anything
+        sceneClippingPlanes = [];
+
+        axPlaneHelper = new THREE.PlaneHelper(axClippingPlane, 200, 'red' );
+        sagPlaneHelper = new THREE.PlaneHelper(sagClippingPlane, 200, 'blue' );
+        corPlaneHelper = new THREE.PlaneHelper(corClippingPlane, 200, 'green' );
+
+        axPlaneHelper.visible = false;
+        sagPlaneHelper.visible = false;
+        corPlaneHelper.visible = false;
+
+        scene.add(axPlaneHelper);
+        scene.add(sagPlaneHelper);
+        scene.add(corPlaneHelper);
 
         // CAMERAS
         spawnCameras();
@@ -1657,8 +1756,6 @@
         let savedControlSphereArr = Object.values($savedControlSphereList);
 
         if (savedControlSphereArr.length > 0) {
-            console.log('regenerating probe path from saved control points!')
-
             for (let i = 0; i < savedControlSphereArr.length; i++) {
                 generateControlSphere();
                 localControlSphereList[i].position.x = savedControlSphereArr[i].x;
@@ -1671,13 +1768,13 @@
             splineObject.layers.set(hiddenLayer);
             
             // create ultrasound tube if there are control spheres for the path  and if there isn't a tube yet
-            if (!ultrasoundTube) {
-                spawnUltrasoundTube();
-                console.log('creating ultrasound tube');
-                ultrasoundTube.layers.set(hiddenLayer);
-            } else {
-                console.log('ultrasound tube exists somehow?');
-            }
+            // if (!ultrasoundTube) {
+            //     spawnUltrasoundTube();
+            //     console.log('creating ultrasound tube');
+            //     ultrasoundTube.layers.set(hiddenLayer);
+            // } else {
+            //     console.log('ultrasound tube exists somehow?');
+            // }
         }
 
         // LIGHTS
@@ -1828,7 +1925,7 @@
             </div>
         </div>
         <div id="mode-switch-ui">
-            {#if localControlSphereList.length > 0 && myocardium != null}
+            {#if localControlSphereList.length > 0 && myocardium != null && adminParams.toggle_editing == false}
                 <div id="mode-switch-ui-inner">
                     {#if modeParams.activate_ultrasound}
                         <button id="ultrasoundButton" on:click={() => handleTeeMode(false)}><b>3D View</b></button>
