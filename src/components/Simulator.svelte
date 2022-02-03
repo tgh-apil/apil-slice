@@ -148,6 +148,9 @@
         toggle_ax_clipping: false,
         toggle_sag_clipping: false,
         toggle_cor_clipping: false,
+        ax_negate: false,
+        sag_negate: false,
+        cor_negate: false,
         ax_pos: 50,
         sag_pos: 0,
         cor_pos: 0,
@@ -235,9 +238,8 @@
                     rotateAlongCurve(path);
                     matchCoPlanar(pointA, pointB, pointC);
                 } catch (e) {
-                    console.log('value is negative');
+                    return;
                 }
-
             } else {
                 console.log('path needed before probe can move!')
             }
@@ -446,21 +448,17 @@
                     probeControls.omniplane(controlParams.omniplane -= 1);                    
                 }
             }, interval);
-        }
-
-        if (mouseButtonNumber == 1) {
+        } else if (mouseButtonNumber == 1) {
             resetProbe();
-        }
-
-        if (mouseButtonNumber == 2) {
+        } else if (mouseButtonNumber == 2) {
             mouseOmniInterval = setInterval(() => {
                 if (controlParams.omniplane < ultrasoundStartMaxValues.omniplaneMax) {
                     probeControls.omniplane(controlParams.omniplane += 1);                        
                 }
             }, interval);   
+        } else {
+            clearTimeout(mouseOmniInterval);
         }
-
-        return;
     }
 
     // MOUSE CONTROLS: MOVEMENT (Advance/Retract/TWIST LEFT/TWIST RIGHT)
@@ -1488,6 +1486,7 @@
         let toggelAxPlane = clippingPlaneFolder.add(modelControlParams, 'toggle_ax_clipping', false).name('Enable Axial Clipping').enable(true).onChange(v => {
             axPlaneHelper.visible = v;
             moveAxPlane.enable(v);
+            axPlaneNegate.enable(v);
 
             displayClippingPlanes(axClippingPlane, v);
         }).listen();
@@ -1495,6 +1494,7 @@
         let toggelSagPlane = clippingPlaneFolder.add(modelControlParams, 'toggle_sag_clipping', false).name('Enable Saggital Clipping').enable(true).onChange(v => {
             sagPlaneHelper.visible = v;
             moveSagPlane.enable(v);
+            sagPlaneNegate.enable(v);
 
             displayClippingPlanes(sagClippingPlane, v);
         }).listen();
@@ -1502,21 +1502,53 @@
         let toggelCorPlane = clippingPlaneFolder.add(modelControlParams, 'toggle_cor_clipping', false).name('Enable Coronal Clipping').enable(true).onChange(v => {
             corPlaneHelper.visible = v;
             moveCorPlane.enable(v);
+            corPlaneNegate.enable(v);
 
             displayClippingPlanes(corClippingPlane, v);
         }).listen();
 
-        let moveAxPlane = clippingPlaneFolder.add(modelControlParams, 'ax_pos', -200, 200, 1).name('Axial Clipping Plane').enable(false).onChange(v => {
-            axClippingPlane.constant = v;
+        let axMax = 200
+        let sagMax = 200;
+        let corMax = 200;
+
+        let moveAxPlane = clippingPlaneFolder.add(modelControlParams, 'ax_pos', -axMax, axMax, 1).name('Axial Clipping Plane').enable(false).onChange(v => {
+            if (modelControlParams.ax_negate) {
+                axClippingPlane.constant = -v;
+            } else {
+                axClippingPlane.constant = v;
+            }
         }).listen();
         
-        let moveSagPlane = clippingPlaneFolder.add(modelControlParams, 'sag_pos', -200, 200, 1).name('Saggital Clipping Plane').enable(false).onChange(v => {
-            sagClippingPlane.constant = v;
+        let moveSagPlane = clippingPlaneFolder.add(modelControlParams, 'sag_pos', -sagMax, sagMax, 1).name('Saggital Clipping Plane').enable(false).onChange(v => {
+            if (modelControlParams.sag_negate) {
+                sagClippingPlane.constant = -v;
+            } else {
+                sagClippingPlane.constant = v;
+            }
         }).listen();
 
-        let moveCorPlane = clippingPlaneFolder.add(modelControlParams, 'cor_pos', -200, 200, 1).name('Coronal Clipping Plane').enable(false).onChange(v => {
-            corClippingPlane.constant = v;
+        let moveCorPlane = clippingPlaneFolder.add(modelControlParams, 'cor_pos', -corMax, corMax, 1).name('Coronal Clipping Plane').enable(false).onChange(v => {
+            if (modelControlParams.cor_negate) {
+                corClippingPlane.constant = -v;
+            } else {
+                corClippingPlane.constant = v;
+            }
         }).listen();
+        
+        let axPlaneNegate = clippingPlaneFolder.add(modelControlParams, 'ax_negate', false).name('Flip Axial Clipping Direction').enable(false).onChange(v => {
+            modelControlParams.ax_negate = v;
+            axClippingPlane.negate();
+        })
+
+        let sagPlaneNegate = clippingPlaneFolder.add(modelControlParams, 'sag_negate', false).name('Flip Saggital Clipping Direction').enable(false).onChange(v => {
+            modelControlParams.sag_negate = v;
+            sagClippingPlane.negate();
+        })
+
+        let corPlaneNegate = clippingPlaneFolder.add(modelControlParams, 'cor_negate', false).name('Flip Coronal Clipping Direction').enable(false).onChange(v => {
+            modelControlParams.cor_negate = v;
+            corClippingPlane.negate();
+        })
 
         clippingPlaneOptions = [
             toggelAxPlane,
@@ -1525,6 +1557,9 @@
             moveAxPlane, 
             moveSagPlane, 
             moveCorPlane,
+            axPlaneNegate,
+            sagPlaneNegate,
+            corPlaneNegate,
         ]
     }
 
@@ -1675,15 +1710,15 @@
         tubeClippingPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
         // for the axial, coronal, saggital planes
         axClippingPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), modelControlParams.ax_pos);
-        sagClippingPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), modelControlParams.sag_pos);
-        corClippingPlane = new THREE.Plane(new THREE.Vector3(-1, 0, 0), modelControlParams.cor_pos);
+        sagClippingPlane = new THREE.Plane(new THREE.Vector3(-1, 0, 0), modelControlParams.sag_pos);
+        corClippingPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), modelControlParams.cor_pos);
 
         // by default the models in the scene are not clipped by anything
         sceneClippingPlanes = [];
 
-        axPlaneHelper = new THREE.PlaneHelper(axClippingPlane, 200, 'red' );
-        sagPlaneHelper = new THREE.PlaneHelper(sagClippingPlane, 200, 'blue' );
-        corPlaneHelper = new THREE.PlaneHelper(corClippingPlane, 200, 'green' );
+        axPlaneHelper = new THREE.PlaneHelper(axClippingPlane, 350, 'red' );
+        sagPlaneHelper = new THREE.PlaneHelper(sagClippingPlane, 350, 'blue' );
+        corPlaneHelper = new THREE.PlaneHelper(corClippingPlane, 350, 'green' );
 
         axPlaneHelper.visible = false;
         sagPlaneHelper.visible = false;
