@@ -1,7 +1,7 @@
 <script>
     import { onMount } from 'svelte';
     import { replace } from 'svelte-spa-router';
-    import { currentView, modelPath, modelTitle, modelPoster, modelDescription, navBarSize, savedControlSphereList, userBookmarks, modelType, uploadPanelShow } from '../../stores.js';
+    import { currentView, modelPath, modelTitle, modelPoster, modelId, modelDescription, navBarSize, savedControlSphereList, userBookmarks, modelType, uploadPanelShow } from '../../stores.js';
     import ModelCard from '../../components/ModelCard.component.svelte';
     import UploadModelData from '../../components/UploadModelData.component.svelte';
 
@@ -62,7 +62,8 @@
         let modelInfo = dbData[selectedModelIndex];
         
         modelTitle.set(modelInfo.modelTitle);
-        modelPoster.set(modelInfo.poster)
+        modelPoster.set(modelInfo.poster);
+        modelId.set(modelInfo.modelId);
         modelDescription.set(modelInfo.description);
         modelPath.set(modelInfo.fileName);
         modelType.set(modelInfo.modelType);
@@ -83,7 +84,7 @@
 {:else}
     <div id="modelSelectBox">
         {#each dbData as modelData, i}
-            <ModelCard modelTitle={modelData.modelTitle} modelPoster={modelData.poster}  modelDescription={modelData.description} modelThumbnailUrl={modelData.thumbnailUrl} 
+            <ModelCard modelTitle={modelData.modelTitle} modelPoster={modelData.poster} modelId={modelData.modelId} modelDescription={modelData.description} modelThumbnailUrl={modelData.thumbnailUrl} 
             buttonFunction={() => loadModelInfo(i)} />
         {/each}
     </div>
@@ -98,9 +99,9 @@
         z-index: 101;
         display: grid;
         grid-template-columns: 1fr 1fr;
-        grid-auto-rows: 48%;
+        grid-auto-rows: auto;
         column-gap: 1%;
-        row-gap: 2%;
+        row-gap: 1%;
         overflow: auto;
     }
 </style>
