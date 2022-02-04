@@ -1,6 +1,4 @@
 <script>
-import { userData } from '../stores.js';
-
 export let modelTitle;
 export let modelPoster;
 export let modelId;
@@ -20,13 +18,19 @@ let descriptionHidden = true;
                 <div id='model-title-container'>
                     <h1><b>{ modelTitle }</b></h1>
                 </div>
-                <div id='model-poster-container'>
-                    <p>Poster: <b>{ modelPoster }</b></p>        
+                <div>
+                    <div id='model-poster-id-container' >
+                        <div id='model-poster-container'>
+                            <p>Poster: <b>{ modelPoster }</b></p>        
+                        </div>
+                        <div id='model-id-container'>
+                            <p>ID: <b> { modelId } </b></p>
+                        </div>
+                    </div>
                 </div>
-                <div id='model-id-container'>
-                    <p>ID: <b> { modelId } </b></p>
-                </div>
-                <div id='model-description-container' hidden={descriptionHidden}>
+            </div>
+            <div id='model-description-container-background' hidden={descriptionHidden}>
+                <div id='model-description-container'>
                     <p>{ modelDescription }</p>
                 </div>
             </div>
@@ -36,7 +40,6 @@ let descriptionHidden = true;
 
 <style>
     
-/* WOW I HATE CSS */
 #container-main {
     position: relative;
     display: grid;
@@ -73,30 +76,48 @@ let descriptionHidden = true;
 #info-box {
     height: 100%;
     width: 100%;
+    display: grid;
+    grid-template-rows: 2fr 1fr;
 }
 
 #model-title-container {
-    width: 95%;;
+    width: 95%;
+    bottom: 2%;
+    grid-row: 1;
 }
 
 #model-title-container h1 {
-    font-size: 3.5em;
+    font-size: 2em;
     color: white;
 }
 
+#model-poster-id-container {
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
 #model-poster-container {
-    font-size: 1.3em;
+    font-size: 1.1em;
+    grid-column: 1;
 }
 
 #model-id-container {
-    font-size: 1.3em;
+    font-size: 1.1em;
+    grid-column: 2;
+}
+
+#model-description-container-background {
+    height: 100%;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    bottom: 10%;
 }
 
 #model-description-container {
-    background: rgba(0, 0, 0, 0.2);
     width: 100%;
     height: 10em;
     overflow: auto;
-    font-size: 1.3em;
+    font-size: 1.1em;
 }
 </style>

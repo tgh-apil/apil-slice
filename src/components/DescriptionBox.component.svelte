@@ -3,10 +3,9 @@
                 viewWidth, titleBoxPosition, btnBoxSize, btnBoxSizeShow, modelDescription } from '../stores.js';
         import TitleBox from './TitleBox.component.svelte';
 
-        // splits the possibly long description text to paragraphs
+        // splits the possibly long description text to paragraphs -- not working from firebase
         let descriptionParagraphs  = $modelDescription.split('\n');
 
-        // FUCKING EW EW EW
         function hideDescriptionBox() {
             descriptionBoxShow.set(!$descriptionBoxShow);
             
@@ -86,7 +85,6 @@
             overflow: auto;
         }
 
-        /* Ewwwwwwwwwwwwwwwwwwwwwwwwwwww */
         #btn-box-show {
             position: absolute;
             z-index: 101;
@@ -116,7 +114,6 @@
             align-items: center;
             text-align: center;
         }
-        /* end ewwwwwww */
 
     button {
         background-color: #007070;
