@@ -29,6 +29,7 @@ export const modelDescription = writable('Default Description');
 export const modelPath = writable('normal_heart.glb');
 export const modelType = writable('heart');
 export const modelId = writable('000');
+export const cameraPosition = writable([]);
 
 // use this as the default position list if none are on firebase
 export const savedControlSphereList = writable({

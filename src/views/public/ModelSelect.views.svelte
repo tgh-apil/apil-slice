@@ -93,11 +93,11 @@
 <style>
     #modelSelectBox {
         position: absolute;
-        top: 7%;
         width: auto;
-        height: 90%;
+        height: 94%;
         z-index: 101;
         display: grid;
+        top: 6%;
         grid-template-columns: 1fr 1fr 1fr;
         /* grid-auto-rows: 1fr; */
         column-gap: 1%;

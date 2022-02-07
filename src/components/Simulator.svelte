@@ -9,7 +9,7 @@
     
     import { viewWidth, descriptionBoxShow, titleBoxPosition, 
             btnBoxSize, modelPath, navBarSize, helpBox,
-            savedControlSphereList, userBookmarks, modelType, userData } from '../stores.js';
+            savedControlSphereList, userBookmarks, modelType, userData, modelId } from '../stores.js';
     
     // -----------------STARTFIREBASE IMPORTS---------------
     import { app } from '../firebase.js';
@@ -26,7 +26,6 @@
     let db = getFirestore(app);
 
     // FOR USER PERMISSIONS
-    // TODO: This flag will be handled by firebase if the logged in user is/is not an admin
     let isAdmin;
 
     if ($userData) {
@@ -91,7 +90,7 @@
     let sceneClippingPlanes = [];
 
     // FOR OBJECT RENDERING VIA LAYERS
-    // subscribing to layer 0 means every camera sees it -- just don't use it for this
+    // subscribing to layer 0 means every camera sees it
     let mainCamLayer = 1;
     let ultrasoundCamLayer = 2;
     let raycastHelperLayer = 3;
@@ -376,17 +375,17 @@
         scene.add(ambientLight);
 
         let spotLightOne = new THREE.SpotLight('white', 0.3);
-        spotLightOne.position.set(100, 300, 100);
+        spotLightOne.position.set(100, 500, 100);
         spotLightOne.name = 'spotlight_one';
         scene.add(spotLightOne);
 
         let spotLightTwo = new THREE.SpotLight('white', 0.3);
-        spotLightTwo.position.set(-100, 300, 100);
+        spotLightTwo.position.set(-100, 500, 100);
         spotLightTwo.name = 'spotlight_two';
         scene.add(spotLightTwo);
 
         let spotLightThree = new THREE.SpotLight('white', 0.3);
-        spotLightThree.position.set(0, 300, -100);
+        spotLightThree.position.set(0, 500, -100);
         spotLightThree.name = 'spotlight_three';
         scene.add(spotLightThree);
 
@@ -403,11 +402,18 @@
         camera = new THREE.PerspectiveCamera(75, 0.5 * aspect, 0.1, 1000);
         camera.layers.enable(mainCamLayer);
         camera.layers.enable(ultrasoundCamLayer);
-        
-        camera.position.x = -70.0;
-        camera.position.y = 190.00;
-        camera.position.z = -120.00;
 
+        // TEMPORARY -- change this so admin can set the default camera position after upload
+        if ($modelId == '20220207') {
+            camera.position.x = -110.00;
+            camera.position.y = 323.66;
+            camera.position.z = -143.53;
+        } else {
+            camera.position.x = -70.0;
+            camera.position.y = 190.0;
+            camera.position.z = -120.0;
+        }
+        
         // Dummy camera for the pointer lock
         // so screen doesn't move when pointer lock is on.
         // does not render anything
@@ -1233,6 +1239,9 @@
     }
 
     function handleTeeMode(isOn) {
+
+        console.log(camera);
+
         splitView = isOn;
         camera.updateProjectionMatrix();
 
@@ -1629,10 +1638,12 @@
             toggleEditing = adminFolder.add(adminParams, 'toggle_editing').name('Edit Scene').onChange(v => {
                 handleEditMode(v);
 
+                console.log(adminParams.toggle_editing);
+
                 adminOptions.forEach(option => {
                     option.enable(v);
                 })
-            });
+            }).listen();
 
             let addControlSphere = adminFolder.add(adminParams, 'add_control_sphere').name('Add Spline Control').enable(false);
             let saveControlSpherePos = adminFolder.add(adminParams, 'save_sphere_position').name('Save Path').enable(false);

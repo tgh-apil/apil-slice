@@ -11,9 +11,14 @@ let descriptionHidden = true;
 </script>
 
 <div id='container-main' on:click={ buttonFunction } on:mouseenter={() => descriptionHidden = false} on:mouseleave={() => descriptionHidden = true}>
-    <div id='padding-div'>
-        <img src={ modelThumbnailUrl } alt='model thumbnail'>
-        <div id='container-inner'>
+    <img src={ modelThumbnailUrl } alt='model thumbnail'>
+    <div id='container-inner'>
+        <div id='model-description-container-background' hidden={descriptionHidden}>
+            <div id='model-description-container'>
+                <p>{ modelDescription }</p>
+            </div>
+        </div>
+        <div hidden={!descriptionHidden}>
             <div id='info-box'>
                 <div id='model-title-container'>
                     <h1><b>{ modelTitle }</b></h1>
@@ -29,12 +34,7 @@ let descriptionHidden = true;
                     </div>
                 </div>
             </div>
-            <div id='model-description-container-background' hidden={descriptionHidden}>
-                <div id='model-description-container'>
-                    <p>{ modelDescription }</p>
-                </div>
-            </div>
-        </div>
+        </div>    
     </div>
 </div>
 
@@ -54,7 +54,8 @@ let descriptionHidden = true;
     -moz-transition:  border 0.25s ease;
     -o-transition:  border 0.25s ease;
     -ms-transition: border 0.25s ease;
-    transition: border 0.25s ease; }
+    transition: border 0.25s ease;
+}
 
 #container-main:hover {
     border: 1em solid #00acac;
@@ -71,10 +72,13 @@ let descriptionHidden = true;
     left: 0;
     bottom: 0;
     width: 100%;
+    height: 100%;
 }
 
 #info-box {
-    height: 100%;
+    position: absolute;
+    top: 50%;
+    height: 50%;
     width: 100%;
     display: grid;
     grid-template-rows: 2fr 1fr;
@@ -111,13 +115,21 @@ let descriptionHidden = true;
     height: 100%;
     width: 100%;
     background: rgba(0, 0, 0, 0.5);
-    bottom: 10%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 #model-description-container {
-    width: 100%;
-    height: 10em;
+    top: 0;
+    width: 95%;
+    height: 95%;
     overflow: auto;
     font-size: 1.1em;
 }
+
+[hidden] {
+    display: none !important;
+}
+
 </style>

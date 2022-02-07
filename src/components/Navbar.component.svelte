@@ -55,7 +55,7 @@
     #navbar-full {
         background-color: #4242425d;
         position: absolute;
-        z-index: 100;
+        z-index: 105;
         top: 0%;
         left: 0%;
         right: 5%;
