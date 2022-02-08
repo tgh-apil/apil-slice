@@ -44,6 +44,7 @@
     let myocardium = null;
     let myocardiumNoClip = null;
     let modelParts = [];
+    let septalDefectParts = [];
 
     // FOR SPLINE EDITING
     let path, pointCount, points, controlSphere, splineObject;
@@ -128,7 +129,7 @@
     let popupConfirmButtonText = 'Save';
     let omniplaneReadoutHidden = true;
 
-    let modelControlFolder, controlFolder, adminFolder, clippingPlaneFolder;
+    let modelControlFolder, controlFolder, adminFolder, clippingPlaneFolder, septalDefectFolder;
 
     // do we need this?
     let modeParams = {
@@ -140,10 +141,12 @@
     // so we can control individual model part visibility in the GUI
     // is empty to scale to hold as many parts the model has
     let partListObject = new Object();
+    let septalDefectListObject = new Object();
     
     let modelControlParams = {
         toggle_myocardium: 2,
         toggle_all_models: 0,
+        toggle_all_septal_models: 2,
         toggle_ax_clipping: false,
         toggle_sag_clipping: false,
         toggle_cor_clipping: false,
@@ -312,23 +315,55 @@
                 // puts all models (other than myocardium) into a single object to make toggling visibility easier
                 // limited colour pallete targeted more specifically to the heart for now
                 if (model.name.includes("1_")) {
+                    modelParts.push(model);
                     model.material = modelMat(0xe62e2e);
                 } else if (model.name.includes("2_")) {
+                    modelParts.push(model);
                     model.material = modelMat(0x372ee6);
                 } else if (model.name.includes("3_")) {
+                    modelParts.push(model);
                     model.material = modelMat(0xe6682e);
                 } else if (model.name.includes("4_")) {
+                    modelParts.push(model);
                     model.material = modelMat(0x2ebee6);
                 } else if (model.name.includes("5_")) {
+                    modelParts.push(model);
                     model.material = modelMat(0xe6bb2e);
                 } else if (model.name.includes("6_")) {
+                    modelParts.push(model);
                     model.material = modelMat(0x2ee662);
+                } else if (model.name.includes("7_")) {
+                    septalDefectParts.push(model);
+                    model.material = modelMat(0xc06858);
+                } else if (model.name.includes("8_")) {
+                    septalDefectParts.push(model);
+                    model.material = modelMat(0x80ae80);
+                } else if (model.name.includes("9_")) {
+                    septalDefectParts.push(model);
+                    model.material = modelMat(0x6fb8d2);
+                } else if (model.name.includes("10_")) {
+                    septalDefectParts.push(model);
+                    model.material = modelMat(0x00aaff);
+                } else if (model.name.includes("IVS")) {
+                    septalDefectParts.push(model);
+                    model.material = modelMat(0x4f4241);
+                } else if (model.name.includes("*")) {
+                    septalDefectParts.push(model);
+                    model.material = modelMat(0xedebd8);
                 } else {
+                    modelParts.push(model);
                     model.material = modelMat('white');
                 }
 
                 model.material.clippingPlanes = sceneClippingPlanes;
-                modelParts.push(model);
+
+                if (septalDefectParts.length > 0) {
+                    septalDefectParts.forEach(part => {
+                        part.layers.set(hiddenLayer);
+                    })
+                }
+
+                // modelParts.push(model);
             }
         })
         
@@ -1239,13 +1274,14 @@
     }
 
     function handleTeeMode(isOn) {
-
-        console.log(camera);
-
         splitView = isOn;
         camera.updateProjectionMatrix();
 
         modeParams.activate_ultrasound = isOn;
+
+        if (septalDefectParts.length > 0) {
+            septalDefectFolder.close()
+        }
 
         // deal with the UI
         bookmarkUiHidden = !isOn;
@@ -1273,6 +1309,8 @@
         axPlaneHelper.visible = false;
         sagPlaneHelper.visible = false;
         corPlaneHelper.visible = false;
+        
+        clippingPlaneFolder.close();
 
         if (isOn) {
             helpBox.set(true);
@@ -1280,7 +1318,6 @@
             navBarSize.set('navbar-ultrasound');
             viewWidth.set('half');
             keyboardControls(true);
-            clippingPlaneFolder.close();
 
             if (isAdmin) {
                 adminFolder.close()
@@ -1292,7 +1329,6 @@
             navBarSize.set('navbar-viewer');
             viewWidth.set('full');
             keyboardControls(false);
-            clippingPlaneFolder.open();
 
             clippingPlaneOptions[0].enable(true);
             clippingPlaneOptions[1].enable(true);
@@ -1425,6 +1461,27 @@
         }
     }
 
+    // this is redundant and only a special case -- to be re-written later
+    function displaySeptalDefectParts(viewState) {
+        septalDefectParts.forEach(part => {
+            if (viewState == 0) {
+                part.material.wireframe = false;
+                part.layers.set(mainCamLayer);
+            } else if(viewState == 1) {
+                part.material.wireframe = true;
+                part.layers.set(mainCamLayer);
+            } else {
+                part.layers.set(hiddenLayer);    
+            }
+        })
+
+        modelControlParams.toggle_all_septal_models = viewState;
+
+        for (let property in septalDefectListObject) {
+            septalDefectListObject[property] = viewState;
+        }
+    }
+
     function displayNoClipMyocardium(viewState) {
         if (viewState == 0) {
             myocardiumNoClip.material.wireframe = false;
@@ -1489,6 +1546,37 @@
                 }
             }).listen();
         })
+
+        // special case -- this is terrible re-write this.
+        if ($modelId == '20220207') {
+            if (septalDefectParts.length > 0) {
+                septalDefectFolder = modelControlFolder.addFolder('Septal Defects');
+
+                septalDefectFolder.close();
+
+                septalDefectFolder.add(modelControlParams, 'toggle_all_septal_models', modelVisibilityOptions).name('All Septal Defects').onChange(v => {            
+                    displaySeptalDefectParts(v);
+                }).listen();
+
+                septalDefectParts.forEach(part => {
+                    let partName = `${part.name}_toggle`;
+    
+                    septalDefectListObject[partName] = 2;
+    
+                    septalDefectFolder.add(septalDefectListObject, partName, modelVisibilityOptions).name(`${part.name}`).onChange(v => {
+                        if (v == 0) {
+                            part.material.wireframe = false;
+                            part.layers.set(mainCamLayer);
+                        } else if(v == 1) {
+                            part.material.wireframe = true;
+                            part.layers.set(mainCamLayer);
+                        } else {
+                            part.layers.set(hiddenLayer);
+                        }
+                    }).listen();
+                })
+            }
+        }
 
         clippingPlaneFolder = gui.addFolder('Clipping Plane Control');
 
@@ -1569,7 +1657,9 @@
             axPlaneNegate,
             sagPlaneNegate,
             corPlaneNegate,
-        ]
+        ];
+
+        clippingPlaneFolder.close();
     }
 
     function openInputPopup(type, label, fn, confirmText) {
