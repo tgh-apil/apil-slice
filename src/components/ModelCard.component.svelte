@@ -11,11 +11,11 @@ let descriptionHidden = true;
 </script>
 
 <div id='container-main' on:click={ buttonFunction } on:mouseenter={() => descriptionHidden = false} on:mouseleave={() => descriptionHidden = true}>
-    <img src={ modelThumbnailUrl } alt='model thumbnail'>
+    <img id='thumbnail-img' src={ modelThumbnailUrl } alt='model thumbnail'>
     <div id='container-inner'>
         <div id='model-description-container-background' hidden={descriptionHidden}>
             <div id='model-description-container'>
-                <p>{ modelDescription }</p>
+                <p id='model-description'>{ modelDescription }</p>
             </div>
         </div>
         <div hidden={!descriptionHidden}>

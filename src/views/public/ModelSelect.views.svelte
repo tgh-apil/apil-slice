@@ -38,16 +38,21 @@
 
                 let storageThumbnailRef = ref(storageRef, `models/${fileName}/${fileName}_thumbnail.png`);
 
+                let img = document.getElementById('thumbnail-img');
+                
                 // it's because we're waiting for this download...
                 await getDownloadURL(storageThumbnailRef)
                 .then(url => {
+
+                    // img.setAttribute(url)
                     obj['thumbnailUrl'] = url;
 
                 }).catch((err) => {
                     // if no thumbnail set, we use a stand-in image instead
+                    // img.setAttribute('no_thumbnail.png')
+
                     obj['thumbnailUrl'] = 'no_thumbnail.png';
                     console.log(`Error downloading thumbnail: ${err}`)
-
                 })
 
                 dbData = [...dbData, obj];
@@ -82,16 +87,22 @@
         <UploadModelData />
     </div>
 {:else}
-    <div id="modelSelectBox">
+    <div id="model-select-box">
         {#each dbData as modelData, i}
             <ModelCard modelTitle={modelData.modelTitle} modelPoster={modelData.poster} modelId={modelData.modelId} modelDescription={modelData.description} modelThumbnailUrl={modelData.thumbnailUrl} 
             buttonFunction={() => loadModelInfo(i)} />
+        {:else}
+            <div id='model-loading-box'>
+                <div>
+                    <h1>Loading Models</h1>
+                </div>
+            </div>
         {/each}
     </div>
 {/if}
 
 <style>
-    #modelSelectBox {
+    #model-select-box {
         position: absolute;
         width: auto;
         height: 94%;
@@ -103,5 +114,13 @@
         column-gap: 1%;
         row-gap: 1%;
         overflow: auto;
+    }
+
+    #model-loading-box {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 </style>

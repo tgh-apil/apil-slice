@@ -1,4 +1,5 @@
 <script>
+    import { onMount } from 'svelte';
     import * as THREE from 'three';
     import { GUI } from 'lil-gui';
     import { OrbitControls}  from 'three/examples/jsm/controls/OrbitControls';
@@ -19,9 +20,10 @@
 
 
     // -----------------START GLOBAL VARIABLES---------------
-    let scene, renderer;
+    let scene, renderer, viewCubeScene, viewCubeRenderer;
     let orbitControls, teeMouseControls, transformControls;
     let splitView = false;
+    let viewCubeReady = false;
     let loader, dracoLoader;
     let db = getFirestore(app);
 
@@ -65,7 +67,7 @@
     let ultrasoundTube;
 
     // FOR CAMERAS
-    let pointerLockCam, camera, ultrasoundCamera;
+    let pointerLockCam, camera, ultrasoundCamera, viewCubeCamera;
     // control this for ultrasound zoom level 
     let frustumSize = 220;
     let SCREEN_WIDTH = window.innerWidth;
@@ -286,6 +288,22 @@
         models.children.forEach(model => {
             // only handle the myocardium if it's a heart model and it has a myocardium model
             if (model.name.toLowerCase() == 'myocardium') {
+                    model.computeBoundingBox;
+
+                    let modelCenter = new THREE.Vector3();
+                    let modelSize = new THREE.Vector3();
+
+                    model.geometry.boundingBox.getCenter(modelCenter);
+                    model.geometry.boundingBox.getSize(modelSize);
+
+                    let offset = 25;
+
+                    camera.position.x = -(modelSize.x + offset);
+                    camera.position.y = modelSize.y/2 + offset;
+                    camera.position.z = -(modelSize.z + offset);
+
+                    camera.lookAt(modelCenter); 
+
                 if ($modelType.toLowerCase() == 'heart') {
                     // create two copies: one clippable, one not
                     myocardium = model;
@@ -437,17 +455,6 @@
         camera = new THREE.PerspectiveCamera(75, 0.5 * aspect, 0.1, 1000);
         camera.layers.enable(mainCamLayer);
         camera.layers.enable(ultrasoundCamLayer);
-
-        // TEMPORARY -- change this so admin can set the default camera position after upload
-        if ($modelId == '20220207') {
-            camera.position.x = -110.00;
-            camera.position.y = 323.66;
-            camera.position.z = -143.53;
-        } else {
-            camera.position.x = -70.0;
-            camera.position.y = 190.0;
-            camera.position.z = -120.0;
-        }
         
         // Dummy camera for the pointer lock
         // so screen doesn't move when pointer lock is on.
@@ -1230,6 +1237,9 @@
     function handleEditMode(isOn) {
         let layer;
 
+        let modeSwitchButtonDiv = document.getElementById('mode-switch-ui');
+        modeSwitchButtonDiv.hidden = isOn;
+
         if (isOn) {
             layer = mainCamLayer;
         } else {
@@ -1504,6 +1514,65 @@
             sceneClippingPlanes.splice(planeIndex, 1);
         }
     }
+
+    onMount(async function () {
+        viewCubeScene = new THREE.Scene();
+
+        let viewCubeElement = document.getElementById('view-cube-container');
+
+        viewCubeRenderer = new THREE.WebGLRenderer( {
+            alpha: true
+        });
+
+        viewCubeRenderer.setSize(viewCubeElement.offsetWidth, viewCubeElement.offsetHeight);
+        viewCubeRenderer.setPixelRatio(window.devicePixelRatio);
+
+        viewCubeRenderer.setClearColor(0x000000, 0);
+        viewCubeRenderer.autoClear = false;
+
+        viewCubeCamera = new THREE.PerspectiveCamera(75, viewCubeElement.offsetWidth / viewCubeElement.offsetHeight, 0.1, 100);
+
+        viewCubeElement.appendChild(viewCubeRenderer.domElement);
+
+        loader.load(
+            '/gltf/human_view_cube.glb',
+            function(gltf) {
+                viewCubeScene.add(gltf.scene);
+
+                gltf.scene.children.forEach(object => {
+                    object.material = modelMat(0xedebd8);
+
+                    let scale = 0.5;
+
+                    object.scale.x = scale;
+                    object.scale.y = scale;
+                    object.scale.z = scale;
+                    object.rotateY(Math.PI);
+                })
+            }
+        )
+
+        let ambientLight = new THREE.AmbientLight('white', 0.35);
+        viewCubeScene.add(ambientLight);
+
+        let spotLightOne = new THREE.SpotLight('white', 0.6);
+        spotLightOne.position.set(100, 500, 100);
+        viewCubeScene.add(spotLightOne);
+
+        let spotLightTwo = new THREE.SpotLight('white', 0.6);
+        spotLightTwo.position.set(-100, 500, 100);
+        viewCubeScene.add(spotLightTwo);
+
+        let spotLightThree = new THREE.SpotLight('white', 0.6);
+        spotLightThree.position.set(0, 500, -100);
+        viewCubeScene.add(spotLightThree);
+
+        let spotLightFour = new THREE.SpotLight('white', 0.6);
+        spotLightFour.position.set(0, -200, -100);
+        viewCubeScene.add(spotLightFour);
+
+        viewCubeReady = true;
+    })
 
     // folder contents change if model is or is not heart
     // call it outside the main GUI function AFTER all models have been loaded
@@ -1802,7 +1871,7 @@
 
     function init() {
         scene = new THREE.Scene();
-
+        
         keyboardControls(false);
         // initialize clipping planes for the scene
         // for ultrasound
@@ -1918,6 +1987,7 @@
 
         // OTHER
         handleGUI();
+        // spawnViewCube();
 
         window.addEventListener('resize', onWindowResize);
         window.addEventListener('mouseup', handleMouseUp);
@@ -1970,6 +2040,16 @@
         renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
         renderer.setPixelRatio( window.devicePixelRatio );
 
+        if (viewCubeReady) {
+            // credit: https://github.com/bytezeroseven/GLB-Viewer/blob/master/viewer.js
+            viewCubeRenderer.render(viewCubeScene, viewCubeCamera);
+            viewCubeCamera.updateProjectionMatrix();
+
+            viewCubeCamera.rotation.copy(camera.rotation);
+            let dir = camera.position.clone().sub(orbitControls.target).normalize();
+            viewCubeCamera.position.copy(dir.multiplyScalar(15));
+        }
+
         if (splitView) {
             // positions the main model viewer window in split-screen
             renderer.setViewport(0, 0, SCREEN_WIDTH * screenSplit, SCREEN_HEIGHT);
@@ -1993,8 +2073,9 @@
     animate();
 </script>
 
+<div id='view-cube-container'></div>
 <div hidden={loadingBarHidden}>
-    <div id="loadingBarUi">
+    <div id="loading-bar-ui">
         <h1>Loading model...</h1>
     </div>
 </div>
@@ -2075,7 +2156,16 @@
 </div>
 
 <style>
-    #loadingBarUi {
+    #view-cube-container {
+        position: absolute;
+        z-index: 101;
+        width: 225px;
+        height: 400px;
+        top: 7%;
+        left: 1%;
+    }
+
+    #loading-bar-ui {
         background: #0000008c;
         position: absolute;
         z-index: 105;
