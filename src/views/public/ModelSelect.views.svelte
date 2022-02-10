@@ -13,6 +13,7 @@
 
     let db = getFirestore(app);
     let storageRef = getStorage(app);
+    let preData = [];
     let dbData = [];
 
     currentView.set('home');
@@ -22,47 +23,48 @@
     // on page load, populates dbData;
     // PAGINATE ME!
     onMount(async function () {
-        
         // reference for the firestore entry and filter by date created;
         let docRef = collection(db, 'modelDb');
         let q = query(docRef, orderBy('dateCreated'), limit(10));
         let queryResult = await getDocs(q);
 
         try {
-            queryResult.forEach(async doc => {
-                // data is coming in sorted by date or whatever
-                // but loading in the html is not?
-                let obj = doc.data();
-                
-                let fileName = obj.fileName.slice(0, -4);
-
-                let storageThumbnailRef = ref(storageRef, `models/${fileName}/${fileName}_thumbnail.png`);
-
-                let img = document.getElementById('thumbnail-img');
-                
-                // it's because we're waiting for this download...
-                await getDownloadURL(storageThumbnailRef)
-                .then(url => {
-
-                    // img.setAttribute(url)
-                    obj['thumbnailUrl'] = url;
-
-                }).catch((err) => {
-                    // if no thumbnail set, we use a stand-in image instead
-                    // img.setAttribute('no_thumbnail.png')
-
-                    obj['thumbnailUrl'] = 'no_thumbnail.png';
-                    console.log(`Error downloading thumbnail: ${err}`)
-                })
-
-                dbData = [...dbData, obj];
+            queryResult.forEach(doc => {
+                // data comes in order based on the query
+                // so we store those in an array in their requested order before we fetch the thumbnails
+                preData = [...preData, doc.data()]
             })
         } catch (err) {
-            console.log(`error loading model data!`);
+            console.log(`error loading model data: ${err}`);
+
+            return
         }
+
+        getThumbnails();
     })
 
-    // 
+    // we assemble the final list by getting the pre-sorted data in the local array
+    // then requesting their image URL one by one
+    // otherwise as the data comes in, the order gets totally randomized
+    async function getThumbnails() {        
+        for (let i = 0; i < preData.length; i++) {
+            let fileName = preData[i].fileName.slice(0, -4);
+            let storageThumbnailRef = ref(storageRef, `models/${fileName}/${fileName}_thumbnail.png`);
+            
+            await getDownloadURL(storageThumbnailRef)
+            .then(url => {
+                preData[i]['thumbnailUrl'] = url;
+                dbData = [...dbData, preData[i]];
+            })
+            .catch((err) => {
+                // if no thumbnail set, we use a stand-in image instead
+                preData[i]['thumbnailUrl'] = 'no_thumbnail.png';
+                console.log(`Error downloading thumbnail: ${err}`)
+                dbData = [...dbData, preData[i]];  
+            })
+        }
+    }
+
     function loadModelInfo(selectedModelIndex) {
         let modelInfo = dbData[selectedModelIndex];
         
@@ -80,7 +82,6 @@
         navBarSize.set('navbar-viewer');
     }
 </script>
-
 
 {#if $uploadPanelShow}
     <div>
