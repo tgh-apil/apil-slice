@@ -17,11 +17,6 @@
         'Heart', 'Other'
     ];
 
-    // set camera positions per model
-    let cameraPosition = [
-        -70.0, 190.00, -120.00
-    ];
-
     let defaultControlSpheres = {
         0: {
             x: 25.3,

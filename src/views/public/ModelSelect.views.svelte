@@ -87,36 +87,46 @@
         <UploadModelData />
     </div>
 {:else}
-    <div id="model-select-box">
-        {#each dbData as modelData, i}
-            <ModelCard modelTitle={modelData.modelTitle} modelPoster={modelData.poster} modelId={modelData.modelId} modelDescription={modelData.description} modelThumbnailUrl={modelData.thumbnailUrl} 
-            buttonFunction={() => loadModelInfo(i)} />
-        {:else}
-            <div id='model-loading-box'>
-                <div>
-                    <h1>Loading Models</h1>
+    <div id='container'>
+        <div id="model-select-box">
+            {#each dbData as modelData, i}
+                <ModelCard modelTitle={modelData.modelTitle} modelPoster={modelData.poster} modelId={modelData.modelId} modelDescription={modelData.description} modelThumbnailUrl={modelData.thumbnailUrl} buttonFunction={() => loadModelInfo(i)} />
+            {:else}
+                <div id='model-loading-box'>
+                    <div>
+                        <h1>Loading Models</h1>
+                    </div>
                 </div>
-            </div>
-        {/each}
+            {/each}
+        </div>
     </div>
 {/if}
 
 <style>
+    #container {
+        position: absolute;
+        z-index: 101;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+    }
+
     #model-select-box {
         position: absolute;
         width: auto;
-        height: 94%;
+        height: auto;
         z-index: 101;
         display: grid;
         top: 6%;
         grid-template-columns: 1fr 1fr 1fr;
-        /* grid-auto-rows: 1fr; */
         column-gap: 1%;
         row-gap: 1%;
-        overflow: auto;
+        margin-bottom: 5%;
     }
 
     #model-loading-box {
+        position: absolute;
+        z-index: 101;
         width: 100%;
         height: 100%;
         display: flex;

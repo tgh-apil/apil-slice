@@ -288,6 +288,7 @@
         models.children.forEach(model => {
             // only handle the myocardium if it's a heart model and it has a myocardium model
             if (model.name.toLowerCase() == 'myocardium') {
+                    // incomplete
                     model.computeBoundingBox;
 
                     let modelCenter = new THREE.Vector3();

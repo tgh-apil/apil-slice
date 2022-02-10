@@ -53,7 +53,8 @@
 
 <style>
     #navbar-full {
-        background-color: #4242425d;
+        background: #4242427a;
+        backdrop-filter: blur(5px);
         position: absolute;
         z-index: 105;
         top: 0%;
@@ -71,7 +72,8 @@
     }
 
     #navbar-viewer {
-        background-color: #4242425d;
+        background: #4242427a;
+        backdrop-filter: blur(5px);
         position: absolute;
         z-index: 100;
         top: 0%;
@@ -87,7 +89,8 @@
     }
 
     #navbar-ultrasound {
-        background-color: #4242425d;
+        background: #4242427a;
+        backdrop-filter: blur(5px);
         position: absolute;
         z-index: 100;
         top: 0%;
