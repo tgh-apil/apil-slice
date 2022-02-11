@@ -4,10 +4,11 @@
     import { currentView, modelPath, modelTitle, modelPoster, modelId, modelDescription, navBarSize, savedControlSphereList, userBookmarks, modelType, uploadPanelShow } from '../../stores.js';
     import ModelCard from '../../components/ModelCard.component.svelte';
     import UploadModelData from '../../components/UploadModelData.component.svelte';
+    import SearchBar from '../../components/SearchBar.component.svelte';
 
     // -----------------STARTFIREBASE IMPORTS---------------
     import { app } from '../../firebase.js';
-    import { getFirestore, getDocs, collection, query, orderBy, limit } from 'firebase/firestore/lite';
+    import { getFirestore, getDocs, collection, query, orderBy, where, limit } from 'firebase/firestore/lite';
     import { getStorage, ref, getDownloadURL } from 'firebase/storage';
     // -----------------END FIREBASE IMPORTS---------------
 
@@ -15,6 +16,8 @@
     let storageRef = getStorage(app);
     let preData = [];
     let dbData = [];
+    let resultsLimit = 10;
+    let docRef = collection(db, 'modelDb');
 
     currentView.set('home');
     
@@ -23,16 +26,16 @@
     // on page load, populates dbData;
     // PAGINATE ME!
     onMount(async function () {
-        // reference for the firestore entry and filter by date created;
-        let docRef = collection(db, 'modelDb');
-        let q = query(docRef, orderBy('dateCreated'), limit(10));
+        // reference for the firestore entry and filter by date created
+        // newest models first
+        let q = query(docRef, orderBy('dateCreated', 'desc'), limit(resultsLimit));
         let queryResult = await getDocs(q);
 
         try {
             queryResult.forEach(doc => {
                 // data comes in order based on the query
                 // so we store those in an array in their requested order before we fetch the thumbnails
-                preData = [...preData, doc.data()]
+                preData = [...preData, doc.data()];
             })
         } catch (err) {
             console.log(`error loading model data: ${err}`);
@@ -81,6 +84,48 @@
         currentView.set('viewer');
         navBarSize.set('navbar-viewer');
     }
+
+    async function queryBuilder() {
+        let dateSortVal = document.getElementById('date-sort').value;
+        let titleSortVal = document.getElementById('title-sort').value;
+        let modelTypeSortVal = document.getElementById('model-type-sort').value;
+
+        let dateSortDir = 'asc';
+
+        if (dateSortVal == 0) {
+            dateSortDir = 'desc';
+        } else {
+            dateSortDir = 'asc'
+        }
+
+        let titleSortDir = 'asc';
+
+        if (titleSortVal == 0) {
+            titleSortDir = 'asc'
+        } else {
+            titleSortDir = 'desc'
+        }
+
+        // we have two operations which order by (date and title)
+        // and one operation which filters (model type)
+        // execute the filter first, then sort the results
+        
+        // the syntax is correct, but i have to setup composite indexing...
+        // let q = query(docRef, where('modelType', '==', modelTypeSortVal), orderBy('dateCreated', dateSortDir), limit(3));
+
+        // let queryResult = await getDocs(q);
+
+        // try {
+        //     queryResult.forEach(doc => {
+        //         console.log(doc.data());
+        //     })
+        // } catch (err) {
+        //     console.log(`error loading sorted model data: ${err}`);
+
+        //     return
+        // }
+    }
+
 </script>
 
 {#if $uploadPanelShow}
@@ -88,6 +133,7 @@
         <UploadModelData />
     </div>
 {:else}
+    <SearchBar queryBuilder={queryBuilder}/>
     <div id='container'>
         <div id="model-select-box">
             {#each dbData as modelData, i}
@@ -118,7 +164,7 @@
         height: auto;
         z-index: 101;
         display: grid;
-        top: 6%;
+        top: 14%;
         grid-template-columns: 1fr 1fr 1fr;
         column-gap: 1%;
         row-gap: 1%;
