@@ -1,32 +1,30 @@
 <script>
-    let sortOptions = ['Newest Model First', 'Oldest Model First', 'Alphabetically', 'Reverse Alphabetically', 'Hearts Only', 'Other Models Only'];
-    let limitOptions = [3, 6, 9, 'all'];
-
-    let sortOptionSelected;
-    let limitOptionSelected;
-
+    export let sortOptions;
+    export let limitOptions;
     export let queryBuilder;
 </script>
 
+<!-- todo: make this more generic -->
 <div id='search-bar-container'>
     <div id='search-bar-container-inner'>
 
         <div id='sort-by-container'>
-            <select id='sort-by' bind:value={sortOptionSelected}>
-                <option value="" selected disabled hidden>Sorting options</option>
+            <label id='sort-by-label' for='sort-by'>Sort by:</label>
+            <select id='sort-by'>
                 {#each sortOptions as sort, i}
                     <option value={i}>
-                        {sort}
+                        {sort.label}
                     </option>
                 {/each}
             </select>                
         </div>
 
         <div id='limit-sort-container'>
-            <select id='limit-sort' bind:value={limitOptionSelected}>
-                <option value="" selected disabled hidden>Number of models to show</option>
-                {#each limitOptions as limit, i}
-                    <option value={i}>
+            <label id='limit-sort-label' for='limit-sort'>Number of models to show:</label>
+            <select id='limit-sort'>
+                <option value={limitOptions[2]} selected disabled hidden>{limitOptions[2]}</option>
+                {#each limitOptions as limit}
+                    <option value={limit}>
                         {limit}
                     </option>
                 {/each}
@@ -55,7 +53,7 @@
         background: #4242427a;
         backdrop-filter: blur(5px);
         height: 100%;
-        width: 65%;
+        width: 50%;
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         grid-template-rows: auto;
@@ -67,6 +65,7 @@
         width: 100%;
         height: 100%;
         display: grid;
+        grid-template-rows: 1fr 1fr;
     }
 
     #limit-sort-container {
@@ -74,6 +73,7 @@
         width: 100%;
         height: 100%;
         display: grid;
+        grid-template-rows: 1fr 1fr;
     }
 
     #sort-model-button-container {

@@ -8,7 +8,7 @@
 
     // -----------------STARTFIREBASE IMPORTS---------------
     import { app } from '../../firebase.js';
-    import { getFirestore, getDocs, collection, query, orderBy, where, limit } from 'firebase/firestore/lite';
+    import { getFirestore, getDocs, collection, query, orderBy, limit } from 'firebase/firestore/lite';
     import { getStorage, ref, getDownloadURL } from 'firebase/storage';
     // -----------------END FIREBASE IMPORTS---------------
 
@@ -17,7 +17,32 @@
     let docRef = collection(db, 'modelDb');
     let preData = [];
     let dbData = [];
-    let resultsLimit = 10;
+
+    let sortOptions = 
+    [
+        {
+            label: 'Newest Model First',
+            database_value: 'dateCreated',
+            sort_direction: 'desc'
+        },
+        {
+            label: 'Oldest Model First',
+            database_value: 'dateCreated',
+            sort_direction: 'asc'
+        },
+        {
+            label: 'Alphabetically',
+            database_value: 'modelTitle',
+            sort_direction: 'desc'
+        },
+        {
+            label: 'Reverse Alphabetically',
+            database_value: 'modelTitle',
+            sort_direction: 'asc'
+        },
+    ]
+
+    let limitOptions = [3, 6, 9, 'all'];
 
     currentView.set('home');
     
@@ -28,7 +53,7 @@
     onMount(async function () {
         // reference for the firestore entry and filter by date created
         // newest models first
-        let q = query(docRef, orderBy('dateCreated', 'desc'), limit(resultsLimit));
+        let q = query(docRef, orderBy('dateCreated', 'desc'), limit(limitOptions[2]));
         let queryResult = await getDocs(q);
 
         try {
@@ -85,57 +110,36 @@
         navBarSize.set('navbar-viewer');
     }
 
+    async function test() {
+        let sortVal = document.getElementById('sort-by').value;
+        let limitVal = document.getElementById('limit-sort').value;
 
-    // async function queryBuilder() {
-    //     let dateSortVal = document.getElementById('date-sort').value;
-    //     let titleSortVal = document.getElementById('title-sort').value;
-    //     let modelTypeSortVal = document.getElementById('model-type-sort').value;
+        let databaseValue = sortOptions[sortVal].database_value;
+        let sortDir = sortOptions[sortVal].sort_direction;
 
-    //     let dateSortDir = 'asc';
+        let q; 
 
-    //     if (dateSortVal == 0) {
-    //         dateSortDir = 'desc';
-    //     } else {
-    //         dateSortDir = 'asc'
-    //     }
+        if (limitVal != 'all') {
+            q = query(docRef, orderBy(databaseValue, sortDir), limit(limitVal));
+        } else {
+            q = query(docRef, orderBy(databaseValue, sortDir));
+        }
 
-    //     let titleSortDir = 'asc';
+        dbData = [];
+        preData = [];
 
-    //     if (titleSortVal == 0) {
-    //         titleSortDir = 'asc'
-    //     } else {
-    //         titleSortDir = 'desc'
-    //     }
+        try {
+            let queryResult = await getDocs(q);
 
-    //     let q;
+            queryResult.forEach(doc => {
+                preData = [...preData, doc.data()];
+            })
 
-    //     // the syntax is correct, but i have to setup composite indexing...
-    //     // have to build an index for all combos???
-    //     if (modelTypeSortVal.toLowerCase() != 'all') {
-    //         q = query(docRef, where('modelType', '==', modelTypeSortVal), orderBy('dateCreated', dateSortDir), orderBy('modelTitle', titleSortDir), limit(2));
-    //     } else {
-    //         // just remove the model type field here if we're getting all models back anyway
-    //         q = query(docRef, orderBy('dateCreated', dateSortDir), orderBy('modelTitle', titleSortDir), limit(2));
-    //     }
-        
-    //     // we have two operations which order by (date and title)
-    //     // and one operation which filters (model type)
-    //     // execute the filter first, then sort the results
+        getThumbnails();
 
-    //     try {
-    //         let queryResult = await getDocs(q);
-
-    //         queryResult.forEach(doc => {
-    //             console.log(doc.data());
-    //         })
-
-    //     } catch (err) {
-    //         console.log(err);
-    //     }
-    // }
-
-    function test() {
-        console.log('test test');
+        } catch (err) {
+            console.log(err);
+        }
     }
 </script>
 
@@ -144,7 +148,7 @@
         <UploadModelData />
     </div>
 {:else}
-    <SearchBar queryBuilder={test}/>
+    <SearchBar sortOptions={sortOptions} limitOptions={limitOptions} queryBuilder={test} />
     <div id='container'>
         <div id="model-select-box">
             {#each dbData as modelData, i}
