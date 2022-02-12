@@ -14,10 +14,10 @@
 
     let db = getFirestore(app);
     let storageRef = getStorage(app);
+    let docRef = collection(db, 'modelDb');
     let preData = [];
     let dbData = [];
     let resultsLimit = 10;
-    let docRef = collection(db, 'modelDb');
 
     currentView.set('home');
     
@@ -85,47 +85,58 @@
         navBarSize.set('navbar-viewer');
     }
 
-    async function queryBuilder() {
-        let dateSortVal = document.getElementById('date-sort').value;
-        let titleSortVal = document.getElementById('title-sort').value;
-        let modelTypeSortVal = document.getElementById('model-type-sort').value;
 
-        let dateSortDir = 'asc';
+    // async function queryBuilder() {
+    //     let dateSortVal = document.getElementById('date-sort').value;
+    //     let titleSortVal = document.getElementById('title-sort').value;
+    //     let modelTypeSortVal = document.getElementById('model-type-sort').value;
 
-        if (dateSortVal == 0) {
-            dateSortDir = 'desc';
-        } else {
-            dateSortDir = 'asc'
-        }
+    //     let dateSortDir = 'asc';
 
-        let titleSortDir = 'asc';
+    //     if (dateSortVal == 0) {
+    //         dateSortDir = 'desc';
+    //     } else {
+    //         dateSortDir = 'asc'
+    //     }
 
-        if (titleSortVal == 0) {
-            titleSortDir = 'asc'
-        } else {
-            titleSortDir = 'desc'
-        }
+    //     let titleSortDir = 'asc';
 
-        // we have two operations which order by (date and title)
-        // and one operation which filters (model type)
-        // execute the filter first, then sort the results
+    //     if (titleSortVal == 0) {
+    //         titleSortDir = 'asc'
+    //     } else {
+    //         titleSortDir = 'desc'
+    //     }
+
+    //     let q;
+
+    //     // the syntax is correct, but i have to setup composite indexing...
+    //     // have to build an index for all combos???
+    //     if (modelTypeSortVal.toLowerCase() != 'all') {
+    //         q = query(docRef, where('modelType', '==', modelTypeSortVal), orderBy('dateCreated', dateSortDir), orderBy('modelTitle', titleSortDir), limit(2));
+    //     } else {
+    //         // just remove the model type field here if we're getting all models back anyway
+    //         q = query(docRef, orderBy('dateCreated', dateSortDir), orderBy('modelTitle', titleSortDir), limit(2));
+    //     }
         
-        // the syntax is correct, but i have to setup composite indexing...
-        // let q = query(docRef, where('modelType', '==', modelTypeSortVal), orderBy('dateCreated', dateSortDir), limit(3));
+    //     // we have two operations which order by (date and title)
+    //     // and one operation which filters (model type)
+    //     // execute the filter first, then sort the results
 
-        // let queryResult = await getDocs(q);
+    //     try {
+    //         let queryResult = await getDocs(q);
 
-        // try {
-        //     queryResult.forEach(doc => {
-        //         console.log(doc.data());
-        //     })
-        // } catch (err) {
-        //     console.log(`error loading sorted model data: ${err}`);
+    //         queryResult.forEach(doc => {
+    //             console.log(doc.data());
+    //         })
 
-        //     return
-        // }
+    //     } catch (err) {
+    //         console.log(err);
+    //     }
+    // }
+
+    function test() {
+        console.log('test test');
     }
-
 </script>
 
 {#if $uploadPanelShow}
@@ -133,7 +144,7 @@
         <UploadModelData />
     </div>
 {:else}
-    <SearchBar queryBuilder={queryBuilder}/>
+    <SearchBar queryBuilder={test}/>
     <div id='container'>
         <div id="model-select-box">
             {#each dbData as modelData, i}

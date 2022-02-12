@@ -2344,20 +2344,4 @@
     #ultrasoundButton:hover {
         background-color: #ff0000;
     }
-
-    select {
-        border: none;
-        outline: none;
-        background-color: #424242;
-        color: #fff;
-        font-style: bold;
-    }
-
-    select:hover {
-        background-color: #797979;
-    }
-
-    select:focus {
-        border-style: none;
-    }
 </style>

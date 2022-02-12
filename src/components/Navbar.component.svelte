@@ -2,7 +2,6 @@
     import LoginButton from './LoginButton.component.svelte';
     import { currentView, userData, descriptionBoxGroupShow, helpBox, navBarSize, uploadPanelShow } from '../stores.js';
 
-
     function goAtlasHome() {
         navBarSize.set('navbar-full');
 

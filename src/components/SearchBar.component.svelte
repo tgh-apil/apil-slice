@@ -1,17 +1,9 @@
 <script>
-    let dateSort = ['Newest first', 'Oldest first'];
-    let titleSort = ['A -> Z', 'Z -> A'];
-    let modelTypeSort = ['All', 'Heart', 'Other'];
+    let sortOptions = ['Newest Model First', 'Oldest Model First', 'Alphabetically', 'Reverse Alphabetically', 'Hearts Only', 'Other Models Only'];
+    let limitOptions = [3, 6, 9, 'all'];
 
-    // not yet implemented
-    let collectionSort = ['All', 'Normal Hearts', 'ACHD'];
-
-    let selectedDate;
-    let selectedTitle;
-    let selectedModelType;
-
-    // not yet implemented
-    let selectedCollection;
+    let sortOptionSelected;
+    let limitOptionSelected;
 
     export let queryBuilder;
 </script>
@@ -19,34 +11,23 @@
 <div id='search-bar-container'>
     <div id='search-bar-container-inner'>
 
-        <div id='date-sort-container'>
-            <label id='date-sort-label' for='date-sort'><b>Date:</b></label>
-            <select id='date-sort' bind:value={selectedDate}>
-                {#each dateSort as date, i}
+        <div id='sort-by-container'>
+            <select id='sort-by' bind:value={sortOptionSelected}>
+                <option value="" selected disabled hidden>Sorting options</option>
+                {#each sortOptions as sort, i}
                     <option value={i}>
-                        {date}
+                        {sort}
                     </option>
                 {/each}
             </select>                
         </div>
 
-        <div id='title-sort-container'>
-            <label id='title-sort-label' for='title-sort'><b>Title:</b></label>
-            <select id='title-sort' bind:value={selectedTitle}>
-                {#each titleSort as title, i}
+        <div id='limit-sort-container'>
+            <select id='limit-sort' bind:value={limitOptionSelected}>
+                <option value="" selected disabled hidden>Number of models to show</option>
+                {#each limitOptions as limit, i}
                     <option value={i}>
-                        {title}
-                    </option>
-                {/each}
-            </select>                
-        </div>
-
-        <div id='model-type-sort-container'>
-            <label id='model-type-sort-label' for='model-type-sort'><b>Model Type:</b></label>
-            <select id='model-type-sort' bind:value={selectedModelType}>
-                {#each modelTypeSort as modelType}
-                    <option value={modelType.toLowerCase()}>
-                        {modelType}
+                        {limit}
                     </option>
                 {/each}
             </select>                
@@ -76,70 +57,33 @@
         height: 100%;
         width: 65%;
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         grid-template-rows: auto;
-        column-gap: 1%;
+        column-gap: 3%;
     }
 
-    #date-sort-container {
+    #sort-by-container {
         grid-column: 1;
         width: 100%;
         height: 100%;
         display: grid;
-        grid-template-rows: 1fr 1fr;
     }
 
-    #date-sort-label {
-        grid-row: 1;
-    }
-
-    #date-sort {
-        grid-row: 2;
-    }
-
-    #title-sort-container {
+    #limit-sort-container {
         grid-column: 2;
         width: 100%;
         height: 100%;
         display: grid;
-        grid-template-rows: 1fr 1fr;
-    }
-
-    #title-sort-label {
-        grid-row: 1;
-    }
-
-    #title-sort {
-        grid-row: 2;
-    }
-
-    #model-type-sort-container {
-        grid-column: 3;
-        width: 100%;
-        height: 100%;
-        display: grid;
-        grid-template-rows: 1fr 1fr;
-    }
-
-    #model-type-sort-label {
-        grid-row: 1;
-    }
-
-    #model-type-sort {
-        grid-row: 2;
     }
 
     #sort-model-button-container {
-        grid-column: 4;
+        grid-column: 3;
         width: 100%;
         height: 100%;
-        display: flex;
-        justify-content: right;
-        align-items: right;
     }
 
     #sort-model-button {
-        width: 90%;
+        width: 100%;
         height: 100%;
     }
 

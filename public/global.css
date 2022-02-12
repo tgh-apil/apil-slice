@@ -58,3 +58,22 @@ button:hover {
 ::-webkit-scrollbar-corner {
 	background: #000000;
 }
+
+select {
+	border: none;
+	outline: none;
+	background: #4242427a;
+	backdrop-filter: blur(5px);
+	color: #fff;
+	font-style: bold;
+}
+
+select:hover {
+	background: #aaaaaa75;
+	backdrop-filter: blur(5px);
+	border-style: none;
+}
+
+select option {
+	background: #4242427a;
+}
