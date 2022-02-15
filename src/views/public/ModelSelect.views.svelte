@@ -1,7 +1,8 @@
 <script>
     import { onMount } from 'svelte';
     import { replace } from 'svelte-spa-router';
-    import { currentView, modelPath, modelTitle, modelPoster, modelId, modelDescription, navBarSize, savedControlSphereList, userBookmarks, modelType, uploadPanelShow } from '../../stores.js';
+    import { currentView, modelPath, modelTitle, modelPoster, modelId, modelDescription, storeUrlList, 
+            navBarSize, savedControlSphereList, userBookmarks, modelType, uploadPanelShow } from '../../stores.js';
     import ModelCard from '../../components/ModelCard.component.svelte';
     import UploadModelData from '../../components/UploadModelData.component.svelte';
     import SearchBar from '../../components/SearchBar.component.svelte';
@@ -104,6 +105,11 @@
         modelType.set(modelInfo.modelType);
         userBookmarks.set(modelInfo.bookmarks);
         savedControlSphereList.set(modelInfo.controlSpheres);
+        
+        if (modelInfo.storeUrlList) {
+            storeUrlList.set(modelInfo.storeUrlList)
+            console.log($storeUrlList);
+        }
         
         replace('/viewer');
         currentView.set('viewer');

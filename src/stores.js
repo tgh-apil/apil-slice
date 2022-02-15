@@ -3,17 +3,11 @@ import { writable } from 'svelte/store';
 export const userData = writable('');
 
 // all for the descirption box ui
-export const descriptionBoxGroupShow = writable(true);
 export const helpBox = writable(false);
-
-export const btnBoxSizeShow = writable(true);
-export const btnBoxSize = writable('btn-box-hide');
-
 export const descriptionBoxShow = writable(false);
-export const viewWidth = writable('full-more');
-
+export const viewWidth = writable('full');
+export const decsriptionBoxHeight = writable('15%');
 export const titleBox = writable(true);
-export const titleBoxPosition = writable('titleBox-hidden-description');
 
 export const navBarSize = writable('navbar-full');
 export const uploadPanelShow = writable(false);
@@ -29,6 +23,8 @@ export const modelDescription = writable('Default Description');
 export const modelPath = writable('normal_heart.glb');
 export const modelType = writable('heart');
 export const modelId = writable('000');
+export const modelDownloadUrl = writable('#');
+export const storeUrlList = writable(false);
 
 // use this as the default position list if none are on firebase
 export const savedControlSphereList = writable({

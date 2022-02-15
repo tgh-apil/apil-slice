@@ -1,39 +1,29 @@
-    <script>
-        import { descriptionBoxGroupShow, descriptionBoxShow,
-                viewWidth, titleBoxPosition, btnBoxSize, btnBoxSizeShow, modelDescription } from '../stores.js';
-        import TitleBox from './TitleBox.component.svelte';
+<script>
+    import { descriptionBoxShow, viewWidth, decsriptionBoxHeight, modelDescription, modelDownloadUrl, storeUrlList } from '../stores.js';
+    import TitleBox from './TitleBox.component.svelte';
 
-        // splits the possibly long description text to paragraphs -- not working from firebase
-        let descriptionParagraphs  = $modelDescription.split('\n');
+    // splits the possibly long description text to paragraphs -- not working from firebase
+    let descriptionParagraphs  = $modelDescription.split('\n');
 
-        function hideDescriptionBox() {
-            descriptionBoxShow.set(!$descriptionBoxShow);
-            
-            if ($descriptionBoxShow) {
-                btnBoxSize.set('btn-box-show');
+    function hideDescriptionBox() {
+        descriptionBoxShow.set(!$descriptionBoxShow);
 
-                if ($viewWidth.includes('full')) {
-                    viewWidth.set('full')
-                } else {
-                    viewWidth.set('half')
-                }
-
-                titleBoxPosition.set('titleBox-show-description');
-            } else {
-                btnBoxSize.set('btn-box-hide');
-                titleBoxPosition.set('titleBox-hidden-description');
-            }
-
-
+        if ($descriptionBoxShow) {
+            decsriptionBoxHeight.set('30%');
+        } else {
+            decsriptionBoxHeight.set('15%');
         }
-    </script>
-    
-    <div id=descriptionBoxGroup hidden={!$descriptionBoxGroupShow}>
-        <div id="title-container">
+    }
+
+</script>
+
+<div id={$viewWidth} style='--view-height: {$decsriptionBoxHeight}'>
+    <div id='title-button-box-container'>
+        <div id='description-title-box'>
             <TitleBox />
         </div>
-        <div hidden={!$btnBoxSizeShow}>
-            <div id={$btnBoxSize}>
+        <div id='description-button-box'>
+            <div id='description-button-1'>
                 <button on:click={() => hideDescriptionBox()}>
                     {#if $descriptionBoxShow}
                         Hide Description
@@ -42,93 +32,71 @@
                     {/if}
                 </button>
             </div>
-        </div>
-        <div hidden={!$descriptionBoxShow}>
-            <div id={$viewWidth} >
-                {#each descriptionParagraphs as paragraph}
-                    <p>{paragraph}</p>
-                {/each}
+            <div id='description-button-2'>
+                <a href={$modelDownloadUrl}>
+                    <button>Download 3D Model (.glb)</button>
+                </a>
             </div>
+            {#if $storeUrlList}
+                {#each $storeUrlList as storeListing}
+                    <div>
+                        <a href={storeListing.url}>
+                            <button>Purchase {storeListing.name}</button>
+                        </a>
+                    </div>
+                {/each}
+            {/if}
         </div>
     </div>
+    <div id='description-box' hidden={!$descriptionBoxShow}>
+        {#each descriptionParagraphs as paragraph}
+            <p>{paragraph}</p>
+        {/each}          
+    </div>
+</div>
 
-    <style>
-        #descriptionBoxGroup {
-            left: 5%;
-        }
-
-        #descriptionBoxInner {
-            background: rgba(0, 0, 0, 0.7);
-            width: 100%;
-            height: 90%;
-            margin: 0 auto;
-            overflow: auto;
-        }
-
-        /* half width*/
-        #half {
-            position: absolute;
-            bottom: 5%;
-            height: 30%;
-            text-align: left;
-            width: 40%;
-            overflow: auto;
-        }
-
-        /* full width */
-        #full {
-            position: absolute;
-            bottom: 5%;
-            height: 30%;
-            text-align: left;
-            width: 75%;
-            overflow: auto;
-        }
-
-        #btn-box-show {
-            position: absolute;
-            z-index: 101;
-            bottom: 35%;
-            display: grid;
-            grid-template: repeat(2, 1fr);
-            grid-gap: 1%;
-            width: 15%;
-            height: 5%;
-            grid-auto-rows: auto;
-            justify-items: center;
-            align-items: center;
-            text-align: center;
-        }
-
-        #btn-box-hide {
-            position: absolute;
-            z-index: 101;
-            bottom: 5%;
-            display: grid;
-            grid-template: repeat(3, 1fr);
-            grid-gap: 1%;
-            width: 15%;
-            height: 5%;
-            grid-auto-rows: auto;
-            justify-items: center;
-            align-items: center;
-            text-align: center;
-        }
-
-    button {
-        background-color: #007070;
-        color: #fff;
-        border-style: none;
+<style>
+    #description-box {
+        background: #0000007a;
+        backdrop-filter: blur(5px);
         height: 100%;
         width: 100%;
-        transition: background-color .1s ease-in;
-        -webkit-transition: background-color .1s ease-in;
-        -o-transition: background-color .1s ease-in;
-        -moz-transition: background-color .1s ease-in;
+        overflow: auto;
     }
 
-    button:hover{
-        background-color: #00acac;
+    #description-button-box {
+        display: grid;
+        grid-auto-flow: column;
+        column-gap: 1%;
+        width: 80%;
+        height: 2rem;
     }
 
-    </style>
+    #half {
+        position: absolute;
+        z-index: 102;
+        display: grid;
+        grid-template-rows: 1fr 2fr;
+        row-gap: 2%;
+        height: var(--view-height);
+        width: 40%;
+        bottom: 5%;
+    }
+
+    #full {
+        position: absolute;
+        z-index: 102;
+        display: grid;
+        grid-template-rows: 1fr 2fr;
+        row-gap: 2%;
+        height: var(--view-height);
+        width: 80%;
+        bottom: 5%;
+    }
+
+    button {
+        height: 100%;
+        width: 100%;
+    }
+
+</style>

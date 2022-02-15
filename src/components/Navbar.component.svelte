@@ -1,6 +1,6 @@
 <script>
     import LoginButton from './LoginButton.component.svelte';
-    import { currentView, userData, descriptionBoxGroupShow, helpBox, navBarSize, uploadPanelShow } from '../stores.js';
+    import { currentView, userData, helpBox, descriptionBoxShow, decsriptionBoxHeight, navBarSize, uploadPanelShow } from '../stores.js';
 
     function goAtlasHome() {
         navBarSize.set('navbar-full');
@@ -14,7 +14,8 @@
 
     function goHelp() {
         helpBox.set(true);
-        descriptionBoxGroupShow.set(false);
+        descriptionBoxShow.set(false);
+        decsriptionBoxHeight.set('15%')
     }
 
     function uploadModel() {

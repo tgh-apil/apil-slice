@@ -8,9 +8,8 @@
     import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
     import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
     
-    import { viewWidth, descriptionBoxShow, titleBoxPosition, 
-            btnBoxSize, modelPath, navBarSize, helpBox,
-            savedControlSphereList, userBookmarks, modelType, userData, modelId } from '../stores.js';
+    import { viewWidth, descriptionBoxShow, decsriptionBoxHeight, modelPath, navBarSize, helpBox,
+            savedControlSphereList, userBookmarks, modelType, userData, modelId, modelDownloadUrl } from '../stores.js';
     
     // -----------------STARTFIREBASE IMPORTS---------------
     import { app } from '../firebase.js';
@@ -274,6 +273,8 @@
                                 res => resolve(res),
                                 xhr => ((xhr.loaded / xhr.total * 100) < 99) ? loadingBarHidden = false : loadingBarHidden = true,
                                 reject);
+                    
+                    modelDownloadUrl.set(url);
                 })
         });
     }
@@ -1299,6 +1300,7 @@
         controlUiHidden = !isOn;
         omniplaneReadoutHidden = !isOn;
         descriptionBoxShow.set(false);
+        decsriptionBoxHeight.set('15%');
         
         controlOptions.forEach(option => {
             option.enable(isOn);
@@ -1350,10 +1352,6 @@
                 toggleEditing.enable(true);
             }
         }
-
-        // to control the elements of the description box
-        btnBoxSize.set('btn-box-hide');
-        titleBoxPosition.set('titleBox-hidden-description')
 
         // if (!ultrasoundTube) {
         //     spawnUltrasoundTube();

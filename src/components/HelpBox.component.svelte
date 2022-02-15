@@ -1,9 +1,8 @@
     <script>
-        import { helpBox, descriptionBoxGroupShow } from '../stores.js';
+        import { helpBox } from '../stores.js';
 
         function closeHelp() {
             helpBox.set(false);
-            descriptionBoxGroupShow.set(true);
         }
     </script>
     

@@ -52,7 +52,7 @@
     #search-bar-container-inner {
         background: #4242427a;
         backdrop-filter: blur(5px);
-        height: 100%;
+        height: auto;
         width: 50%;
         display: grid;
         grid-template-columns: repeat(3, 1fr);
