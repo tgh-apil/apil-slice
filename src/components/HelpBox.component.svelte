@@ -140,9 +140,9 @@
     }
     
     #instructionBox {
-        background-color: rgba(0, 0, 0, 0.95);
+        background: #000000c9;
+        backdrop-filter: blur(10px);
         position: absolute;
-        top: 0%;
         width: 100%;
         height: 100%;
         text-align: left;
@@ -150,19 +150,17 @@
     }
 
     #instructionBoxInner {
-        height: auto;
-        width: 70%;
-        height: 90%;
-        margin-left: 5%;
+        width: 100%;
+        height: 80%;
+        margin-top: 5%;
+        left: 2%;
         overflow: auto;
     }
 
     #instruction-box-button-container {
-        height: auto;
         width: 70%;
         height: 100%;
-        margin-left: 5%;
-        margin-top: 2%;
+        left: 2%;
     }
 
     #instructionsCloseBtn {

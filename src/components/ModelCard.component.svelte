@@ -112,9 +112,10 @@ let descriptionHidden = true;
 }
 
 #model-description-container-background {
+    background: #0000007a;
+    backdrop-filter: blur(5px);
     height: 100%;
     width: 100%;
-    background: rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
     align-items: center;

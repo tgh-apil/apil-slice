@@ -108,7 +108,6 @@
         
         if (modelInfo.storeUrlList) {
             storeUrlList.set(modelInfo.storeUrlList)
-            console.log($storeUrlList);
         }
         
         replace('/viewer');
