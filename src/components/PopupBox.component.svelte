@@ -5,7 +5,6 @@
     export let popupConfirmText;
     export let popupConfrimFunction;
     export let popupCancelFunction;
-
 </script>
 
 <div hidden={popupInputUiHidden}>

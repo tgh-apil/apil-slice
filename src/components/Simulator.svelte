@@ -94,8 +94,9 @@
     let sceneClippingPlanes = [];
 
     // FOR ANNOTATIONS
-    let annotation = document.getElementById('annotation-1');
     let annotationHidden = true;
+    let annotationList = [];
+    let annotationTarget;
 
     // FOR OBJECT RENDERING VIA LAYERS
     // subscribing to layer 0 means every camera sees it
@@ -139,9 +140,10 @@
     let popupFunction = null;
     let popupCancelFunction = null;
 
+    // for lilgui
     let modelControlFolder, controlFolder, adminFolder, clippingPlaneFolder, septalDefectFolder;
+    let annotationDisplay;
 
-    // do we need this?
     let modeParams = {
         activate_ultrasound: false,
     }
@@ -166,6 +168,7 @@
         ax_pos: 50,
         sag_pos: 0,
         cor_pos: 0,
+        annotations_hidden: false,
     }
 
     // object for probe controls in the GUI
@@ -398,7 +401,6 @@
         addModelControlFolder();
     }
 
-    let annotationList = [];
     function handleRaycast(e) {
         // used for raycasting as per: https://threejs.org/docs/#api/en/core/Raycaster
         // calculate mouse position in normalized device coordinates
@@ -427,102 +429,19 @@
 
             // for annotations -- not quite working ignore for now
             if (target.object.type == 'Mesh' && target.object.name != 'control_sphere') {
-                // why can't i just set annoPos = target.point?
-                // the renderer won't let me?
+                if ($userData) {
+                    annotationTarget = target;
+                    // hide all annotations
+                    modelControlParams.annotations_hidden = true;
 
-                let newAnnotation = {
-                    name: `annotation-${annotationList.length}`,
-                    point: 
-                    {
-                        x: target.point.x,
-                        y: target.point.y,
-                        z: target.point.z,
-                    },
-                    targetParentName: target.object.name,
-                    content: 'This is content!'
-                };
-                
-                annotationList = [...annotationList, newAnnotation];                
-                annotationHidden = false;
+                    // turn off any open annotation content boxes
+                    toggleAllAnnotations(true);
 
-                updateAnnotationPosition();
-            }
-        }
-    }
-
-    function updateAnnotationPosition() {
-        let canvas = renderer.domElement;
-
-        for (let i = 0; i < annotationList.length; i++) {
-            let annoPos = new THREE.Vector3(annotationList[i].point.x, annotationList[i].point.y, annotationList[i].point.z);
-    
-            // converts the intersect point to normazlied device coordinate (2D);
-            annoPos.project(camera);
-    
-            // from https://manu.ninja/webgl-three-js-annotations/
-            annoPos.x = Math.round((0.5 + annoPos.x / 2) * (canvas.width / window.devicePixelRatio));
-            
-            annoPos.y = Math.round((0.5 - annoPos.y / 2) * (canvas.height / window.devicePixelRatio));
-            
-            // set this mutation observer to get a callback to fire when the html element has actually loaded
-            // otherwise the style won't be applied until the next double click.
-            let observer = new MutationObserver((mutations, obs) => {
-                let annoRef = document.getElementById(annotationList[i].name);
-                let annoContentRef = document.getElementById(annotationList[i].name + '-content-box'); 
-
-                if (annoRef && annoContentRef) {
-                    annoRef.style.position = 'absolute';
-                    annoRef.style.zIndex = '102';
-                    annoRef.style.background = '#00000099';
-                    annoRef.style.width = '2em';
-                    annoRef.style.height = '2em';
-                    annoRef.style.top = `${annoPos.y}px`;
-                    annoRef.style.left = `${annoPos.x}px`;
-                    annoRef.style.color = '#fff';
-                    annoRef.style.display = 'flex';
-                    annoRef.style.justifyContent = 'center';
-                    annoRef.style.alignItems = 'center';
-                    annoRef.style.borderRadius = '100%';
-                    annoRef.style.border = '0.2rem solid #00acac';
-                    annoRef.style.cursor = 'pointer';
-
-                    annoContentRef.style.position = 'absolute';
-                    annoContentRef.style.zIndex = '101';
-                    annoContentRef.style.background = '#00000099';
-                    annoContentRef.style.width = '15em';
-                    annoContentRef.style.height = '10em';
-                    annoContentRef.style.top = `${annoPos.y + 18}px`;
-                    annoContentRef.style.left = `${annoPos.x + 18}px`;
-                    annoContentRef.style.color = '#fff';
-
-                    let parentMesh = scene.getObjectByName(annotationList[i].targetParentName);
-                    let distanceToParentMesh = camera.position.distanceTo(parentMesh.position);
-
-                    let annotationPoint = new THREE.Vector3(
-                        annotationList[i].point.x,
-                        annotationList[i].point.y,
-                        annotationList[i].point.z,
-                    )
-
-                    let distanceToAnnotation = camera.position.distanceTo(annotationPoint);
-
-                    if (distanceToAnnotation > distanceToParentMesh) {
-                        annoRef.style.opacity = 0.25;
-                        annoContentRef.style.opacity = 0.25;
-                    } else {
-                        annoRef.style.opacity = 1.0;
-                        annoContentRef.style.opacity = 1.0;
-                    }
-
-                    obs.disconnect();
-                    return
+                    openInputPopup('input', 'Add annotation', addAnnotation, 'Save annotation')
+                } else {
+                    openInputPopup('NA', 'Must be logged in to add an annotation',  closeInputPopup, 'Okay')
                 }
-            })
-
-            observer.observe(document, {
-                childList: true,
-                subtree: true,
-            })
+            }
         }
     }
 
@@ -566,6 +485,159 @@
         pointerLockCam = new THREE.PerspectiveCamera(1, 1, 0.1, 1);
     }
     // -----------------END GLOBAL SCENE HELPER FUNCTIONS-----------------
+
+    // -----------------START ANNOTATION HELPER FUNCTIONS-----------------
+    function addAnnotation() {
+        popupInputUiHidden = true;
+
+        let annotationContent = document.getElementById('input-ui-2').value;
+
+        if (annotationContent == '' || annotationContent === undefined) {
+            openInputPopup('NA', 'Annotation cannot be empty!',  closeInputPopup, 'Okay');
+
+            modelControlParams.annotations_hidden = false;
+            return
+        }
+
+        let newAnnotation = {
+            name: `annotation-${annotationList.length}`,
+            // why can't i just set annoPos = target.point?
+            // the renderer won't let me?
+            point: 
+            {
+                x: annotationTarget.point.x,
+                y: annotationTarget.point.y,
+                z: annotationTarget.point.z,
+            },
+            targetParentName: annotationTarget.object.name,
+            content: annotationContent,
+            poster: $userData.displayName,
+        };
+        
+        annotationList = [...annotationList, newAnnotation];
+
+        // wait for the new annotation to load then apply style and open the content box
+        let observer = new MutationObserver((mutation, obs) => {
+            let annoRef = document.getElementById(annotationList[annotationList.length - 1].name);
+            let annoContentRef = document.getElementById(annotationList[annotationList.length - 1].name + '-content-box');
+
+            if (annoRef && annoContentRef) {
+                annoContentRef.hidden = false;
+
+                annoRef.style.position = 'absolute';
+                annoRef.style.zIndex = '102';
+                annoRef.style.background = '#00000099';
+                annoRef.style.width = '2em';
+                annoRef.style.height = '2em';
+                annoRef.style.color = '#fff';
+                annoRef.style.display = 'flex';
+                annoRef.style.justifyContent = 'center';
+                annoRef.style.alignItems = 'center';
+                annoRef.style.borderRadius = '100%';
+                annoRef.style.border = '0.2rem solid #00acac';
+                annoRef.style.cursor = 'pointer';
+
+                annoContentRef.style.position = 'absolute';
+                annoContentRef.style.zIndex = '103';
+                annoContentRef.style.width = '12em';
+                annoContentRef.style.height = '15em';
+                annoContentRef.style.color = '#fff';
+
+                obs.disconnect();
+                return
+            } 
+        })
+
+        observer.observe(document, {
+                childList: true,
+                subtree: true,
+        })
+
+        modelControlParams.annotations_hidden = false;
+
+        updateAnnotationPosition();
+    }
+
+    function updateAnnotationPosition() {
+        let canvas = renderer.domElement;
+
+        for (let i = 0; i < annotationList.length; i++) {
+            let annoPos = new THREE.Vector3(annotationList[i].point.x, annotationList[i].point.y, annotationList[i].point.z);
+    
+            // converts the intersect point to normazlied device coordinate (2D);
+            annoPos.project(camera);
+    
+            // from https://manu.ninja/webgl-three-js-annotations/
+            annoPos.x = Math.round((0.5 + annoPos.x / 2) * (canvas.width / window.devicePixelRatio));
+            
+            annoPos.y = Math.round((0.5 - annoPos.y / 2) * (canvas.height / window.devicePixelRatio));
+            
+            // set this mutation observer to get a callback to fire when the html element has actually loaded
+            // otherwise the style won't be applied until the next double click.
+            let observer = new MutationObserver((mutations, obs) => {
+                let annoRef = document.getElementById(annotationList[i].name);
+                let annoContentRef = document.getElementById(annotationList[i].name + '-content-box'); 
+
+                if (annoRef && annoContentRef) {
+                    annoRef.style.top = `${annoPos.y}px`;
+                    annoRef.style.left = `${annoPos.x}px`;
+                    annoContentRef.style.top = `${annoPos.y + 36}px`;
+                    annoContentRef.style.left = `${annoPos.x + 36}px`;
+
+                    let parentMesh = scene.getObjectByName(annotationList[i].targetParentName);
+                    let distanceToParentMesh = camera.position.distanceTo(parentMesh.position);
+
+                    let annotationPoint = new THREE.Vector3(
+                        annotationList[i].point.x,
+                        annotationList[i].point.y,
+                        annotationList[i].point.z,
+                    )
+
+                    let distanceToAnnotation = camera.position.distanceTo(annotationPoint);
+
+                    if (distanceToAnnotation > distanceToParentMesh) {
+                        annoRef.style.opacity = 0.25;
+                        annoContentRef.style.opacity = 0.25;
+                    } else {
+                        annoRef.style.opacity = 1.0;
+                        annoContentRef.style.opacity = 1.0;
+                    }
+
+                    obs.disconnect();
+                    return
+                }
+            })
+
+            observer.observe(document, {
+                childList: true,
+                subtree: true,
+            })
+        }
+    }
+
+    function openAnnotation(annotation) {
+        // turn off all annotation content boxes
+        toggleAllAnnotations(true);
+
+        // turn on only the content box associated wutg the clicked on marker
+        let requestedContentBox = document.getElementById(annotation + '-content-box');
+        requestedContentBox.hidden = false;
+    }
+
+    function closeAnnotation(annotation) {
+        let requestedContentBox = document.getElementById(annotation + '-content-box');
+        requestedContentBox.hidden = true;
+    }
+
+    function toggleAllAnnotations(isHidden) {
+        if (annotationList.length > 0) {
+            annotationList.forEach(anno => {
+                let otherContentBox = document.getElementById(anno.name + '-content-box');
+                otherContentBox.hidden = isHidden;
+            });            
+        }
+    }
+    // -----------------END ANNOTATION HELPER FUNCTIONS-----------------
 
     // -----------------START ULTRASOUND CONTROL FUNCTIONS-----------------
     // MOUSE CONTROLS: SCROLL WHEEL (Anteflex/Retroflex)
@@ -819,7 +891,7 @@
                 openInputPopup('input', 'Must enter a name to save a view!',  saveBookmark, 'Save View')
             }            
         } else {
-            openInputPopup('NA', 'Must be logged in to save a view!',  null, 'Okay')
+            openInputPopup('NA', 'Must be logged in to save a view!',  closeInputPopup, 'Okay')
         }
 
     }
@@ -880,7 +952,7 @@
             
             openInputPopup('NA', 'View updated!', closeInputPopup, 'Close');
         } else {
-            openInputPopup('NA', 'Must be logged in to update a view!',  null, 'Okay')
+            openInputPopup('NA', 'Must be logged in to update a view!',  closeInputPopup, 'Okay')
         }
     }
 
@@ -912,8 +984,7 @@
 
             openInputPopup('NA', 'View deleted!', closeInputPopup, 'Close');
         } else {
-            openInputPopup('NA', 'Must be logged in to delete a view!',  null, 'Okay')
-
+            openInputPopup('NA', 'Must be logged in to delete a view!',  closeInputPopup, 'Okay')
         }
     }
     // -----------------END BOOKMARK CONTROL FUNCTIONS-----------------
@@ -1391,7 +1462,6 @@
         camera.updateProjectionMatrix();
 
         splitView = isOn;
-        annotationHidden = isOn;
         modeParams.activate_ultrasound = isOn;
 
         if (septalDefectParts.length > 0) {
@@ -1405,6 +1475,12 @@
         descriptionBoxShow.set(false);
         decsriptionBoxHeight.set('15%');
         
+        // deal with annotations
+        modelControlParams.annotations_hidden = isOn;
+        annotationDisplay.enable(!isOn);
+        toggleAllAnnotations(true);
+
+        // deal with the gui slider controls
         controlOptions.forEach(option => {
             option.enable(isOn);
         })
@@ -1553,19 +1629,6 @@
     // -----------------END MODE SWITCH FUNCTIONS-----------------
 
     // -----------------START DISPLAY AND UI HELPER FUNCTIONS----------------- 
-    function handleAnnotations(annotation) {
-        let annoRef = document.getElementById(annotation);        
-        let contentBox = document.getElementById(annotation + '-content-box');
-        
-        contentBox.hidden = !contentBox.hidden;
-
-        if (contentBox.hidden) {
-            annoRef.style.background = '#424242';
-        } else {
-            annoRef.style.background = '#4242427a';
-        }        
-    }
-
     function displayModelParts(viewState) {
         modelParts.forEach(part => {
             if (viewState == 0) {
@@ -1695,9 +1758,13 @@
     // only call this once in modelParser()
     let clippingPlaneOptions
     function addModelControlFolder() {
-        // deals with model visibility
+        // deals with model and model annotation visibility
         modelControlFolder = gui.addFolder('Model Control');
         
+        annotationDisplay = modelControlFolder.add(modelControlParams, 'annotations_hidden', modelControlParams.annotations_hidden).name('Hide Annotations').enable(true).onChange(v => {
+            modelControlParams.annotations_hidden = v;
+        }).listen();
+
         let modelGroupName = 'All Models Visible';
         let modelVisibilityOptions = {'Visible': 0, 'Wireframe': 1, 'Hidden': 2}
 
@@ -1847,7 +1914,9 @@
     }
 
     function openInputPopup(type, label, fn, confirmText) {
-        popupInputUiHidden = false
+        popupInputUiHidden = false;
+
+        document.getElementById('input-ui-2').value = '';
 
         popupType = type;
         popupLabel = label;
@@ -1855,12 +1924,21 @@
         popupFunction = fn;
         popupCancelFunction = closeInputPopup;
 
-        keyboardControls(false);
+        if (modeParams.activate_ultrasound) {
+            keyboardControls(false);
+        }
     }
 
     function closeInputPopup() {
         popupInputUiHidden = true;
-        keyboardControls(true);
+
+        if (modeParams.activate_ultrasound) {
+            keyboardControls(true);
+        } else {
+            modelControlParams.annotations_hidden = false;
+        }
+
+
     }
 
     let controlOptions;
@@ -2180,7 +2258,7 @@
 
         camera.updateProjectionMatrix();
 
-        if (annotationList.length > 0 && annotationHidden == false) {
+        if (annotationList.length > 0 && modelControlParams.annotations_hidden == false) {
             updateAnnotationPosition();
         }
     }
@@ -2218,8 +2296,8 @@
 
 {#if annotationList.length > 0}
     {#each annotationList as annotation, i}
-        <div hidden={annotationHidden} >
-            <div id={annotation.name} on:click={() => handleAnnotations(annotation.name)}>
+        <div hidden={modelControlParams.annotations_hidden}>
+            <div id={annotation.name} on:click={() => openAnnotation(annotation.name)} hidden=false>
                 <p>{i + 1}</p>
             </div>
             <div class='annotation-content' id={annotation.name + '-content-box'} hidden=true>
@@ -2227,8 +2305,13 @@
                     <div id='annotation-content-text-box'>
                         <p>{annotation.content}</p>
                     </div>
-                    <div id='annotation-content-button-box'>
-                        <button>Close</button>
+                    <div id='annotation-content-control-box'>
+                        <div id='annotation-poster-box'>
+                            <p>Poster: <b>{annotation.poster}</b></p>
+                        </div>
+                        <div id='annotation-close-button-box'>
+                            <button on:click={() => closeAnnotation(annotation.name)}>Hide</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2288,9 +2371,14 @@
 
 <style>
     #annotation-content-box-inner {
+        background: #000000c7;
+        backdrop-filter: blur(5px);
         display: grid;
-        grid-template-rows: 1fr 1fr;
-        row-gap: 1%;
+        grid-template-rows: 4fr 1fr;
+        row-gap: 2%;
+        height: 100%;
+        width: 100%;
+        border: 0.1rem solid #00acac;
     }
 
     #annotation-content-text-box {
@@ -2299,12 +2387,15 @@
         overflow: auto;
     }
 
-    #annotation-content-button-box {
+    #annotation-content-control-box {
         width: 100%;
         height: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        column-gap: 1%;
     }
 
-    #annotation-content-button-box button {
+    #annotation-content-control-box button {
         width: 100%;
         height: 100%
     }
