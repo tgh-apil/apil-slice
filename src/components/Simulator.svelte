@@ -9,7 +9,7 @@
     import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
     
     import { viewWidth, descriptionBoxShow, decsriptionBoxHeight, modelPath, navBarSize, helpBox,
-            savedControlSphereList, userBookmarks, modelType, userData, modelId, modelDownloadUrl } from '../stores.js';
+            savedControlSphereList, userBookmarks, annotations, modelType, userData, modelId, modelDownloadUrl } from '../stores.js';
 
     import PopupBox from './PopupBox.component.svelte';
     
@@ -19,10 +19,10 @@
     import { getFirestore, updateDoc, doc, arrayUnion, arrayRemove } from 'firebase/firestore/lite';
     // -----------------END FIREBASE IMPORTS---------------
 
-
     // -----------------START GLOBAL VARIABLES---------------
     let scene, renderer, viewCubeScene, viewCubeRenderer;
     let orbitControls, teeMouseControls, transformControls;
+    let camXPos, camYPos, camZPos;
     let splitView = false;
     let viewCubeReady = false;
     let loader, dracoLoader;
@@ -310,13 +310,13 @@
                     model.geometry.boundingBox.getCenter(modelCenter);
                     model.geometry.boundingBox.getSize(modelSize);
 
-                    let offset = 25;
+                    let offset = 10;
 
-                    camera.position.x = -(modelSize.x + offset);
-                    camera.position.y = modelSize.y/2 + offset;
-                    camera.position.z = -(modelSize.z + offset);
+                    camXPos = -(modelSize.x + offset);
+                    camYPos = (modelSize.y + 50);
+                    camZPos = -(modelSize.z + offset);
 
-                    camera.lookAt(modelCenter); 
+                    camera.position.set(0, camYPos, camZPos);
 
                 if ($modelType.toLowerCase() == 'heart') {
                     // create two copies: one clippable, one not
@@ -398,6 +398,16 @@
             }
         })
         
+        // spawn annotations
+
+        if ($annotations) {
+            annotationList = $annotations;
+    
+            annotationList.forEach(annotation => {
+                applyAnnotationStyle(annotation.name, true);
+            })
+        }
+
         addModelControlFolder();
     }
 
@@ -487,7 +497,7 @@
     // -----------------END GLOBAL SCENE HELPER FUNCTIONS-----------------
 
     // -----------------START ANNOTATION HELPER FUNCTIONS-----------------
-    function addAnnotation() {
+    async function addAnnotation() {
         popupInputUiHidden = true;
 
         let annotationContent = document.getElementById('input-ui-2').value;
@@ -513,16 +523,37 @@
             content: annotationContent,
             poster: $userData.displayName,
         };
-        
+
         annotationList = [...annotationList, newAnnotation];
 
+        // write new data to firebase
+        let docName = $modelPath;
+        docName = docName.slice(0, -4);
+        
+        // get reference to this specific bookmark from firebase
+        // database, collection, document
+        let bookmarkRef = doc(db, 'modelDb', docName);
+
+        await updateDoc(bookmarkRef, {
+            // newest entry to the local bookmarks is always going to be the last one
+            annotations: arrayUnion(annotationList.at(-1)),
+        })
+
+        applyAnnotationStyle(annotationList[annotationList.length - 1].name, false);
+
+        modelControlParams.annotations_hidden = false;
+
+        updateAnnotationPosition();
+    }
+
+    function applyAnnotationStyle(newAnnotation, contentBoxHidden) {
         // wait for the new annotation to load then apply style and open the content box
         let observer = new MutationObserver((mutation, obs) => {
-            let annoRef = document.getElementById(annotationList[annotationList.length - 1].name);
-            let annoContentRef = document.getElementById(annotationList[annotationList.length - 1].name + '-content-box');
+            let annoRef = document.getElementById(newAnnotation);
+            let annoContentRef = document.getElementById(newAnnotation + '-content-box');
 
             if (annoRef && annoContentRef) {
-                annoContentRef.hidden = false;
+                annoContentRef.hidden = contentBoxHidden;
 
                 annoRef.style.position = 'absolute';
                 annoRef.style.zIndex = '102';
@@ -539,8 +570,8 @@
 
                 annoContentRef.style.position = 'absolute';
                 annoContentRef.style.zIndex = '103';
-                annoContentRef.style.width = '12em';
-                annoContentRef.style.height = '15em';
+                annoContentRef.style.width = '15em';
+                annoContentRef.style.height = '10em';
                 annoContentRef.style.color = '#fff';
 
                 obs.disconnect();
@@ -552,10 +583,6 @@
                 childList: true,
                 subtree: true,
         })
-
-        modelControlParams.annotations_hidden = false;
-
-        updateAnnotationPosition();
     }
 
     function updateAnnotationPosition() {
@@ -2065,6 +2092,7 @@
         scene = new THREE.Scene();
         
         keyboardControls(false);
+
         // initialize clipping planes for the scene
         // for ultrasound
         clippingPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
@@ -2541,13 +2569,4 @@
         background-color: #ff0000;
     }
 
-    /* #annotation-0 {
-        background: coral;
-        position: absolute;
-        top: 0;
-        left: 0;
-        z-index: 101;
-        width: 5rem;
-        height: 2rem;
-    } */
 </style>

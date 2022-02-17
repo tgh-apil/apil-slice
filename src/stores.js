@@ -25,6 +25,7 @@ export const modelType = writable('heart');
 export const modelId = writable('000');
 export const modelDownloadUrl = writable('#');
 export const storeUrlList = writable(false);
+export const annotations = writable(false);
 
 // use this as the default position list if none are on firebase
 export const savedControlSphereList = writable({

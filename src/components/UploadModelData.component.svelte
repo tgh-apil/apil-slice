@@ -5,7 +5,6 @@
     import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore/lite';
     import { getStorage, ref, uploadBytes } from 'firebase/storage';
     
-
     let modelId = null;
     let modelTitle = null;
     let modelDescription = null;
@@ -106,6 +105,7 @@
         let modelDocPath = modelFileName.slice(0, -4);
 
         let data = {
+            annotations: [],
             bookmarks: [],
             controlSpheres: defaultControlSpheres,
             dateCreated: serverTimestamp(),

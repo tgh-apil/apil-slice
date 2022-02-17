@@ -2,7 +2,7 @@
     import { onMount } from 'svelte';
     import { replace } from 'svelte-spa-router';
     import { currentView, modelPath, modelTitle, modelPoster, modelId, modelDescription, storeUrlList, 
-            navBarSize, savedControlSphereList, userBookmarks, modelType, uploadPanelShow } from '../../stores.js';
+            navBarSize, savedControlSphereList, userBookmarks, annotations, modelType, uploadPanelShow } from '../../stores.js';
     import ModelCard from '../../components/ModelCard.component.svelte';
     import UploadModelData from '../../components/UploadModelData.component.svelte';
     import SearchBar from '../../components/SearchBar.component.svelte';
@@ -19,8 +19,7 @@
     let preData = [];
     let dbData = [];
 
-    let sortOptions = 
-    [
+    let sortOptions = [
         {
             label: 'Newest Model First',
             database_value: 'dateCreated',
@@ -105,7 +104,11 @@
         modelType.set(modelInfo.modelType);
         userBookmarks.set(modelInfo.bookmarks);
         savedControlSphereList.set(modelInfo.controlSpheres);
-        
+
+        if (modelInfo.annotations) {
+            annotations.set(modelInfo.annotations);
+        } 
+
         if (modelInfo.storeUrlList) {
             storeUrlList.set(modelInfo.storeUrlList)
         }
@@ -115,7 +118,7 @@
         navBarSize.set('navbar-viewer');
     }
 
-    async function test() {
+    async function queryBuilder() {
         let sortVal = document.getElementById('sort-by').value;
         let limitVal = document.getElementById('limit-sort').value;
 
@@ -153,7 +156,7 @@
         <UploadModelData />
     </div>
 {:else}
-    <SearchBar sortOptions={sortOptions} limitOptions={limitOptions} queryBuilder={test} />
+    <SearchBar sortOptions={sortOptions} limitOptions={limitOptions} queryBuilder={queryBuilder} />
     <div id='container'>
         <div id="model-select-box">
             {#each dbData as modelData, i}
