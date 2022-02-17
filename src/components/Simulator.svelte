@@ -93,6 +93,10 @@
 
     let sceneClippingPlanes = [];
 
+    // FOR ANNOTATIONS
+    let annotation = document.getElementById('annotation-1');
+    let annotationHidden = true;
+
     // FOR OBJECT RENDERING VIA LAYERS
     // subscribing to layer 0 means every camera sees it
     let mainCamLayer = 1;
@@ -381,20 +385,20 @@
                 }
 
                 model.material.clippingPlanes = sceneClippingPlanes;
+                model.layers.set(mainCamLayer);
 
                 if (septalDefectParts.length > 0) {
                     septalDefectParts.forEach(part => {
                         part.layers.set(hiddenLayer);
                     })
                 }
-
-                // modelParts.push(model);
             }
         })
         
         addModelControlFolder();
     }
 
+    let annotationList = [];
     function handleRaycast(e) {
         // used for raycasting as per: https://threejs.org/docs/#api/en/core/Raycaster
         // calculate mouse position in normalized device coordinates
@@ -404,7 +408,7 @@
         raycaster.setFromCamera(mouse, camera);
         raycaster.layers.set(mainCamLayer);
 
-        //un-comment the next 3 lines for debugging the raycaster
+        // un-comment the next 3 lines for debugging the raycaster
         // let rayHelper = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 1500, 0xff0000);
         // rayHelper.layers.set(raycastHelperLayer);
         // scene.add(rayHelper);
@@ -413,7 +417,8 @@
         let previousObject;
 
         if (intersects.length > 0) {
-            let target = intersects[0]
+            let target = intersects[0];
+
             if (target.object.name == 'control_sphere') {
                 generateTransformControl(target.object);
                 previousObject = target.object;
@@ -421,11 +426,103 @@
             }
 
             // for annotations -- not quite working ignore for now
-            // if (target.object.type == 'Mesh' && target.object.name != 'control_sphere') {
-            //     spawnAnnotation(target.point, target.face.normal);
-            //     console.log(target.point);
-            // }
+            if (target.object.type == 'Mesh' && target.object.name != 'control_sphere') {
+                // why can't i just set annoPos = target.point?
+                // the renderer won't let me?
 
+                let newAnnotation = {
+                    name: `annotation-${annotationList.length}`,
+                    point: 
+                    {
+                        x: target.point.x,
+                        y: target.point.y,
+                        z: target.point.z,
+                    },
+                    targetParentName: target.object.name,
+                    content: 'This is content!'
+                };
+                
+                annotationList = [...annotationList, newAnnotation];                
+                annotationHidden = false;
+
+                updateAnnotationPosition();
+            }
+        }
+    }
+
+    function updateAnnotationPosition() {
+        let canvas = renderer.domElement;
+
+        for (let i = 0; i < annotationList.length; i++) {
+            let annoPos = new THREE.Vector3(annotationList[i].point.x, annotationList[i].point.y, annotationList[i].point.z);
+    
+            // converts the intersect point to normazlied device coordinate (2D);
+            annoPos.project(camera);
+    
+            // from https://manu.ninja/webgl-three-js-annotations/
+            annoPos.x = Math.round((0.5 + annoPos.x / 2) * (canvas.width / window.devicePixelRatio));
+            
+            annoPos.y = Math.round((0.5 - annoPos.y / 2) * (canvas.height / window.devicePixelRatio));
+            
+            // set this mutation observer to get a callback to fire when the html element has actually loaded
+            // otherwise the style won't be applied until the next double click.
+            let observer = new MutationObserver((mutations, obs) => {
+                let annoRef = document.getElementById(annotationList[i].name);
+                let annoContentRef = document.getElementById(annotationList[i].name + '-content-box'); 
+
+                if (annoRef && annoContentRef) {
+                    annoRef.style.position = 'absolute';
+                    annoRef.style.zIndex = '102';
+                    annoRef.style.background = '#00000099';
+                    annoRef.style.width = '2em';
+                    annoRef.style.height = '2em';
+                    annoRef.style.top = `${annoPos.y}px`;
+                    annoRef.style.left = `${annoPos.x}px`;
+                    annoRef.style.color = '#fff';
+                    annoRef.style.display = 'flex';
+                    annoRef.style.justifyContent = 'center';
+                    annoRef.style.alignItems = 'center';
+                    annoRef.style.borderRadius = '100%';
+                    annoRef.style.border = '0.2rem solid #00acac';
+                    annoRef.style.cursor = 'pointer';
+
+                    annoContentRef.style.position = 'absolute';
+                    annoContentRef.style.zIndex = '101';
+                    annoContentRef.style.background = '#00000099';
+                    annoContentRef.style.width = '15em';
+                    annoContentRef.style.height = '10em';
+                    annoContentRef.style.top = `${annoPos.y + 18}px`;
+                    annoContentRef.style.left = `${annoPos.x + 18}px`;
+                    annoContentRef.style.color = '#fff';
+
+                    let parentMesh = scene.getObjectByName(annotationList[i].targetParentName);
+                    let distanceToParentMesh = camera.position.distanceTo(parentMesh.position);
+
+                    let annotationPoint = new THREE.Vector3(
+                        annotationList[i].point.x,
+                        annotationList[i].point.y,
+                        annotationList[i].point.z,
+                    )
+
+                    let distanceToAnnotation = camera.position.distanceTo(annotationPoint);
+
+                    if (distanceToAnnotation > distanceToParentMesh) {
+                        annoRef.style.opacity = 0.25;
+                        annoContentRef.style.opacity = 0.25;
+                    } else {
+                        annoRef.style.opacity = 1.0;
+                        annoContentRef.style.opacity = 1.0;
+                    }
+
+                    obs.disconnect();
+                    return
+                }
+            })
+
+            observer.observe(document, {
+                childList: true,
+                subtree: true,
+            })
         }
     }
 
@@ -1291,9 +1388,10 @@
     }
 
     function handleTeeMode(isOn) {
-        splitView = isOn;
         camera.updateProjectionMatrix();
 
+        splitView = isOn;
+        annotationHidden = isOn;
         modeParams.activate_ultrasound = isOn;
 
         if (septalDefectParts.length > 0) {
@@ -1454,7 +1552,20 @@
     }
     // -----------------END MODE SWITCH FUNCTIONS-----------------
 
-    // -----------------START DISPLAY AND UI HELPER FUNCTIONS-----------------   
+    // -----------------START DISPLAY AND UI HELPER FUNCTIONS----------------- 
+    function handleAnnotations(annotation) {
+        let annoRef = document.getElementById(annotation);        
+        let contentBox = document.getElementById(annotation + '-content-box');
+        
+        contentBox.hidden = !contentBox.hidden;
+
+        if (contentBox.hidden) {
+            annoRef.style.background = '#424242';
+        } else {
+            annoRef.style.background = '#4242427a';
+        }        
+    }
+
     function displayModelParts(viewState) {
         modelParts.forEach(part => {
             if (viewState == 0) {
@@ -1802,8 +1913,6 @@
             toggleEditing = adminFolder.add(adminParams, 'toggle_editing').name('Edit Scene').onChange(v => {
                 handleEditMode(v);
 
-                console.log(adminParams.toggle_editing);
-
                 adminOptions.forEach(option => {
                     option.enable(v);
                 })
@@ -1992,7 +2101,6 @@
 
         // OTHER
         handleGUI();
-        // spawnViewCube();
 
         window.addEventListener('resize', onWindowResize);
         window.addEventListener('mouseup', handleMouseUp);
@@ -2071,6 +2179,10 @@
         }
 
         camera.updateProjectionMatrix();
+
+        if (annotationList.length > 0 && annotationHidden == false) {
+            updateAnnotationPosition();
+        }
     }
 
     // go go go
@@ -2103,6 +2215,26 @@
         <p>Press <b>"T"</b> on your keyboard to exit <b>{inputControlOptions}</b> control mode!</p>
     </div>
 </div>
+
+{#if annotationList.length > 0}
+    {#each annotationList as annotation, i}
+        <div hidden={annotationHidden} >
+            <div id={annotation.name} on:click={() => handleAnnotations(annotation.name)}>
+                <p>{i + 1}</p>
+            </div>
+            <div class='annotation-content' id={annotation.name + '-content-box'} hidden=true>
+                <div id='annotation-content-box-inner'>
+                    <div id='annotation-content-text-box'>
+                        <p>{annotation.content}</p>
+                    </div>
+                    <div id='annotation-content-button-box'>
+                        <button>Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {/each}
+{/if}
 
 <div hidden={bottomGuiHidden}>
     <div id="bottom-ui">
@@ -2155,6 +2287,28 @@
 </div>
 
 <style>
+    #annotation-content-box-inner {
+        display: grid;
+        grid-template-rows: 1fr 1fr;
+        row-gap: 1%;
+    }
+
+    #annotation-content-text-box {
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+    }
+
+    #annotation-content-button-box {
+        width: 100%;
+        height: 100%;
+    }
+
+    #annotation-content-button-box button {
+        width: 100%;
+        height: 100%
+    }
+
     #view-cube-container {
         position: absolute;
         z-index: 101;
@@ -2295,4 +2449,14 @@
     #ultrasoundButton:hover {
         background-color: #ff0000;
     }
+
+    /* #annotation-0 {
+        background: coral;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 101;
+        width: 5rem;
+        height: 2rem;
+    } */
 </style>
