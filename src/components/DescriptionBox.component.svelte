@@ -68,8 +68,8 @@
         display: grid;
         grid-auto-flow: column;
         column-gap: 1%;
-        width: 80%;
-        height: 2rem;
+        width: 100%;
+        height: 3rem;
     }
 
     #half {
@@ -80,7 +80,7 @@
         row-gap: 2%;
         height: var(--view-height);
         width: 40%;
-        bottom: 5%;
+        bottom: 3.5%;
     }
 
     #full {
@@ -91,7 +91,7 @@
         row-gap: 2%;
         height: var(--view-height);
         width: 80%;
-        bottom: 5%;
+        bottom: 3.5%;
     }
 
     button {

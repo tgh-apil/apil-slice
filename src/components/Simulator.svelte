@@ -94,7 +94,6 @@
     let sceneClippingPlanes = [];
 
     // FOR ANNOTATIONS
-    let annotationHidden = true;
     let annotationList = [];
     let annotationTarget;
 
@@ -310,13 +309,20 @@
                     model.geometry.boundingBox.getCenter(modelCenter);
                     model.geometry.boundingBox.getSize(modelSize);
 
-                    let offset = 10;
+                    // the taller the object the further back we go
+                    let offset = (modelSize.y /3);
 
-                    camXPos = -(modelSize.x + offset);
-                    camYPos = (modelSize.y + 50);
+                    // set to 0 so we're always looking at the model from the anterior position
+                    camXPos = 0;
+
+                    // place y a little over the middle of the model
+                    camYPos = (modelSize.y + 20);
                     camZPos = -(modelSize.z + offset);
 
-                    camera.position.set(0, camYPos, camZPos);
+                    camera.position.set(camXPos, camYPos, camZPos);
+                    orbitControls.target = new THREE.Vector3(0, modelCenter.y, 0);
+
+                    orbitControls.update();
 
                 if ($modelType.toLowerCase() == 'heart') {
                     // create two copies: one clippable, one not
@@ -2173,6 +2179,8 @@
         document.body.appendChild(renderer.domElement);
         
         // CONTROLS
+        // the orbit control target gets changed from default world-zero to center of model-ish
+        // inside the async modelParser since it relies on getting the model's center (if myocardium exists)
         orbitControls = new OrbitControls(camera, renderer.domElement);
         teeMouseControls = new PointerLockControls(pointerLockCam, renderer.domElement);
 
@@ -2460,7 +2468,7 @@
     #bottom-message-ui {
         right: 1%;
         /* close enough to the description box? */
-        bottom: 5.2%;
+        bottom: 1%;
         height: 12%;
         width: 58%;
         z-index: 102;
@@ -2481,7 +2489,7 @@
     #bottom-ui {
         right: 1%;
         /* close enough to the description box? */
-        bottom: 5.2%;
+        bottom: 1%;
         height: 12%;
         width: 58%;
         z-index: 102;
