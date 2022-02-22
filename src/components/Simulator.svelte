@@ -136,7 +136,8 @@
     let popupType = 'confirm';
     let popupLabel = 'Not Set';
     let popupConfirmButtonText = 'Save';
-    let popupFunction = null;
+    // let popupFunction = null;
+    let popupConfirmOptions = [];
     let popupCancelFunction = null;
 
     // for lilgui
@@ -453,9 +454,9 @@
                     // turn off any open annotation content boxes
                     toggleAllAnnotations(true);
 
-                    openInputPopup('input', 'Add annotation', addAnnotation, 'Save annotation')
+                    openInputPopup('input', 'Add annotation', [{text: 'Save Annotation', fn: addAnnotation}]);
                 } else {
-                    openInputPopup('NA', 'Must be logged in to add an annotation',  closeInputPopup, 'Okay')
+                    openInputPopup('NA', 'Must be logged in to add an annotation', [{text: 'Okay', fn: closeInputPopup}]);
                 }
             }
         }
@@ -506,10 +507,10 @@
     async function addAnnotation() {
         popupInputUiHidden = true;
 
-        let annotationContent = document.getElementById('input-ui-2').value;
+        let annotationContent = document.getElementById('input-field').value;
 
         if (annotationContent == '' || annotationContent === undefined) {
-            openInputPopup('NA', 'Annotation cannot be empty!',  closeInputPopup, 'Okay');
+            openInputPopup('NA', 'Annotation cannot be empty!',  [{text: 'Okay', fn: closeInputPopup}]);
 
             modelControlParams.annotations_hidden = false;
             return
@@ -697,6 +698,7 @@
     // theis variable is  used ONLY for the mouse click omniplane control
     // leave as global so onMouseUp can access it and stop the interval
     let mouseOmniInterval;
+    let wasInXteeMode;
     function xTeeControlClick(mouseButtonNumber) {
         let interval = 50;
         if (mouseButtonNumber == 0) {
@@ -706,7 +708,29 @@
                 }
             }, interval);
         } else if (mouseButtonNumber == 1) {
-            resetProbe();
+            controlParams.xtee();
+
+            openInputPopup(
+                'NA', 
+                'Select Option', 
+                [
+                    {
+                        text: 'Reset Probe',
+                        fn: () => {
+                            wasInXteeMode = true;
+                            resetProbe();
+                            closeInputPopup();
+                        },
+                    },
+                    {
+                        text: 'Save Bookmark',
+                        fn: () => {
+                            wasInXteeMode = true;
+                            openInputPopup('input', 'Name your view', [{text: 'Save', fn: saveBookmark}])
+                        },
+                    }
+                ]
+            )
         } else if (mouseButtonNumber == 2) {
             mouseOmniInterval = setInterval(() => {
                 if (controlParams.omniplane < ultrasoundStartMaxValues.omniplaneMax) {
@@ -846,17 +870,22 @@
     }
 
     function resetProbe() {
-            controlParams.anteflex = 0;
-            controlParams.omniplane = 0;
-            controlParams.rightLeftFlex = 0;
-            controlParams.twist = 0;
-            controlParams.advance = 0;
+        if (wasInXteeMode) {
+            controlParams.xtee();
+            wasInXteeMode = false;
+        }
 
-            probeControls.anteflex(controlParams.anteflex);
-            probeControls.omniplane(controlParams.omniplane);
-            probeControls.rightLeftFlex(controlParams.rightLeftFlex);
-            probeControls.twist(controlParams.twist);
-            probeControls.advance(controlParams.advance);
+        controlParams.anteflex = 0;
+        controlParams.omniplane = 0;
+        controlParams.rightLeftFlex = 0;
+        controlParams.twist = 0;
+        controlParams.advance = 0;
+
+        probeControls.anteflex(controlParams.anteflex);
+        probeControls.omniplane(controlParams.omniplane);
+        probeControls.rightLeftFlex(controlParams.rightLeftFlex);
+        probeControls.twist(controlParams.twist);
+        probeControls.advance(controlParams.advance);
     }
     // -----------------END ULTRASOUND CONTROL FUNCTIONS-----------------
 
@@ -886,7 +915,7 @@
     async function saveBookmark() {
         if ($userData) {
             keyboardControls(false);
-            let bookmarkName = document.getElementById('input-ui-2').value;
+            let bookmarkName = document.getElementById('input-field').value;
 
             if (bookmarkName !== "") {
                 let newVal = {
@@ -919,14 +948,13 @@
                     bookmarks: arrayUnion(localBookmarks.at(-1)),
                 })
 
-                openInputPopup('NA', 'View saved!', closeInputPopup, 'Close');
+                openInputPopup('NA', 'View saved!', [{text: 'Close', fn: closeInputPopup}]);
             } else {
-                openInputPopup('input', 'Must enter a name to save a view!',  saveBookmark, 'Save View')
+                openInputPopup('input', 'Must enter a name to save a view!', [{text: 'Save View', fn: saveBookmark}]);
             }            
         } else {
-            openInputPopup('NA', 'Must be logged in to save a view!',  closeInputPopup, 'Okay')
+            openInputPopup('NA', 'Must be logged in to save a view!', [{text: 'Okay', fn: closeInputPopup}]);
         }
-
     }
 
     async function updateBookmark() {
@@ -983,9 +1011,9 @@
                 bookmarks: arrayUnion(localBookmarks[bookmarkIndex - 1]),
             })
             
-            openInputPopup('NA', 'View updated!', closeInputPopup, 'Close');
+            openInputPopup('NA', 'View updated!', [{text: 'Close', fn: closeInputPopup}]);
         } else {
-            openInputPopup('NA', 'Must be logged in to update a view!',  closeInputPopup, 'Okay')
+            openInputPopup('NA', 'Must be logged in to update a view!', [{text: 'Okay', fn: closeInputPopup}]);
         }
     }
 
@@ -1015,9 +1043,9 @@
                 bookmarks: arrayRemove(bookmarkToRemoveFirestore[0]),
             })
 
-            openInputPopup('NA', 'View deleted!', closeInputPopup, 'Close');
+            openInputPopup('NA', 'View deleted!', [{text: 'Close', fn: closeInputPopup}]);
         } else {
-            openInputPopup('NA', 'Must be logged in to delete a view!',  closeInputPopup, 'Okay')
+            openInputPopup('NA', 'Must be logged in to delete a view!', [{text: 'Okay', fn: closeInputPopup}]);
         }
     }
     // -----------------END BOOKMARK CONTROL FUNCTIONS-----------------
@@ -1946,16 +1974,13 @@
         clippingPlaneFolder.close();
     }
 
-    function openInputPopup(type, label, fn, confirmText) {
+    function openInputPopup(type, label, confirmFunction) {
         popupInputUiHidden = false;
-
-        document.getElementById('input-ui-2').value = '';
 
         popupType = type;
         popupLabel = label;
-        popupConfirmButtonText = confirmText;
-        popupFunction = fn;
         popupCancelFunction = closeInputPopup;
+        popupConfirmOptions = confirmFunction;
 
         if (modeParams.activate_ultrasound) {
             keyboardControls(false);
@@ -1967,11 +1992,15 @@
 
         if (modeParams.activate_ultrasound) {
             keyboardControls(true);
+
+            if (wasInXteeMode) {
+                controlParams.xtee();
+                wasInXteeMode = false;
+            }
+
         } else {
             modelControlParams.annotations_hidden = false;
         }
-
-
     }
 
     let controlOptions;
@@ -2319,8 +2348,7 @@
     popupInputUiHidden={popupInputUiHidden} 
     popupLabel={popupLabel} 
     popupType={popupType} 
-    popupConfirmText={popupConfirmButtonText} 
-    popupConfrimFunction={popupFunction} 
+    popupConfirmOptions={popupConfirmOptions} 
     popupCancelFunction={popupCancelFunction} 
 />
 
@@ -2365,9 +2393,9 @@
                         <option value={i}>{bookmark.name}</option>
                     {/each}
                 </select>
-                <button id='bookmark-ui-2' on:click={() => openInputPopup('input', 'Name your view', saveBookmark, 'Save')}>Save View</button>
-                <button id='bookmark-ui-3' on:click={() => openInputPopup('NA', 'Are you sure you want to update this view?', updateBookmark, 'Update')}>Update View</button>
-                <button id='bookmark-ui-4' on:click={() => openInputPopup('NA', 'Are you sure you want to delete this view?', deleteBookmark, 'Confirm')}>Delete View</button>
+                <button id='bookmark-ui-2' on:click={() => openInputPopup('input', 'Name your view', [{text: 'Save', fn: saveBookmark}])}>Save View</button>
+                <button id='bookmark-ui-3' on:click={() => openInputPopup('NA', 'Are you sure you want to update this view?', [{text: 'Yes, update!', fn: updateBookmark}])}>Update View</button>
+                <button id='bookmark-ui-4' on:click={() => openInputPopup('NA', 'Are you sure you want to delete this view?', [{text: 'Yes, delete!', fn: deleteBookmark}])}>Delete View</button>
             </div>
         </div>
         <div hidden={controlUiHidden}>

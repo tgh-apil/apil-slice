@@ -2,22 +2,32 @@
     export let popupInputUiHidden;
     export let popupLabel;
     export let popupType;
-    export let popupConfirmText;
-    export let popupConfrimFunction;
+    export let popupConfirmOptions;
     export let popupCancelFunction;
+
 </script>
 
 <div hidden={popupInputUiHidden}>
     <div id="popup-input-ui-outer">
         <div id="popup-input-ui-inner">
-            <h2 for='input-ui-input-field' id=input-ui-1><b>{popupLabel}</b></h2>
-            {#if popupType == 'input'}
-                <input type='text' id=input-ui-2 />
-            {:else}
-                <br id=input-ui-2 />
-            {/if}
-            <button id='input-ui-3' on:click={popupConfrimFunction}>{popupConfirmText}</button>
-            <button id='input-ui-4'on:click={popupCancelFunction}>Cancel</button>
+            <div id=popup-input-ui-label-box>
+                <div id='popup-input-label-box'>
+                    <h2 for='input-ui-input-field' ><b>{popupLabel}</b></h2>
+                </div>
+                <div id='popup-input-box'>
+                    {#if popupType == 'input'}
+                        <input id='input-field' type='text' />
+                    {:else}
+                        <br />
+                    {/if}
+                </div>
+            </div>
+            <div id='popup-input-button-box'>
+                {#each popupConfirmOptions as option}
+                    <button id='confirm-button' on:click={option.fn}>{option.text}</button>
+                {/each}
+                <button on:click={popupCancelFunction}>Cancel</button>
+            </div>
         </div>
     </div>
 </div>
@@ -38,35 +48,51 @@
         border: solid 1px #424242;
         z-index: 100;
         background: #121212e5;
+        backdrop-filter: blur(5px);
         width: 30%;
-        height: 15%;
+        height: auto;
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        column-gap: 1%;
-        row-gap: 1%;
+        grid-template-rows: 4fr 1fr;
+        row-gap: 2%;
     }
     
-    #input-ui-1 {
-        grid-column: 1 / 3;
+    #popup-input-ui-label-box {
+        grid-row: 1;
+        display: grid;
+        grid-template-rows: 1fr 1fr;
+    }
+
+    #popup-input-label-box {
+        grid-row: 1;
         display: flex;
         justify-content: center;
         align-items: center;
         text-align: center;
-        grid-row: 1;
     }
 
-    #input-ui-2 {
-        grid-column: 1 / 3;
+    #popup-input-box {
         grid-row: 2;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
     }
 
-    #input-ui-3 {
-        grid-column: 1;
-        grid-row: 3;
+    #popup-input-box input {
+        width: 90%;
+        height: 50%;
     }
 
-    #input-ui-4 {
-        grid-column: 2;
-        grid-row: 3;
+    #popup-input-button-box {
+        grid-row: 2;
+        display: grid;
+        grid-auto-flow: column;
+        column-gap: 1%;
+        row-gap: 2%;
+    }
+
+    #popup-input-button-box button {
+        height: 100%;
+        width: 100%;
     }
 </style>
