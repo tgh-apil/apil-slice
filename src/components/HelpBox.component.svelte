@@ -12,47 +12,54 @@
                 <h1>
                     INSTRUCTIONS
                 </h1>
-                <h2>Model Navigation</h2>
+                <h2>
+                    Model Navigation
+                </h2>
                 <table>
                     <tr>
-                        <th>Action</th>
-                        <th>Mouse Button</th>
+                        <th><b>Action</b></th>
+                        <th><b>Mouse Button</b></th>
+                        <th><b>Keyboard</b></th>
+                        <th><b>Additional Notes</b></th>
                     </tr>
                     <tr>
                         <td>Rotate</td>
                         <td>Left Click</td>
+                        <td class='td-unbound'>Unbound</td>
                     </tr>
                     <tr>
                         <td>Pan</td>
                         <td>Right Click</td>
+                        <td class='td-unbound'>Unbound</td>
                     </tr>
                     <tr>
                         <td>Zoom in</td>
                         <td>Mouse wheel up</td>
+                        <td class='td-unbound'>Unbound</td>
                     </tr>
                     <tr>
                         <td>Zoom out</td>
                         <td>Mouse wheel down</td>
+                        <td class='td-unbound'>Unbound</td>
                     </tr>
                     <tr>
-                        <td>Quick zoom in</td>
-                        <td>Middle mouse button & push mouse forward</td>
-                    </tr>
-                    <tr>
-                        <td>Quick zoom out</td>
-                        <td>Middle mouse button & pull mouse backward</td>
+                        <td>Add new annotation</td>
+                        <td>Double left click anywhere on the model</td>
+                        <td class='td-unbound'>Unbound</td>
+                        <td><i>Only available when in 3D viewer mode</i></td>
                     </tr>
                 </table>
-                <h2>TEE Controls</h2>
+                <h2>
+                    Ultrasound Controls
+                </h2>
                 <table>
                     <tr>
-                        <th>Action</th>
-                        <th>Keyboard</th>
-                        <th>Mouse</th>
-                        <th>Rod</th>
-                        <th>TEE Probe</th>
+                        <th><b>Action</b></th>
+                        <th><b>Keyboard</b></th>
+                        <th><b>Mouse</b></th>
+                        <th><b>Rod</b></th>
+                        <th><b>TEE Probe</b></th>
                     </tr>
-    
                     <tr>
                         <td>Advance</td>
                         <td>Arrow Up</td>
@@ -112,19 +119,41 @@
                     <tr>
                         <td>Probe Head Left</td>
                         <td>A</td>
-                        <td>Unbound</td>
-                        <td>Unbound</td>
-                        <td>Unbound</td>
+                        <td class='td-unbound'>Unbound</td>
+                        <td class='td-unbound'>Unbound</td>
+                        <td class='td-unbound'>Unbound</td>
                     </tr>
                     <tr>
                         <td>Probe Head Right</td>
                         <td>D</td>
-                        <td>Unbound</td>
-                        <td>Unbound</td>
-                        <td>Unbound</td>
+                        <td class='td-unbound'>Unbound</td>
+                        <td class='td-unbound'>Unbound</td>
+                        <td class='td-unbound'>Unbound</td>
                     </tr>
                 </table>
-
+                <h2>
+                    Additional Options
+                </h2>
+                <table>
+                    <tr>
+                        <th><b>Action</b></th>
+                        <th><b>Keyboard</b></th>
+                        <th><b>Mouse</b></th>
+                        <th><b>Notes</b></th>
+                    </tr>
+                    <tr>
+                        <td>Activate & deactivate ultrasound controller</td>
+                        <td>T</td>
+                        <td class='td-unbound'>Unbound</td>
+                        <td><i>Only available when in ultrasound mode when mouse control is activated</i></td>
+                    </tr>
+                    <tr>
+                        <td>Puase mouse control</td>
+                        <td class='td-unbound'>Unbound</td>
+                        <td>Middle mouse button</td>
+                        <td><i>Only available when in ultrasound mode when mouse control is activated</i></td>
+                    </tr>
+                </table>
             </div>
             <br>
             <div id='instruction-box-button-container'>
@@ -141,6 +170,10 @@
         padding-bottom: 0.25rem;
         padding-right: 1rem;
     }
+
+    .td-unbound {
+        color: rgb(129, 129, 129);
+    }
     
     #instruction-box {
         background: #000000c9;
@@ -150,14 +183,15 @@
         height: 100%;
         text-align: left;
         z-index: 102;
-        display: grid;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
     #instruction-box-inner {
         position: absolute;
         width: 60%;
         height: 85%;
-        left: 20%;
         top: 5%;
     }
 
@@ -177,20 +211,4 @@
         height: 100%;
         width: 100%;
     }
-
-    /* #instruction-close-button {
-        background-color: #007070;
-        color: #fff;
-        width: 12%;
-        height: 100%;
-        border-style: none;
-        transition: background-color .1s ease-in;
-        -webkit-transition: background-color .1s ease-in;
-        -o-transition: background-color .1s ease-in;
-        -moz-transition: background-color .1s ease-in;
-    }
-
-    #instruction-close-button:hover{
-        background-color: #00acac;
-    } */
 </style>

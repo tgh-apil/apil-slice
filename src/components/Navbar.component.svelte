@@ -13,9 +13,13 @@
     }
 
     function goHelp() {
-        helpBox.set(true);
-        descriptionBoxShow.set(false);
-        decsriptionBoxHeight.set('15%')
+        if (!$helpBox) {
+            helpBox.set(true);
+            descriptionBoxShow.set(false);
+            decsriptionBoxHeight.set('15%');
+        } else {
+            helpBox.set(false);
+        }
     }
 
     function uploadModel() {

@@ -135,8 +135,6 @@
     let popupInputUiHidden = true;
     let popupType = 'confirm';
     let popupLabel = 'Not Set';
-    let popupConfirmButtonText = 'Save';
-    // let popupFunction = null;
     let popupConfirmOptions = [];
     let popupCancelFunction = null;
 
@@ -698,6 +696,10 @@
     // theis variable is  used ONLY for the mouse click omniplane control
     // leave as global so onMouseUp can access it and stop the interval
     let mouseOmniInterval;
+
+    // tracks whether we were in xtee mode when the middle moouse button
+    // is clicked.  This way we know to go back when the user has finished
+    // selecting an option from the popup after middle mouse is clicked
     let wasInXteeMode;
     function xTeeControlClick(mouseButtonNumber) {
         let interval = 50;
@@ -709,6 +711,7 @@
             }, interval);
         } else if (mouseButtonNumber == 1) {
             controlParams.xtee();
+            wasInXteeMode = true;
 
             openInputPopup(
                 'NA', 
@@ -717,7 +720,6 @@
                     {
                         text: 'Reset Probe',
                         fn: () => {
-                            wasInXteeMode = true;
                             resetProbe();
                             closeInputPopup();
                         },
@@ -725,7 +727,6 @@
                     {
                         text: 'Save Bookmark',
                         fn: () => {
-                            wasInXteeMode = true;
                             openInputPopup('input', 'Name your view', [{text: 'Save', fn: saveBookmark}])
                         },
                     }
@@ -1995,9 +1996,8 @@
 
             if (wasInXteeMode) {
                 controlParams.xtee();
-                wasInXteeMode = false;
             }
-
+            
         } else {
             modelControlParams.annotations_hidden = false;
         }
