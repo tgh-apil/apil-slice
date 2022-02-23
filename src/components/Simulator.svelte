@@ -715,7 +715,7 @@
 
             openInputPopup(
                 'NA', 
-                'Select Option', 
+                'Select an option', 
                 [
                     {
                         text: 'Reset Probe',
@@ -854,11 +854,7 @@
                         inputControlOptions = 'mouse';
                     }
                 break;
-
-                case 'z':
-                    splitView = !splitView;
-                    camera.updateProjectionMatrix();
-                break;
+                
                 }
             };
         } else {
@@ -1997,7 +1993,7 @@
             if (wasInXteeMode) {
                 controlParams.xtee();
             }
-            
+
         } else {
             modelControlParams.annotations_hidden = false;
         }
@@ -2333,102 +2329,104 @@
     animate();
 </script>
 
-<div id='view-cube-container'></div>
-<div hidden={loadingBarHidden}>
-    <div id="loading-bar-ui">
-        <h1>Loading model...</h1>
+<div id='main'>
+    <div id='view-cube-container'></div>
+    <div hidden={loadingBarHidden}>
+        <div id="loading-bar-ui">
+            <h1>Loading model...</h1>
+        </div>
     </div>
-</div>
-
-<div hidden={omniplaneReadoutHidden}>
-    <div id="omniplane-ui-readout"><b>{controlParams.omniplane}°</b></div>
-</div>
-
-<PopupBox 
-    popupInputUiHidden={popupInputUiHidden} 
-    popupLabel={popupLabel} 
-    popupType={popupType} 
-    popupConfirmOptions={popupConfirmOptions} 
-    popupCancelFunction={popupCancelFunction} 
-/>
-
-<div hidden={!bottomGuiHidden}>
-    <div id="bottom-message-ui">
-        <p>Press <b>"T"</b> on your keyboard to exit <b>{inputControlOptions}</b> control mode!</p>
+    
+    <div hidden={omniplaneReadoutHidden}>
+        <div id="omniplane-ui-readout"><b>{controlParams.omniplane}°</b></div>
     </div>
-</div>
-
-{#if annotationList.length > 0}
-    {#each annotationList as annotation, i}
-        <div hidden={modelControlParams.annotations_hidden}>
-            <div id={annotation.name} on:click={() => openAnnotation(annotation.name)} hidden=false>
-                <p>{i + 1}</p>
-            </div>
-            <div class='annotation-content' id={annotation.name + '-content-box'} hidden=true>
-                <div id='annotation-content-box-inner'>
-                    <div id='annotation-content-text-box'>
-                        <p>{annotation.content}</p>
-                    </div>
-                    <div id='annotation-content-control-box'>
-                        <div id='annotation-poster-box'>
-                            <p>Poster: <b>{annotation.poster}</b></p>
+    
+    <PopupBox 
+        popupInputUiHidden={popupInputUiHidden} 
+        popupLabel={popupLabel} 
+        popupType={popupType} 
+        popupConfirmOptions={popupConfirmOptions} 
+        popupCancelFunction={popupCancelFunction} 
+    />
+    
+    <div hidden={!bottomGuiHidden}>
+        <div id="bottom-message-ui">
+            <p>Press <b>"T"</b> on your keyboard to exit <b>{inputControlOptions}</b> control mode!</p>
+        </div>
+    </div>
+    
+    {#if annotationList.length > 0}
+        {#each annotationList as annotation, i}
+            <div hidden={modelControlParams.annotations_hidden}>
+                <div id={annotation.name} on:click={() => openAnnotation(annotation.name)} hidden=false>
+                    <p>{i + 1}</p>
+                </div>
+                <div class='annotation-content' id={annotation.name + '-content-box'} hidden=true>
+                    <div id='annotation-content-box-inner'>
+                        <div id='annotation-content-text-box'>
+                            <p>{annotation.content}</p>
                         </div>
-                        <div id='annotation-close-button-box'>
-                            <button on:click={() => closeAnnotation(annotation.name)}>Hide</button>
+                        <div id='annotation-content-control-box'>
+                            <div id='annotation-poster-box'>
+                                <p>Poster: <b>{annotation.poster}</b></p>
+                            </div>
+                            <div id='annotation-close-button-box'>
+                                <button on:click={() => closeAnnotation(annotation.name)}>Hide</button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    {/each}
-{/if}
-
-<div hidden={bottomGuiHidden}>
-    <div id="bottom-ui">
-        <div hidden={bookmarkUiHidden}>
-            <div id="bookmark-ui">
-                <select name="bookmark-select" id='bookmark-ui-1' on:change={() => bookmarkMove()}>
-                    <option label="Select Saved View"></option>
-                    {#each $userBookmarks as bookmark, i}
-                        <option value={i}>{bookmark.name}</option>
-                    {/each}
-                </select>
-                <button id='bookmark-ui-2' on:click={() => openInputPopup('input', 'Name your view', [{text: 'Save', fn: saveBookmark}])}>Save View</button>
-                <button id='bookmark-ui-3' on:click={() => openInputPopup('NA', 'Are you sure you want to update this view?', [{text: 'Yes, update!', fn: updateBookmark}])}>Update View</button>
-                <button id='bookmark-ui-4' on:click={() => openInputPopup('NA', 'Are you sure you want to delete this view?', [{text: 'Yes, delete!', fn: deleteBookmark}])}>Delete View</button>
-            </div>
-        </div>
-        <div hidden={controlUiHidden}>
-            <div id="control-ui">
-                <p id='control-ui-1'><b>Select Input Method</b></p>
-                <label>
-                    <input id='control-ui-2' type=radio bind:group={inputControlOptions} name="input control options" value='keyboard' on:change={handleInputControl(inputControlOptions)}>
-                    Keyboard
-                </label>
-                <label>
-                    <input id='control-ui-3' type=radio bind:group={inputControlOptions} name="input control options" value='mouse' on:change={handleInputControl(inputControlOptions)}>
-                    Mouse
-                </label>
-                <label>
-                    <input id='control-ui-4' type=radio bind:group={inputControlOptions} name="input control options" value='rod controller' on:change={handleInputControl(inputControlOptions)}>
-                    Rod Controller
-                </label>
-                <label>
-                    <input id='control-ui-5' type=radio bind:group={inputControlOptions} name="input control options" value='tee controller' on:change={handleInputControl(inputControlOptions)}>
-                    TEE Controller
-                </label>
-            </div>
-        </div>
-        <div id="mode-switch-ui">
-            {#if localControlSphereList.length > 0 && myocardium != null && adminParams.toggle_editing == false}
-                <div id="mode-switch-ui-inner">
-                    {#if modeParams.activate_ultrasound}
-                        <button id="ultrasoundButton" on:click={() => handleTeeMode(false)}><b>3D View</b></button>
-                    {:else}
-                        <button id="ultrasoundButton" on:click={() => handleTeeMode(true)}><b>Ultrasound</b></button>
-                    {/if}
+        {/each}
+    {/if}
+    
+    <div hidden={bottomGuiHidden}>
+        <div id="bottom-ui">
+            <div hidden={bookmarkUiHidden}>
+                <div id="bookmark-ui">
+                    <select name="bookmark-select" id='bookmark-ui-1' on:change={() => bookmarkMove()}>
+                        <option label="Select Saved View"></option>
+                        {#each $userBookmarks as bookmark, i}
+                            <option value={i}>{bookmark.name}</option>
+                        {/each}
+                    </select>
+                    <button id='bookmark-ui-2' on:click={() => openInputPopup('input', 'Name your view', [{text: 'Save', fn: saveBookmark}])}>Save View</button>
+                    <button id='bookmark-ui-3' on:click={() => openInputPopup('NA', 'Are you sure you want to update this view?', [{text: 'Yes, update!', fn: updateBookmark}])}>Update View</button>
+                    <button id='bookmark-ui-4' on:click={() => openInputPopup('NA', 'Are you sure you want to delete this view?', [{text: 'Yes, delete!', fn: deleteBookmark}])}>Delete View</button>
                 </div>
-            {/if}
+            </div>
+            <div hidden={controlUiHidden}>
+                <div id="control-ui">
+                    <p id='control-ui-1'><b>Select Input Method</b></p>
+                    <label>
+                        <input id='control-ui-2' type=radio bind:group={inputControlOptions} name="input control options" value='keyboard' on:change={handleInputControl(inputControlOptions)}>
+                        Keyboard
+                    </label>
+                    <label>
+                        <input id='control-ui-3' type=radio bind:group={inputControlOptions} name="input control options" value='mouse' on:change={handleInputControl(inputControlOptions)}>
+                        Mouse
+                    </label>
+                    <label>
+                        <input id='control-ui-4' type=radio bind:group={inputControlOptions} name="input control options" value='rod controller' on:change={handleInputControl(inputControlOptions)}>
+                        Rod Controller
+                    </label>
+                    <label>
+                        <input id='control-ui-5' type=radio bind:group={inputControlOptions} name="input control options" value='tee controller' on:change={handleInputControl(inputControlOptions)}>
+                        TEE Controller
+                    </label>
+                </div>
+            </div>
+            <div id="mode-switch-ui">
+                {#if localControlSphereList.length > 0 && myocardium != null && adminParams.toggle_editing == false}
+                    <div id="mode-switch-ui-inner">
+                        {#if modeParams.activate_ultrasound}
+                            <button id="ultrasoundButton" on:click={() => handleTeeMode(false)}><b>3D View</b></button>
+                        {:else}
+                            <button id="ultrasoundButton" on:click={() => handleTeeMode(true)}><b>Ultrasound</b></button>
+                        {/if}
+                    </div>
+                {/if}
+            </div>
         </div>
     </div>
 </div>
