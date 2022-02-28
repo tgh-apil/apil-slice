@@ -760,64 +760,48 @@
         // set direction of movement of the probe depending on controller type
         let dir;
 
-        // try to keep this as an even number
         // larger the number, the more movement from the mouse is needed to move the probe 
         let speed;
 
         // reverses control direction depending on contoller input
         if (inputControlOptions == 'rod controller' || inputControlOptions == 'tee controller') {
             dir = -1;
-            speed = 10;
+            speed = 12;
         } else {
             dir = 1;
-            speed = 6;
+            speed = 14;
         }
 
         if (Math.abs(mouseY) > Math.abs(mouseX)) {
-            let vertMoveAmount;
+            let vertMoveAmount = (mouseY * dir) / speed;
             
-            if (mouseY < 0) {
-                vertMoveAmount = -1 * dir;
-            } else if (mouseY > 0) {
-                vertMoveAmount = 1 * dir;
-            } else {
-                vertMoveAmount = 0;
-            }
 
             if (controlParams.advance < 100 && controlParams.advance > 0) {
-                probeControls.advance(controlParams.advance -= (vertMoveAmount / speed));                
+                probeControls.advance(controlParams.advance -= vertMoveAmount);                
             } else if (controlParams.advance >= 100) {
                 // probe forced to go backwards
-                probeControls.advance(controlParams.advance -= (Math.abs(vertMoveAmount) / speed));            
+                probeControls.advance(controlParams.advance -= (Math.abs(vertMoveAmount)));            
             } else if (controlParams.advance <= 0){
                 // probe forced to go forwards
-                probeControls.advance(controlParams.advance += (Math.abs(vertMoveAmount) / speed));            
+                probeControls.advance(controlParams.advance += (Math.abs(vertMoveAmount)));            
             } else {
                 console.log('something went wrong with the advance');
             }
         }
 
         if (Math.abs(mouseX) > Math.abs(mouseY)) {
-            let horMoveAmount;
-
-            if (mouseX < 0) {
-                horMoveAmount = -1 * dir;
-            } else if (mouseX > 0) {
-                horMoveAmount = 1 * dir;
-            } else {
-                horMoveAmount = 0;
-            }
+            // slow down the twist compared to the advance/retract
+            let horMoveAmount = (mouseX * dir) / (speed * 2) ;
 
             if (controlParams.twist < ultrasoundStartMaxValues.twistMax && controlParams.twist > ultrasoundStartMaxValues.twistMin) {
-                probeControls.twist(controlParams.twist += (horMoveAmount / (speed / 2)));
+                probeControls.twist(controlParams.twist += horMoveAmount);
             } else if (controlParams.twist >= ultrasoundStartMaxValues.twistMax) {
-                probeControls.twist(controlParams.twist -= (Math.abs(horMoveAmount) / (speed / 2)));            
+                probeControls.twist(controlParams.twist -= (Math.abs(horMoveAmount)));            
             } else if (controlParams.twist <= ultrasoundStartMaxValues.twistMin) {
-                probeControls.twist(controlParams.twist += (Math.abs(horMoveAmount) / (speed / 2)));            
+                probeControls.twist(controlParams.twist += (Math.abs(horMoveAmount)));            
             } else {
                 console.log('something went wrong with the twist');
             }
-
         }
     }
 
