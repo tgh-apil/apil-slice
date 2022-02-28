@@ -710,36 +710,40 @@
                 }
             }, interval);
         } else if (mouseButtonNumber == 1) {
-            controlParams.xtee();
-            wasInXteeMode = true;
+            if (inputControlOptions == 'mouse') {
+                controlParams.xtee();
+                wasInXteeMode = true;
 
-            openInputPopup(
-                'NA', 
-                'Select an option', 
-                [
-                    {
-                        text: 'Reset Probe',
-                        fn: () => {
-                            resetProbe();
-                            closeInputPopup();
+                openInputPopup(
+                    'NA', 
+                    'Select an option', 
+                    [
+                        {
+                            text: 'Reset Probe',
+                            fn: () => {
+                                resetProbe();
+                                closeInputPopup();
+                            },
                         },
-                    },
-                    {
-                        text: 'Save Bookmark',
-                        fn: () => {
-                            openInputPopup('input', 'Name your view', [{text: 'Save', fn: saveBookmark}])
+                        {
+                            text: 'Save Bookmark',
+                            fn: () => {
+                                openInputPopup('input', 'Name your view', [{text: 'Save', fn: saveBookmark}])
+                            },
                         },
-                    },
-                    {
-                        text: `Disable ${inputControlOptions} mode`,
-                        fn: () => {
-                            wasInXteeMode = false;
-                            inputControlOptions = 'keyboard';
-                            closeInputPopup();
+                        {
+                            text: `Disable ${inputControlOptions} mode`,
+                            fn: () => {
+                                wasInXteeMode = false;
+                                inputControlOptions = 'keyboard';
+                                closeInputPopup();
+                            }
                         }
-                    }
-                ]
-            )
+                    ]
+                )
+            } else {
+                resetProbe();
+            }
         } else if (mouseButtonNumber == 2) {
             mouseOmniInterval = setInterval(() => {
                 if (controlParams.omniplane < ultrasoundStartMaxValues.omniplaneMax) {
@@ -753,35 +757,67 @@
 
     // MOUSE CONTROLS: MOVEMENT (Advance/Retract/TWIST LEFT/TWIST RIGHT)
     function xTeeControlMove(mouseX, mouseY) {
-        let mod;
+        // set direction of movement of the probe depending on controller type
+        let dir;
+
+        // try to keep this as an even number
+        // larger the number, the more movement from the mouse is needed to move the probe 
+        let speed;
 
         // reverses control direction depending on contoller input
         if (inputControlOptions == 'rod controller' || inputControlOptions == 'tee controller') {
-            mod = -1;
+            dir = -1;
+            speed = 10;
         } else {
-            mod = 1;
-        }
-    
-        if (controlParams.advance < 100 && controlParams.advance > 0) {
-            probeControls.advance(controlParams.advance -= (mod * mouseY / 100));                
-        } else if (controlParams.advance >= 100) {
-            // probe forced to go backwards
-            probeControls.advance(controlParams.advance -= (Math.abs(mouseY) / 100));            
-        } else if (controlParams.advance <= 0){
-            // probe forced to go forwards
-            probeControls.advance(controlParams.advance += (Math.abs(mouseY) / 100));            
-        } else {
-            console.log('something went wrong with the advance');
+            dir = 1;
+            speed = 6;
         }
 
-        if (controlParams.twist < ultrasoundStartMaxValues.twistMax && controlParams.twist > ultrasoundStartMaxValues.twistMin) {
-            probeControls.twist(controlParams.twist += (mod * mouseX / 20));
-        } else if (controlParams.twist >= ultrasoundStartMaxValues.twistMax) {
-            probeControls.twist(controlParams.twist -= (Math.abs(mouseX) / 20));            
-        } else if (controlParams.twist <= ultrasoundStartMaxValues.twistMin) {
-            probeControls.twist(controlParams.twist += (Math.abs(mouseX) / 20));            
-        } else {
-            console.log('something went wrong with the twist');
+        if (Math.abs(mouseY) > Math.abs(mouseX)) {
+            let vertMoveAmount;
+            
+            if (mouseY < 0) {
+                vertMoveAmount = -1 * dir;
+            } else if (mouseY > 0) {
+                vertMoveAmount = 1 * dir;
+            } else {
+                vertMoveAmount = 0;
+            }
+
+            if (controlParams.advance < 100 && controlParams.advance > 0) {
+                probeControls.advance(controlParams.advance -= (vertMoveAmount / speed));                
+            } else if (controlParams.advance >= 100) {
+                // probe forced to go backwards
+                probeControls.advance(controlParams.advance -= (Math.abs(vertMoveAmount) / speed));            
+            } else if (controlParams.advance <= 0){
+                // probe forced to go forwards
+                probeControls.advance(controlParams.advance += (Math.abs(vertMoveAmount) / speed));            
+            } else {
+                console.log('something went wrong with the advance');
+            }
+        }
+
+        if (Math.abs(mouseX) > Math.abs(mouseY)) {
+            let horMoveAmount;
+
+            if (mouseX < 0) {
+                horMoveAmount = -1 * dir;
+            } else if (mouseX > 0) {
+                horMoveAmount = 1 * dir;
+            } else {
+                horMoveAmount = 0;
+            }
+
+            if (controlParams.twist < ultrasoundStartMaxValues.twistMax && controlParams.twist > ultrasoundStartMaxValues.twistMin) {
+                probeControls.twist(controlParams.twist += (horMoveAmount / (speed / 2)));
+            } else if (controlParams.twist >= ultrasoundStartMaxValues.twistMax) {
+                probeControls.twist(controlParams.twist -= (Math.abs(horMoveAmount) / (speed / 2)));            
+            } else if (controlParams.twist <= ultrasoundStartMaxValues.twistMin) {
+                probeControls.twist(controlParams.twist += (Math.abs(horMoveAmount) / (speed / 2)));            
+            } else {
+                console.log('something went wrong with the twist');
+            }
+
         }
     }
 
