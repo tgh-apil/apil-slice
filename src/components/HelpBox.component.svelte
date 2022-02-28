@@ -145,13 +145,13 @@
                         <td>Activate & deactivate ultrasound controller</td>
                         <td>T</td>
                         <td class='td-unbound'>Unbound</td>
-                        <td><i>Only available when in ultrasound mode when mouse control is activated</i></td>
+                        <td><i>Only available when in ultrasound mode when a controller is activated</i></td>
                     </tr>
                     <tr>
-                        <td>Puase mouse control</td>
+                        <td>Open simulator controller options menu</td>
                         <td class='td-unbound'>Unbound</td>
                         <td>Middle mouse button</td>
-                        <td><i>Only available when in ultrasound mode when mouse control is activated</i></td>
+                        <td><i>Only available when in ultrasound mode when a controller is activated</i></td>
                     </tr>
                 </table>
             </div>

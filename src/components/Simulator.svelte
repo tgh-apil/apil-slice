@@ -729,6 +729,14 @@
                         fn: () => {
                             openInputPopup('input', 'Name your view', [{text: 'Save', fn: saveBookmark}])
                         },
+                    },
+                    {
+                        text: `Disable ${inputControlOptions} mode`,
+                        fn: () => {
+                            wasInXteeMode = false;
+                            inputControlOptions = 'keyboard';
+                            closeInputPopup();
+                        }
                     }
                 ]
             )
@@ -755,13 +763,13 @@
         }
     
         if (controlParams.advance < 100 && controlParams.advance > 0) {
-            probeControls.advance(controlParams.advance -= (mod * mouseY / 50));                
+            probeControls.advance(controlParams.advance -= (mod * mouseY / 100));                
         } else if (controlParams.advance >= 100) {
             // probe forced to go backwards
-            probeControls.advance(controlParams.advance -= (Math.abs(mouseY) / 50));            
+            probeControls.advance(controlParams.advance -= (Math.abs(mouseY) / 100));            
         } else if (controlParams.advance <= 0){
             // probe forced to go forwards
-            probeControls.advance(controlParams.advance += (Math.abs(mouseY) / 50));            
+            probeControls.advance(controlParams.advance += (Math.abs(mouseY) / 100));            
         } else {
             console.log('something went wrong with the advance');
         }
@@ -780,81 +788,81 @@
     function keyboardControls(isOn) {
         if (isOn) {
             document.onkeydown = function(e) {
-            switch (e.key) {
-                case 'ArrowUp':
-                    if (controlParams.advance < 100) {
-                        e.preventDefault();
-                        probeControls.advance(controlParams.advance += 1);
-                    }
-                break;
+                switch (e.key) {
+                    case 'ArrowUp':
+                        if (controlParams.advance < 100) {
+                            e.preventDefault();
+                            probeControls.advance(controlParams.advance += 1);
+                        }
+                    break;
 
-                case 'ArrowDown':
-                    if (controlParams.advance > 0) {
-                        e.preventDefault();
-                        probeControls.advance(controlParams.advance -= 1);
-                    }
-                break;
+                    case 'ArrowDown':
+                        if (controlParams.advance > 0) {
+                            e.preventDefault();
+                            probeControls.advance(controlParams.advance -= 1);
+                        }
+                    break;
 
-                case 'ArrowLeft':
-                    if (controlParams.twist > ultrasoundStartMaxValues.twistMin) {
-                        e.preventDefault();
-                        probeControls.twist(controlParams.twist -= 1);
-                    }
-                break;
+                    case 'ArrowLeft':
+                        if (controlParams.twist > ultrasoundStartMaxValues.twistMin) {
+                            e.preventDefault();
+                            probeControls.twist(controlParams.twist -= 1);
+                        }
+                    break;
 
-                case 'ArrowRight':
-                    if (controlParams.twist < ultrasoundStartMaxValues.twistMax) {
-                        e.preventDefault();
-                        probeControls.twist(controlParams.twist += 1);
-                    }
-                break;
+                    case 'ArrowRight':
+                        if (controlParams.twist < ultrasoundStartMaxValues.twistMax) {
+                            e.preventDefault();
+                            probeControls.twist(controlParams.twist += 1);
+                        }
+                    break;
 
-                case 'q':
-                    if (controlParams.omniplane > ultrasoundStartMaxValues.omniplaneMin) {
-                        probeControls.omniplane(controlParams.omniplane -= 1);
-                    }
-                break;
+                    case 'q':
+                        if (controlParams.omniplane > ultrasoundStartMaxValues.omniplaneMin) {
+                            probeControls.omniplane(controlParams.omniplane -= 1);
+                        }
+                    break;
 
-                case 'e':
-                    if (controlParams.omniplane < ultrasoundStartMaxValues.omniplaneMax) {
-                        probeControls.omniplane(controlParams.omniplane += 1);
-                    }
-                break;
+                    case 'e':
+                        if (controlParams.omniplane < ultrasoundStartMaxValues.omniplaneMax) {
+                            probeControls.omniplane(controlParams.omniplane += 1);
+                        }
+                    break;
 
-                case 'w':
-                    if (controlParams.anteflex < ultrasoundStartMaxValues.anteflexMax) {
-                        probeControls.anteflex(controlParams.anteflex += 1);                        
-                    }
-                break;
+                    case 'w':
+                        if (controlParams.anteflex < ultrasoundStartMaxValues.anteflexMax) {
+                            probeControls.anteflex(controlParams.anteflex += 1);                        
+                        }
+                    break;
 
-                case 's':
-                    if (controlParams.anteflex > ultrasoundStartMaxValues.anteflexMin) {
-                        probeControls.anteflex(controlParams.anteflex -= 1);                        
-                    }
-                break;
+                    case 's':
+                        if (controlParams.anteflex > ultrasoundStartMaxValues.anteflexMin) {
+                            probeControls.anteflex(controlParams.anteflex -= 1);                        
+                        }
+                    break;
 
-                case 'a':
-                    if (controlParams.rightLeftFlex > ultrasoundStartMaxValues.rightLeftFlexMin) {
-                        probeControls.rightLeftFlex(controlParams.rightLeftFlex -= 1);                        
-                    }
-                break;
+                    case 'a':
+                        if (controlParams.rightLeftFlex > ultrasoundStartMaxValues.rightLeftFlexMin) {
+                            probeControls.rightLeftFlex(controlParams.rightLeftFlex -= 1);                        
+                        }
+                    break;
 
-                case 'd':
-                    if (controlParams.rightLeftFlex < ultrasoundStartMaxValues.rightLeftFlexMax) {
-                        probeControls.rightLeftFlex(controlParams.rightLeftFlex += 1);                        
-                    }
-                break;
+                    case 'd':
+                        if (controlParams.rightLeftFlex < ultrasoundStartMaxValues.rightLeftFlexMax) {
+                            probeControls.rightLeftFlex(controlParams.rightLeftFlex += 1);                        
+                        }
+                    break;
 
-                case 't' || 'Escape':
-                    controlParams.xtee();
+                    case 't' || 'Escape':
+                        controlParams.xtee();
+                        
+                        if (inputControlOptions != 'keyboard') {
+                            inputControlOptions = 'keyboard';
+                        } else {
+                            inputControlOptions = 'mouse';
+                        }
+                    break;
 
-                    if (inputControlOptions != 'keyboard') {
-                        inputControlOptions = 'keyboard';
-                    } else {
-                        inputControlOptions = 'mouse';
-                    }
-                break;
-                
                 }
             };
         } else {
@@ -864,6 +872,10 @@
         }
 
         return;
+    }
+
+    function changeTeeController() {
+
     }
 
     function resetProbe() {
@@ -2351,7 +2363,7 @@
     
     <div hidden={!bottomGuiHidden}>
         <div id="bottom-message-ui">
-            <p>Press <b>"T"</b> on your keyboard to exit <b>{inputControlOptions}</b> control mode!</p>
+            <p>Press <b>"T"</b> or <b>"middle mouse button"</b> on your keyboard to exit <b>{inputControlOptions}</b> control mode!</p>
         </div>
     </div>
     
