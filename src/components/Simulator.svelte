@@ -874,10 +874,6 @@
         return;
     }
 
-    function changeTeeController() {
-
-    }
-
     function resetProbe() {
         if (wasInXteeMode) {
             controlParams.xtee();
