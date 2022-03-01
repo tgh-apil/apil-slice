@@ -2381,7 +2381,11 @@
     
     <div hidden={!bottomGuiHidden}>
         <div id="bottom-message-ui">
-            <p>Press <b>"T"</b> or <b>"middle mouse button"</b> on your keyboard to exit <b>{inputControlOptions}</b> control mode!</p>
+            {#if inputControlOptions == 'mouse'}
+                <p>Press <b>"T"</b> on your keyboard or <b>middle mouse button</b> to exit <b>{inputControlOptions}</b> control mode!</p>
+            {:else}
+                <p>Press <b>"T"</b> on your keyboard to exit <b>{inputControlOptions}</b> control mode!</p>
+            {/if}
         </div>
     </div>
     
