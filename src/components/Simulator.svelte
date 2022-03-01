@@ -761,21 +761,23 @@
         let dir;
 
         // larger the number, the more movement from the mouse is needed to move the probe 
-        let speed;
+        let vertSpeed;
+        let horSpeed;
 
         // reverses control direction depending on contoller input
         if (inputControlOptions == 'rod controller' || inputControlOptions == 'tee controller') {
             dir = -1;
-            speed = 12;
+            vertSpeed = 30;
+            horSpeed = 25;
         } else {
             dir = 1;
-            speed = 14;
+            vertSpeed = 14;
+            horSpeed = 8;
         }
 
         if (Math.abs(mouseY) > Math.abs(mouseX)) {
-            let vertMoveAmount = (mouseY * dir) / speed;
+            let vertMoveAmount = (mouseY * dir) / vertSpeed;
             
-
             if (controlParams.advance < 100 && controlParams.advance > 0) {
                 probeControls.advance(controlParams.advance -= vertMoveAmount);                
             } else if (controlParams.advance >= 100) {
@@ -791,7 +793,7 @@
 
         if (Math.abs(mouseX) > Math.abs(mouseY)) {
             // slow down the twist compared to the advance/retract
-            let horMoveAmount = (mouseX * dir) / (speed * 2) ;
+            let horMoveAmount = (mouseX * dir) / horSpeed;
 
             if (controlParams.twist < ultrasoundStartMaxValues.twistMax && controlParams.twist > ultrasoundStartMaxValues.twistMin) {
                 probeControls.twist(controlParams.twist += horMoveAmount);

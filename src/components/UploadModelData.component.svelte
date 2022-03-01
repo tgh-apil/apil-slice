@@ -1,5 +1,6 @@
 <script>
     import { uploadPanelShow } from '../stores.js';
+    import PopupBox from './PopupBox.component.svelte';
 
     import { app } from '../firebase.js';
     import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore/lite';
@@ -11,6 +12,13 @@
     let modelFileName = null;
     let selectedModelType = null;
     let modelThumbnailFileName = null;
+
+    // for popupbox
+    let popupInputUiHidden = true;
+    let popupType = 'confirm';
+    let popupLabel = 'Not Set';
+    let popupConfirmOptions = [];
+    let popupCancelFunction = null;
 
     let modelTypes = [
         'Heart', 'Other'
@@ -61,12 +69,14 @@
 
         // check that all fields have data
         if (modelId == null || modelTitle == null || modelDescription == null || modelFileName == null) {
-            return console.log('must fill out all fields');
+            openInputPopup('NA', 'Error: Must fill out all fields!', [{text: 'Okay', fn: closeInputPopup}]);
+            return
         } 
 
         // check if the model file is valid
         if (!modelFileExtensionAllowed) {
-            return console.log('Model must be in a glb file format!');
+            openInputPopup('NA', 'Model must be in a glb file format!', [{text: 'Okay', fn: closeInputPopup}]);
+            return
         }
 
         addNewModelData();
@@ -145,13 +155,45 @@
             });
     }
 
+    function openInputPopup(type, label, confirmFunction) {
+        popupInputUiHidden = false;
+
+        popupType = type;
+        popupLabel = label;
+        popupCancelFunction = closeInputPopup;
+        popupConfirmOptions = confirmFunction;
+    }
+
+    function closeInputPopup() {
+        popupInputUiHidden = true;
+
+        if (modeParams.activate_ultrasound) {
+            keyboardControls(true);
+
+            if (wasInXteeMode) {
+                controlParams.xtee();
+            }
+
+        } else {
+            modelControlParams.annotations_hidden = false;
+        }
+    }
+
     function closeUploadPanel() {
         uploadPanelShow.set(false);
     }
 
 </script>
 
+<PopupBox 
+    popupInputUiHidden={popupInputUiHidden} 
+    popupLabel={popupLabel} 
+    popupType={popupType} 
+    popupConfirmOptions={popupConfirmOptions} 
+    popupCancelFunction={popupCancelFunction} 
+/>
 <div hiddden>
+
     <div id='upload-panel-input-container'>
         <div>
             <label for='model-id-input'>Model ID:</label>
@@ -173,7 +215,7 @@
         </div>
         <div>
             <label for='model-description-input'>Model Description:</label>
-            <textarea id='model-description-input' cols='40' rows='20' bind:value={modelDescription} />
+            <textarea id='model-description-input' cols='60' rows='20' bind:value={modelDescription} />
         </div>
         <div>
             <label for='model-file-input'>Add Model File (.glb)</label>
@@ -185,7 +227,7 @@
         </div>
         <div id='upload-panel-button-container'>
             <div>
-                <button on:click={() => checkInputData()}>Save</button>
+                <button type='submit' on:click={() => checkInputData()}>Upload Model</button>
             </div>
             <div>
                 <button on:click={() => closeUploadPanel()}>Cancel</button>
@@ -195,17 +237,14 @@
 </div>
 
 <style>
-
 #upload-panel-input-container {
     background: #000;
     position: absolute;
     z-index: 102;
-    width: 100%;
+    width: 80%;
     height: 100%;
-    left: 0;
+    left: 10%;
     top: 7%;
-    display: grid;
-    grid-auto-rows: min-content;
 }
 
 #upload-panel-button-container {
@@ -215,7 +254,19 @@
 
 #upload-panel-button-container button {
     width: 80%;
-    height: 100%;
+    height: 2rem;
+}
+
+#model-description-input {
+    resize: none;
+}
+
+#model-file-input {
+    border: none;
+}
+
+#model-thumbnail-file-input {
+    border: none;
 }
 
 </style>
