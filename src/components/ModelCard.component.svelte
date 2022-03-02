@@ -91,7 +91,7 @@ let descriptionHidden = true;
 }
 
 #model-title-container h1 {
-    font-size: 2em;
+    font-size: 1.4em;
     color: white;
 }
 
@@ -102,12 +102,12 @@ let descriptionHidden = true;
 }
 
 #model-poster-container {
-    font-size: 1.1em;
+    font-size: 1.05em;
     grid-column: 1;
 }
 
 #model-id-container {
-    font-size: 1.1em;
+    font-size: 1.05em;
     grid-column: 2;
 }
 

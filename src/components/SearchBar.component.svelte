@@ -7,7 +7,6 @@
 <!-- todo: make this more generic -->
 <div id='search-bar-container'>
     <div id='search-bar-container-inner'>
-
         <div id='sort-by-container'>
             <label id='sort-by-label' for='sort-by'>Sort by:</label>
             <select id='sort-by'>
@@ -22,7 +21,7 @@
         <div id='limit-sort-container'>
             <label id='limit-sort-label' for='limit-sort'>Number of models to show:</label>
             <select id='limit-sort'>
-                <option value={limitOptions[2]} selected disabled hidden>{limitOptions[2]}</option>
+                <option value={limitOptions[1]} selected disabled hidden>{limitOptions[1]}</option>
                 {#each limitOptions as limit}
                     <option value={limit}>
                         {limit}

@@ -42,7 +42,7 @@
         },
     ]
 
-    let limitOptions = [3, 6, 9, 'all'];
+    let limitOptions = [4, 8, 12, 'all'];
 
     currentView.set('home');
     
@@ -53,7 +53,7 @@
     onMount(async function () {
         // reference for the firestore entry and filter by date created
         // newest models first
-        let q = query(docRef, orderBy('dateCreated', 'desc'), limit(limitOptions[2]));
+        let q = query(docRef, orderBy('dateCreated', 'desc'), limit(limitOptions[1]));
         let queryResult = await getDocs(q);
 
         try {
@@ -188,7 +188,7 @@
         z-index: 101;
         display: grid;
         top: 14%;
-        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
         column-gap: 1%;
         row-gap: 1%;
         margin-bottom: 5%;
