@@ -22,6 +22,7 @@ button {
 	background-color: #007070;
 	color: #fff;
 	border-style: none;
+	font-size: 1.05em;
 	transition: background-color .1s ease-in;
 	-webkit-transition: background-color .1s ease-in;
 	-o-transition: background-color .1s ease-in;

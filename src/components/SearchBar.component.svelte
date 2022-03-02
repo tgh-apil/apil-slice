@@ -86,4 +86,12 @@
         height: 100%;
     }
 
+    label {
+        font-size: 1.05em;
+    }
+
+    select {
+        font-size: 1.1em;
+    }
+
 </style>
