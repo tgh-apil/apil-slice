@@ -6,12 +6,12 @@
     import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore/lite';
     import { getStorage, ref, uploadBytes } from 'firebase/storage';
     
-    let modelId = null;
-    let modelTitle = null;
-    let modelDescription = null;
-    let modelFileName = null;
-    let selectedModelType = null;
-    let modelThumbnailFileName = null;
+    let modelId = '';
+    let modelTitle = '';
+    let modelDescription = '';
+    let modelFileName = '';
+    let selectedModelType = '';
+    let modelThumbnailFileName = '';
 
     // for popupbox
     let popupInputUiHidden = true;
@@ -68,9 +68,9 @@
         )
 
         // check that all fields have data
-        if (modelId == null || modelTitle == null || modelDescription == null || modelFileName == null) {
+        if (modelId.length == 0 || modelTitle.length == 0 || modelDescription.length == 0 || modelFileName.length == 0) {
             openInputPopup('NA', 'Error: Must fill out all fields!', [{text: 'Okay', fn: closeInputPopup}]);
-            return
+            return;
         } 
 
         // check if the model file is valid
@@ -166,17 +166,6 @@
 
     function closeInputPopup() {
         popupInputUiHidden = true;
-
-        if (modeParams.activate_ultrasound) {
-            keyboardControls(true);
-
-            if (wasInXteeMode) {
-                controlParams.xtee();
-            }
-
-        } else {
-            modelControlParams.annotations_hidden = false;
-        }
     }
 
     function closeUploadPanel() {
@@ -192,38 +181,46 @@
     popupConfirmOptions={popupConfirmOptions} 
     popupCancelFunction={popupCancelFunction} 
 />
-<div hiddden>
 
-    <div id='upload-panel-input-container'>
-        <div>
-            <label for='model-id-input'>Model ID:</label>
-            <input id='model-id-input' bind:value={modelId} />
-        </div>
-        <div>
-            <label for='model-id-input'>Model Title:</label>
-            <input id='model-title-input' bind:value={modelTitle} />
-        </div>
-        <div>
-            <label for='model-type-input'>Model Type:</label>
-            <select id='model-type-input' bind:value={selectedModelType}>
-                {#each modelTypes as modelType}
-                    <option value={modelType.toLowerCase()}>
-                        {modelType}
-                    </option>
-                {/each}
-            </select>                
-        </div>
-        <div>
-            <label for='model-description-input'>Model Description:</label>
-            <textarea id='model-description-input' cols='60' rows='20' bind:value={modelDescription} />
-        </div>
-        <div>
-            <label for='model-file-input'>Add Model File (.glb)</label>
-            <input type='file' id='model-file-input' /> 
-        </div>
-        <div>
-            <label for='model-thumbnail-file-input'>Add Model Thumbnail (.png)</label>
-            <input type='file' id='model-thumbnail-file-input' /> 
+<div id='main' hiddden>
+    <div id='upload-panel-main'>
+        <div id='upload-panel-input-container'>
+            <div id='upload-panel-left-col'>
+                <div id='model-id-container'>
+                    <label for='model-id-input'>Model ID</label>
+                    <input id='model-id-input' bind:value={modelId} />
+                </div>
+                <div id='model-title-container'>
+                    <label for='model-title-input'>Model Title</label>
+                    <input id='model-title-input' bind:value={modelTitle} />
+                </div>
+                <div id='model-type-container'>
+                    <label for='model-type-input'>Model Type</label>
+                    <select id='model-type-input' bind:value={selectedModelType}>
+                        {#each modelTypes as modelType}
+                            <option value={modelType.toLowerCase()}>
+                                {modelType}
+                            </option>
+                        {/each}
+                    </select>                
+                </div>
+            </div>
+            <div id='upload-panel-right-col'>
+                <div id='model-description-container'>
+                    <label for='model-description-input'>Model Description</label>
+                    <textarea id='model-description-input' bind:value={modelDescription} />
+                </div>
+                <div id='model-file-input-container'>
+                    <div id='model-file-container'>
+                        <label for='model-file-input'>Add Model (.glb)</label>
+                        <input type='file' id='model-file-input' /> 
+                    </div>
+                    <div id='model-thumbnail-container'>
+                        <label for='model-thumbnail-file-input'>Add Thumbnail (.png)</label>
+                        <input type='file' id='model-thumbnail-file-input' /> 
+                    </div>
+                </div>
+            </div>
         </div>
         <div id='upload-panel-button-container'>
             <div>
@@ -237,36 +234,128 @@
 </div>
 
 <style>
-#upload-panel-input-container {
-    background: #000;
-    position: absolute;
-    z-index: 102;
-    width: 80%;
-    height: 100%;
-    left: 10%;
-    top: 7%;
-}
+    #main {
+        background: #000;
+        position: absolute;
+        left: 0;
+        top:0;
+        z-index: 102;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 
-#upload-panel-button-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-}
+    #upload-panel-main {
+        width: 70%;
+        height: 60%;
+        display: grid;
+        grid-template-rows: 95% 5%;
+    }
 
-#upload-panel-button-container button {
-    width: 80%;
-    height: 2rem;
-}
+    #upload-panel-input-container {
+        display: grid;
+        column-gap: 5%;
+        grid-template-columns: 1fr 1fr;
+    }
 
-#model-description-input {
-    resize: none;
-}
+    #upload-panel-left-col {
+        display: grid;
+        row-gap: 2%;
+        grid-template-rows: 1fr 1fr 1fr;
+    }
 
-#model-file-input {
-    border: none;
-}
+    #upload-panel-right-col {
+        display: grid;
+        row-gap: 2%;
+        grid-template-rows: 1fr 1fr 1fr;
+    }
 
-#model-thumbnail-file-input {
-    border: none;
-}
+    #model-id-input {
+        width: 100%;
+    }
+
+    #model-type-input {
+        width: 100%;
+    }
+
+    #model-title-input {
+        width: 100%;
+    }
+
+    #model-description-container {
+        display: grid;
+        grid-template-rows: 1fr 1fr;
+    }
+
+    #model-description-input {
+        resize: none;
+    }
+
+    #model-file-input-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    #model-file-container {
+        display: grid;
+        grid-template-rows: 1fr 1fr;
+    }
+
+    #model-thumbnail-container {
+        display: grid;
+        grid-template-rows: 1fr 1fr;
+    }
+
+    #upload-panel-button-container {
+        display: grid;
+        column-gap: 5%;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    #upload-panel-button-container button {
+        width: 100%;
+        height: 100%;
+    }
+
+    #model-file-input {
+        border: none;
+    }
+
+    #model-thumbnail-file-input {
+        border: none;
+    }
+
+    label {
+        color: #bbbbbb;
+        display: flex;
+        align-items: flex-end;
+        font-size: 1.25rem;
+        font-style: bold;
+        margin-bottom: 2rem;
+    }
+
+    input {
+        font-size: 1.15rem;
+    }
+
+    select {
+        height: 15%;
+        font-size: 1.15rem;;
+    }
+
+    option {
+        font-size: 1.15rem;
+    }
+
+    textarea {
+        border: none;
+        font-size: 1.15rem;
+    }
+
+    textarea:focus {
+        outline: none;
+    }
 
 </style>

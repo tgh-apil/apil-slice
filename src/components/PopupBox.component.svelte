@@ -46,7 +46,7 @@
     #popup-input-ui-inner {
         position: absolute;
         border: solid 1px #424242;
-        z-index: 100;
+        z-index: 103;
         background: #121212e5;
         backdrop-filter: blur(5px);
         width: 30%;
