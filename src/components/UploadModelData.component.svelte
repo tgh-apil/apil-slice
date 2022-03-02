@@ -98,10 +98,23 @@
             if (modelThumbnailFileExtensionAllowed) {
                 addModelFiles(modelThumbnailFile, false)                
             } else {
-                console.log('thumbnail file type must be png, jpg, or jpeg')
+                openInputPopup('NA', 'Thumbnail file type must be .png', [{text: 'Okay', fn: closeInputPopup}]);
+                return
             }
             
         }
+
+        openInputPopup('NA', `${modelTitle} successfully uploaded!`, [{text: 'Great!', fn: closeInputPopup}]);
+        clearInputs();
+    }
+
+    function clearInputs() {
+        modelId = '';
+        modelTitle = '';
+        modelDescription = '';
+        modelFileName = '';
+        selectedModelType = '';
+        modelThumbnailFileName = '';
     }
 
     async function addNewModelData() {
