@@ -1,6 +1,6 @@
 <script>
     import LoginButton from './LoginButton.component.svelte';
-    import { currentView, userData, helpBox, descriptionBoxShow, decsriptionBoxHeight, navBarSize, uploadPanelShow } from '../stores.js';
+    import { currentView, userData, helpBox, descriptionBoxShow, decsriptionBoxHeight, navBarSize, uploadPanelShow, editModelDataOn } from '../stores.js';
 
     function goAtlasHome() {
         navBarSize.set('navbar-full');
@@ -26,31 +26,47 @@
         uploadPanelShow.set(true);
     }
 
+    function editModelData() {
+        editModelDataOn.set(!$editModelDataOn);
+    }
+
 </script>
 
 <nav id={$navBarSize}>
     <div class="col1">
         <button class="logo" on:click={() => goAtlasHome()}>APIL SLICE</button>
     </div>
+    <!-- refactor me -->
     {#if $userData}
         {#if $userData.email == 'apiltgh@gmail.com'}
             {#if $currentView == 'home'}
-                <div class="col3">
-                    <button class="navItem" on:click={() => uploadModel()}>Upload Model</button>
-                </div>
+                {#if !$uploadPanelShow}
+                    {#if !$editModelDataOn}
+                        <div class="col3">
+                            <button class="navItem" on:click={() => uploadModel()}>Upload Model</button>
+                        </div>
+                    {/if}
+                    <div class="col4">
+                        {#if $editModelDataOn}
+                            <button class="navItem" on:click={() => editModelData()}>Stop Editing Model Data</button>
+                        {:else}
+                            <button class="navItem" on:click={() => editModelData()}>Edit Model Data</button>
+                        {/if}
+                    </div>
+                {/if}
             {/if}
         {/if}
     {/if}
-    <div class="col4">
+    <div class="col5">
         <button class="navItem" on:click={() => goAtlasHome()}>Atlas Home</button>
     </div>
-    <div class="col5">
+    <div class="col6">
         <button class="navItem" on:click={() => console.log('not implemented')}>About</button>
     </div>
-    <div class="col6">
+    <div class="col7">
         <button class="navItem" on:click={() => goHelp()}>Help</button>
     </div>
-    <div class="col7">
+    <div class="col8">
         <LoginButton />
     </div>
 </nav>
@@ -135,23 +151,26 @@
     }
 
     .col3 {
+        grid-column: 3;
+    }
+
+    .col4 {
         grid-column: 4;
     }
 
-
-    .col4 {
+    .col5 {
         grid-column: 5;
     }
 
-    .col5 {
-        grid-column: 6;
-    }
-
     .col6 {
-        grid-column: 7;
+        grid-column: 6;
     }
     
     .col7 {
+        grid-column: 7;
+    }
+
+    .col8 {
         grid-column: 8;
     }
 

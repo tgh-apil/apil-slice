@@ -2,7 +2,7 @@
     import { onMount } from 'svelte';
     import { replace } from 'svelte-spa-router';
     import { currentView, modelPath, modelTitle, modelPoster, modelId, modelDescription, storeUrlList, 
-            navBarSize, savedControlSphereList, userBookmarks, annotations, modelType, uploadPanelShow } from '../../stores.js';
+            navBarSize, savedControlSphereList, userBookmarks, annotations, modelType, uploadPanelShow, editModelDataOn } from '../../stores.js';
     import ModelCard from '../../components/ModelCard.component.svelte';
     import UploadModelData from '../../components/UploadModelData.component.svelte';
     import SearchBar from '../../components/SearchBar.component.svelte';
@@ -43,6 +43,11 @@
     ]
 
     let limitOptions = [4, 8, 12, 'all'];
+
+    // for model upload/editing
+    let uploadModelTitle = '';
+    let uploadModelId = '';
+    let uploadModelDescription = '';
 
     currentView.set('home');
     
@@ -118,6 +123,15 @@
         navBarSize.set('navbar-viewer');
     }
 
+    function editModelInfo(selectedModelIndex) {
+        let modelInfo = dbData[selectedModelIndex];
+        uploadPanelShow.set(true);
+
+        uploadModelTitle = modelInfo.modelTitle;
+        uploadModelId = modelInfo.modelId;
+        uploadModelDescription = modelInfo.description;
+    }
+
     async function queryBuilder() {
         let sortVal = document.getElementById('sort-by').value;
         let limitVal = document.getElementById('limit-sort').value;
@@ -152,15 +166,25 @@
 </script>
 
 {#if $uploadPanelShow}
-    <div>
-        <UploadModelData />
-    </div>
+    {#if $editModelDataOn}
+        <div>
+            <UploadModelData uploadModelId={uploadModelId} uploadModelTitle={uploadModelTitle} uploadModelDescription={uploadModelDescription} />
+        </div>
+    {:else}
+        <div>
+            <UploadModelData uploadModelId={''} uploadModelTitle={''} uploadModelDescription={''} />
+        </div>
+    {/if}
 {:else}
     <SearchBar sortOptions={sortOptions} limitOptions={limitOptions} queryBuilder={queryBuilder} />
     <div id='container'>
         <div id="model-select-box">
             {#each dbData as modelData, i}
-                <ModelCard modelTitle={modelData.modelTitle} modelPoster={modelData.poster} modelId={modelData.modelId} modelDescription={modelData.description} modelThumbnailUrl={modelData.thumbnailUrl} buttonFunction={() => loadModelInfo(i)} />
+                {#if $editModelDataOn}
+                    <ModelCard modelTitle={modelData.modelTitle} modelPoster={modelData.poster} modelId={modelData.modelId} modelDescription={modelData.description} modelThumbnailUrl={modelData.thumbnailUrl} buttonFunction={() => editModelInfo(i)} />
+                {:else}
+                    <ModelCard modelTitle={modelData.modelTitle} modelPoster={modelData.poster} modelId={modelData.modelId} modelDescription={modelData.description} modelThumbnailUrl={modelData.thumbnailUrl} buttonFunction={() => loadModelInfo(i)} />
+                {/if}
             {:else}
                 <div id='model-loading-box'>
                     <div>

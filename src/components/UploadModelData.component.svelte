@@ -1,14 +1,11 @@
 <script>
-    import { uploadPanelShow } from '../stores.js';
+    import { uploadPanelShow, editModelDataOn, modelTitle, modelId, modelDescription } from '../stores.js';
     import PopupBox from './PopupBox.component.svelte';
 
     import { app } from '../firebase.js';
     import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore/lite';
     import { getStorage, ref, uploadBytes } from 'firebase/storage';
-    
-    let modelId = '';
-    let modelTitle = '';
-    let modelDescription = '';
+
     let modelFileName = '';
     let selectedModelType = '';
     let modelThumbnailFileName = '';
@@ -51,6 +48,10 @@
         'png', 'jpg', 'jpeg',
     ];
 
+    export let uploadModelId;
+    export let uploadModelTitle;
+    export let uploadModelDescription;
+
     function checkInputData() {
         let modelFile = document.getElementById('model-file-input');
         let modelThumbnailFile = document.getElementById('model-thumbnail-file-input');
@@ -68,7 +69,7 @@
         )
 
         // check that all fields have data
-        if (modelId.length == 0 || modelTitle.length == 0 || modelDescription.length == 0 || modelFileName.length == 0) {
+        if (uploadModelId.length == 0 || uploadModelTitle.length == 0 || uploadModelDescription.length == 0 || modelFileName.length == 0) {
             openInputPopup('NA', 'Error: Must fill out all fields!', [{text: 'Okay', fn: closeInputPopup}]);
             return;
         } 
@@ -104,14 +105,14 @@
             
         }
 
-        openInputPopup('NA', `${modelTitle} successfully uploaded!`, [{text: 'Great!', fn: closeInputPopup}]);
+        openInputPopup('NA', `${uploadModelTitle} successfully uploaded!`, [{text: 'Great!', fn: closeInputPopup}]);
         clearInputs();
     }
 
     function clearInputs() {
-        modelId = '';
-        modelTitle = '';
-        modelDescription = '';
+        uploadModelId = '';
+        uploadModelTitle = '';
+        uploadModelDescription = '';
         modelFileName = '';
         selectedModelType = '';
         modelThumbnailFileName = '';
@@ -132,10 +133,10 @@
             bookmarks: [],
             controlSpheres: defaultControlSpheres,
             dateCreated: serverTimestamp(),
-            description: modelDescription,
+            description: uploadModelDescription,
             fileName: modelFileName,
-            modelId: modelId,
-            modelTitle: modelTitle,
+            modelId: uploadModelId,
+            modelTitle: uploadModelTitle,
             modelType: selectedModelType,
 
             // by default, only APIL can post models for now
@@ -143,6 +144,10 @@
         }
         
         await setDoc(doc(db, 'modelDb', modelDocPath), data);
+    }
+
+    function editExistingModelData() {
+        console.log('updated!');
     }
 
     async function addModelFiles(file, isModelFile) {
@@ -183,6 +188,10 @@
 
     function closeUploadPanel() {
         uploadPanelShow.set(false);
+
+        if ($editModelDataOn) {
+            editModelDataOn.set(false);
+        }
     }
 
 </script>
@@ -201,46 +210,62 @@
             <div id='upload-panel-left-col'>
                 <div id='model-id-container'>
                     <label for='model-id-input'>Model ID</label>
-                    <input id='model-id-input' bind:value={modelId} />
+                    <input id='model-id-input' bind:value={uploadModelId} />
                 </div>
                 <div id='model-title-container'>
                     <label for='model-title-input'>Model Title</label>
-                    <input id='model-title-input' bind:value={modelTitle} />
+                    <input id='model-title-input' bind:value={uploadModelTitle} />
                 </div>
-                <div id='model-type-container'>
-                    <label for='model-type-input'>Model Type</label>
-                    <select id='model-type-input' bind:value={selectedModelType}>
-                        {#each modelTypes as modelType}
-                            <option value={modelType.toLowerCase()}>
-                                {modelType}
-                            </option>
-                        {/each}
-                    </select>                
-                </div>
+                {#if !$editModelDataOn}
+                    <div id='model-type-container'>
+                        <label for='model-type-input'>Model Type</label>
+                        <select id='model-type-input' bind:value={selectedModelType}>
+                            {#each modelTypes as modelType}
+                                <option value={modelType.toLowerCase()}>
+                                    {modelType}
+                                </option>
+                            {/each}
+                        </select>                
+                    </div>
+                {/if}
             </div>
             <div id='upload-panel-right-col'>
                 <div id='model-description-container'>
                     <label for='model-description-input'>Model Description</label>
-                    <textarea id='model-description-input' bind:value={modelDescription} />
+                    <textarea id='model-description-input' bind:value={uploadModelDescription} />
                 </div>
-                <div id='model-file-input-container'>
-                    <div id='model-file-container'>
-                        <label for='model-file-input'>Add Model (.glb)</label>
-                        <input type='file' id='model-file-input' /> 
+                {#if !$editModelDataOn}
+                    <div id='model-file-input-container'>
+                        <div id='model-file-container'>
+                            <label for='model-file-input'>Add Model (.glb)</label>
+                            <input type='file' id='model-file-input' /> 
+                        </div>
+                        <div id='model-thumbnail-container'>
+                            <label for='model-thumbnail-file-input'>Add Thumbnail (.png)</label>
+                            <input type='file' id='model-thumbnail-file-input' /> 
+                        </div>
                     </div>
-                    <div id='model-thumbnail-container'>
-                        <label for='model-thumbnail-file-input'>Add Thumbnail (.png)</label>
-                        <input type='file' id='model-thumbnail-file-input' /> 
-                    </div>
-                </div>
+                {/if}
             </div>
         </div>
         <div id='upload-panel-button-container'>
             <div>
-                <button type='submit' on:click={() => checkInputData()}>Upload Model</button>
+                <button type='submit' on:click={() => editExistingModelData()}>
+                    {#if $editModelDataOn}
+                        Update Model Data
+                    {:else}
+                        Upload Model
+                    {/if}
+                </button>
             </div>
             <div>
-                <button on:click={() => closeUploadPanel()}>Cancel</button>
+                <button on:click={() => closeUploadPanel()}>
+                    {#if $editModelDataOn}
+                        Close Editing Panel
+                    {:else}
+                        Close Upload Panel
+                    {/if}
+                </button>
             </div>
         </div>
     </div>

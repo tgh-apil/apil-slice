@@ -11,6 +11,7 @@ export const titleBox = writable(true);
 
 export const navBarSize = writable('navbar-full');
 export const uploadPanelShow = writable(false);
+export const editModelDataOn = writable(false);
 
 // can we set this based on the route?
 export const currentView = writable('home');
