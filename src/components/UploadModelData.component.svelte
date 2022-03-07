@@ -1,9 +1,9 @@
 <script>
-    import { uploadPanelShow, editModelDataOn, modelTitle, modelId, modelDescription } from '../stores.js';
+    import { uploadPanelShow, editModelDataOn, modelPath } from '../stores.js';
     import PopupBox from './PopupBox.component.svelte';
 
     import { app } from '../firebase.js';
-    import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore/lite';
+    import { getFirestore, doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore/lite';
     import { getStorage, ref, uploadBytes } from 'firebase/storage';
 
     let modelFileName = '';
@@ -53,59 +53,71 @@
     export let uploadModelDescription;
 
     function checkInputData() {
-        let modelFile = document.getElementById('model-file-input');
-        let modelThumbnailFile = document.getElementById('model-thumbnail-file-input');
-
-        // remove the Drive letter://fakePath
-        modelFileName = modelFile.value.split('\\').pop();
-        
-        // return the file extension for the model and then the thumbnail
-        let modelFileNameExtension = modelFileName.split('.').pop();
-
-        let modelFileExtensionAllowed = allowedModelFileExtensions.find(
-            (str) => {
-                return str == modelFileNameExtension;
-            }
-        )
-
-        // check that all fields have data
-        if (uploadModelId.length == 0 || uploadModelTitle.length == 0 || uploadModelDescription.length == 0 || modelFileName.length == 0) {
-            openInputPopup('NA', 'Error: Must fill out all fields!', [{text: 'Okay', fn: closeInputPopup}]);
-            return;
-        } 
-
-        // check if the model file is valid
-        if (!modelFileExtensionAllowed) {
-            openInputPopup('NA', 'Model must be in a glb file format!', [{text: 'Okay', fn: closeInputPopup}]);
-            return
-        }
-
-        addNewModelData();
-        addModelFiles(modelFile, true)
-
-        // since thumbnails are optional, we have a separate check if the user is uploading one
-        // and only if all other fields are setup and a valid model file is included
-        if (modelThumbnailFile.files.length > 0) {
-            modelThumbnailFileName = modelThumbnailFile.value.split('\\').pop();
+        if (!$editModelDataOn) {
+            let modelFile = document.getElementById('model-file-input');
+            let modelThumbnailFile = document.getElementById('model-thumbnail-file-input');
+    
+            // remove the Drive letter://fakePath
+            modelFileName = modelFile.value.split('\\').pop();
             
-            let modelThumbnailFileExtension = modelThumbnailFileName.split('.').pop();
-
-            let modelThumbnailFileExtensionAllowed = allowedModelThumbnailFileExtensions.find(
+            // return the file extension for the model and then the thumbnail
+            let modelFileNameExtension = modelFileName.split('.').pop();
+    
+            let modelFileExtensionAllowed = allowedModelFileExtensions.find(
                 (str) => {
-                    return str == modelThumbnailFileExtension;
+                    return str == modelFileNameExtension;
                 }
             )
+    
+            // check that all fields have data
+            if (uploadModelId.length == 0 || uploadModelTitle.length == 0 || uploadModelDescription.length == 0 || modelFileName.length == 0) {
+                openInputPopup('NA', 'Error: Must fill out all fields!', [{text: 'Okay', fn: closeInputPopup}]);
+                return;
+            }
 
-            if (modelThumbnailFileExtensionAllowed) {
-                addModelFiles(modelThumbnailFile, false)                
-            } else {
-                openInputPopup('NA', 'Thumbnail file type must be .png', [{text: 'Okay', fn: closeInputPopup}]);
+            // check if the model file is valid
+            if (!modelFileExtensionAllowed) {
+                openInputPopup('NA', 'Model must be in a glb file format!', [{text: 'Okay', fn: closeInputPopup}]);
                 return
             }
-            
+    
+            addNewModelData();
+            addModelFiles(modelFile, true)
+    
+            // since thumbnails are optional, we have a separate check if the user is uploading one
+            // and only if all other fields are setup and a valid model file is included
+            if (modelThumbnailFile.files.length > 0) {
+                modelThumbnailFileName = modelThumbnailFile.value.split('\\').pop();
+                
+                let modelThumbnailFileExtension = modelThumbnailFileName.split('.').pop();
+    
+                let modelThumbnailFileExtensionAllowed = allowedModelThumbnailFileExtensions.find(
+                    (str) => {
+                        return str == modelThumbnailFileExtension;
+                    }
+                )
+    
+                if (modelThumbnailFileExtensionAllowed) {
+                    addModelFiles(modelThumbnailFile, false)                
+                } else {
+                    openInputPopup('NA', 'Thumbnail file type must be .png', [{text: 'Okay', fn: closeInputPopup}]);
+                    return
+                }    
+            }
+
+            openInputPopup('NA', `${uploadModelTitle} successfully uploaded!`, [{text: 'Great!', fn: closeInputPopup}]);
+        } else {
+            // check that all fields have data
+            if (uploadModelId.length == 0 || uploadModelTitle.length == 0 || uploadModelDescription.length == 0) {
+                openInputPopup('NA', 'Error: Must fill out all fields!', [{text: 'Okay', fn: closeInputPopup}]);
+                return;
+            }
+
+            editExistingModelData();
+
+            openInputPopup('NA', `${uploadModelTitle} successfully updated!`, [{text: 'Great!', fn: closeInputPopup}]);
         }
 
-        openInputPopup('NA', `${uploadModelTitle} successfully uploaded!`, [{text: 'Great!', fn: closeInputPopup}]);
         clearInputs();
     }
 
@@ -141,13 +153,24 @@
 
             // by default, only APIL can post models for now
             poster: 'APIL',
-        }
+        };
         
         await setDoc(doc(db, 'modelDb', modelDocPath), data);
     }
 
-    function editExistingModelData() {
-        console.log('updated!');
+    async function editExistingModelData() {
+        let db = getFirestore(app);
+
+        let modelDocPath = $modelPath.slice(0, -4);
+
+        let updatedData = {
+            modelId: uploadModelId,
+            modelTitle: uploadModelTitle,
+            description: uploadModelDescription,
+            dateCreated: serverTimestamp(),
+        };
+
+        await updateDoc(doc(db, 'modelDb', modelDocPath), updatedData);
     }
 
     async function addModelFiles(file, isModelFile) {
@@ -184,6 +207,7 @@
 
     function closeInputPopup() {
         popupInputUiHidden = true;
+        closeUploadPanel();
     }
 
     function closeUploadPanel() {
@@ -191,6 +215,12 @@
 
         if ($editModelDataOn) {
             editModelDataOn.set(false);
+        
+            // can't call replace and reload the window...have to do it like this
+            window.location = '/#';
+
+            // best way to dump the 3js scene when switching away??
+            location.reload();
         }
     }
 
@@ -250,9 +280,9 @@
         </div>
         <div id='upload-panel-button-container'>
             <div>
-                <button type='submit' on:click={() => editExistingModelData()}>
+                <button type='submit' on:click={() => checkInputData()}>
                     {#if $editModelDataOn}
-                        Update Model Data
+                        Save Edited Model Data
                     {:else}
                         Upload Model
                     {/if}

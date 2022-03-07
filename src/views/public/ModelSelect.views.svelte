@@ -130,6 +130,7 @@
         uploadModelTitle = modelInfo.modelTitle;
         uploadModelId = modelInfo.modelId;
         uploadModelDescription = modelInfo.description;
+        modelPath.set(modelInfo.fileName);
     }
 
     async function queryBuilder() {
