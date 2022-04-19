@@ -289,6 +289,32 @@
         });
     }
 
+    //calculates the bounding box or myocardium/largest obecjt in the scene and sets scene camera
+    function setCamPosition(targetModel) {
+        targetModel.computeBoundingBox;
+
+        let modelCenter = new THREE.Vector3();
+        let modelSize = new THREE.Vector3();
+
+        targetModel.geometry.boundingBox.getCenter(modelCenter);
+        targetModel.geometry.boundingBox.getSize(modelSize);
+
+        // the taller the object the further back we go
+        let offset = (modelSize.y /3);
+
+        // set to 0 so we're always looking at the model from the anterior position
+        camXPos = 0;
+
+        // place y a little over the middle of the model
+        camYPos = (modelSize.y + 20);
+        camZPos = -(modelSize.z + offset);
+
+        camera.position.set(camXPos, camYPos, camZPos);
+        orbitControls.target = new THREE.Vector3(0, modelCenter.y, 0);
+
+        orbitControls.update();
+    }
+
     // responsbile for setting up the selected 3D model (colours, clipping, etc...)
     async function modelParser(path) {       
         let data = await modelLoader(path);
@@ -296,58 +322,59 @@
 
         scene.add(models);
 
+        if ($modelType.toLowerCase() != 'heart') {
+            let modelList = [];
+            let boundingBoxSizeList = [];
+            let targetModel;
+
+            models.children.forEach(model => {
+                model.computeBoundingBox;
+                
+                let tempSize = new THREE.Vector3();
+                
+                model.geometry.boundingBox.getSize(tempSize);
+                
+                let tempVolume = (tempSize.x * tempSize.y * tempSize.z);
+                
+                modelList.push(model);
+
+                boundingBoxSizeList.push(tempVolume);
+            })
+
+            let maxVolume = Math.max(...boundingBoxSizeList);
+            let maxVolumeIndex = boundingBoxSizeList.indexOf(maxVolume);
+
+            targetModel = modelList[maxVolumeIndex];
+
+            setCamPosition(targetModel);
+        }
+
         models.children.forEach(model => {
-            // only handle the myocardium if it's a heart model and it has a myocardium model
             if (model.name.toLowerCase() == 'myocardium') {
-                    // incomplete
-                    model.computeBoundingBox;
+                // set the camera position according to the myocardium's size
+                setCamPosition(model);
 
-                    let modelCenter = new THREE.Vector3();
-                    let modelSize = new THREE.Vector3();
-
-                    model.geometry.boundingBox.getCenter(modelCenter);
-                    model.geometry.boundingBox.getSize(modelSize);
-
-                    // the taller the object the further back we go
-                    let offset = (modelSize.y /3);
-
-                    // set to 0 so we're always looking at the model from the anterior position
-                    camXPos = 0;
-
-                    // place y a little over the middle of the model
-                    camYPos = (modelSize.y + 20);
-                    camZPos = -(modelSize.z + offset);
-
-                    camera.position.set(camXPos, camYPos, camZPos);
-                    orbitControls.target = new THREE.Vector3(0, modelCenter.y, 0);
-
-                    orbitControls.update();
-
-                if ($modelType.toLowerCase() == 'heart') {
-                    // create two copies: one clippable, one not
-                    myocardium = model;
-                    myocardiumNoClip = model.clone();
-                    
-                    myocardium.material = modelMat(0xb50d0d);
-                    myocardium.layers.set(hiddenLayer);
-                    myocardium.material.clippingPlanes = [clippingPlane];
-                    scene.add(myocardium);
-                    
-                    frontMesh = new THREE.Mesh(myocardium.geometry, frontFaceStencilMat);
-                    frontMesh.layers.set(hiddenLayer);
-                    scene.add(frontMesh);
-                    
-                    backMesh = new THREE.Mesh(myocardium.geometry, backFaceStencilMat);
-                    backMesh.layers.set(hiddenLayer);
-                    scene.add(backMesh);
-                    
-                    myocardiumNoClip.material = modelMat(0xb50d0d);
-                    myocardiumNoClip.layers.set(hiddenLayer);
-                    myocardiumNoClip.material.clippingPlanes = sceneClippingPlanes;
-                    scene.add(myocardiumNoClip);
-                } else {
-                    console.log('model is a heart, but no myocardium model');
-                }
+                // create two copies: one clippable, one not
+                myocardium = model;
+                myocardiumNoClip = model.clone();
+                
+                myocardium.material = modelMat(0xb50d0d);
+                myocardium.layers.set(hiddenLayer);
+                myocardium.material.clippingPlanes = [clippingPlane];
+                scene.add(myocardium);
+                
+                frontMesh = new THREE.Mesh(myocardium.geometry, frontFaceStencilMat);
+                frontMesh.layers.set(hiddenLayer);
+                scene.add(frontMesh);
+                
+                backMesh = new THREE.Mesh(myocardium.geometry, backFaceStencilMat);
+                backMesh.layers.set(hiddenLayer);
+                scene.add(backMesh);
+                
+                myocardiumNoClip.material = modelMat(0xb50d0d);
+                myocardiumNoClip.layers.set(hiddenLayer);
+                myocardiumNoClip.material.clippingPlanes = sceneClippingPlanes;
+                scene.add(myocardiumNoClip);
             } else {
                 // puts all models (other than myocardium) into a single object to make toggling visibility easier
                 // limited colour pallete targeted more specifically to the heart for now
@@ -2192,7 +2219,7 @@
 
         // FIREBASE STUFF
         modelParser($modelPath).catch(err => {
-            console.log(`something went wrong loading the heart model: ${err}`);
+            console.log(`something went wrong loading the model: ${err}`);
         });
 
         // ULTRASOUND TEE PROBE ASSEMBLY
