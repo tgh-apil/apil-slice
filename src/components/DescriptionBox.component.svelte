@@ -56,6 +56,8 @@
 </div>
 
 <style>
+    /* not scaling properly to different screen resolutions */
+
     #description-box {
         background: #0000007a;
         backdrop-filter: blur(5px);
@@ -80,7 +82,7 @@
         row-gap: 2%;
         height: var(--view-height);
         width: 40%;
-        bottom: 3.5%;
+        bottom: 5%;
     }
 
     #full {
@@ -91,7 +93,7 @@
         row-gap: 2%;
         height: var(--view-height);
         width: 80%;
-        bottom: 3.5%;
+        bottom: 5%;
     }
 
     button {

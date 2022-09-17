@@ -2557,7 +2557,7 @@
         /* close enough to the description box? */
         bottom: 1%;
         height: 12%;
-        width: 58%;
+        width: 80%;
         z-index: 102;
         position: absolute;
         justify-content: center;

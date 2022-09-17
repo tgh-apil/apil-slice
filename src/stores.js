@@ -25,6 +25,7 @@ export const modelPath = writable('normal_heart.glb');
 export const modelType = writable('heart');
 export const modelId = writable('000');
 export const modelDownloadUrl = writable('#');
+export const pinned = writable(false);
 export const storeUrlList = writable(false);
 export const annotations = writable(false);
 

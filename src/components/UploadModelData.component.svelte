@@ -51,6 +51,7 @@
     export let uploadModelId;
     export let uploadModelTitle;
     export let uploadModelDescription;
+    export let uploadModelPinned;
 
     function checkInputData() {
         if (!$editModelDataOn) {
@@ -128,6 +129,7 @@
         modelFileName = '';
         selectedModelType = '';
         modelThumbnailFileName = '';
+        uploadModelPinned = false;
     }
 
     async function addNewModelData() {
@@ -150,6 +152,7 @@
             modelId: uploadModelId,
             modelTitle: uploadModelTitle,
             modelType: selectedModelType,
+            pinned: uploadModelPinned,
 
             // by default, only APIL can post models for now
             poster: 'APIL',
@@ -167,7 +170,8 @@
             modelId: uploadModelId,
             modelTitle: uploadModelTitle,
             description: uploadModelDescription,
-            dateCreated: serverTimestamp(),
+            pinned: uploadModelPinned,
+            dateEdited: serverTimestamp(),
         };
 
         await updateDoc(doc(db, 'modelDb', modelDocPath), updatedData);
@@ -245,6 +249,11 @@
                 <div id='model-title-container'>
                     <label for='model-title-input'>Model Title</label>
                     <input id='model-title-input' bind:value={uploadModelTitle} />
+                </div>
+                <!-- looks like crap -->
+                <div>
+                    <label for='model-pinned-input'>Pin Model?</label>
+                    <input id='model-pinned-input' type='checkbox' bind:checked={uploadModelPinned} />
                 </div>
                 {#if !$editModelDataOn}
                     <div id='model-type-container'>

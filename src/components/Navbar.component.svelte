@@ -81,7 +81,7 @@
         left: 0%;
         right: 5%;
         width: 100%;
-        height: 5%;
+        height: 3rem;
         display: grid;
         grid-template: repeat(8, 1fr);
         grid-auto-rows: auto;
@@ -98,7 +98,7 @@
         z-index: 100;
         top: 0%;
         width: 80%;
-        height: 5%;
+        height: 2.5rem;
         display: grid;
         grid-template: repeat(7, 1fr);
         grid-auto-rows: auto;

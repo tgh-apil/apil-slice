@@ -21,7 +21,7 @@
         <div id='limit-sort-container'>
             <label id='limit-sort-label' for='limit-sort'>Number of models to show:</label>
             <select id='limit-sort'>
-                <option value={limitOptions[1]} selected disabled hidden>{limitOptions[1]}</option>
+                <option value={limitOptions[3]} selected disabled hidden>{limitOptions[3]}</option>
                 {#each limitOptions as limit}
                     <option value={limit}>
                         {limit}
@@ -40,9 +40,9 @@
     #search-bar-container {
         position: absolute;
         z-index: 102;
-        top: 6%;
+        top: 8vh;
         width: 100%;
-        height: 5%;
+        height: 3rem;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -51,7 +51,7 @@
     #search-bar-container-inner {
         background: #4242427a;
         backdrop-filter: blur(5px);
-        height: auto;
+        height: 100%;
         width: 50%;
         display: grid;
         grid-template-columns: repeat(3, 1fr);

@@ -2,7 +2,7 @@
     import { onMount } from 'svelte';
     import { replace } from 'svelte-spa-router';
     import { currentView, modelPath, modelTitle, modelPoster, modelId, modelDescription, storeUrlList, 
-            navBarSize, savedControlSphereList, userBookmarks, annotations, modelType, uploadPanelShow, editModelDataOn } from '../../stores.js';
+            navBarSize, savedControlSphereList, userBookmarks, annotations, modelType, pinned, uploadPanelShow, editModelDataOn } from '../../stores.js';
     import ModelCard from '../../components/ModelCard.component.svelte';
     import UploadModelData from '../../components/UploadModelData.component.svelte';
     import SearchBar from '../../components/SearchBar.component.svelte';
@@ -30,16 +30,18 @@
             database_value: 'dateCreated',
             sort_direction: 'asc'
         },
-        {
-            label: 'Alphabetically',
-            database_value: 'modelTitle',
-            sort_direction: 'desc'
-        },
-        {
-            label: 'Reverse Alphabetically',
-            database_value: 'modelTitle',
-            sort_direction: 'asc'
-        },
+
+        // not very useful -- disable for now
+        // {
+        //     label: 'Alphabetically',
+        //     database_value: 'modelTitle',
+        //     sort_direction: 'desc'
+        // },
+        // {
+        //     label: 'Reverse Alphabetically',
+        //     database_value: 'modelTitle',
+        //     sort_direction: 'asc'
+        // },
     ]
 
     let limitOptions = [4, 8, 12, 'all'];
@@ -48,6 +50,7 @@
     let uploadModelTitle = '';
     let uploadModelId = '';
     let uploadModelDescription = '';
+    let uploadModelPinned = '';
 
     currentView.set('home');
     
@@ -58,20 +61,40 @@
     onMount(async function () {
         // reference for the firestore entry and filter by date created
         // newest models first
-        let q = query(docRef, orderBy('dateCreated', 'desc'), limit(limitOptions[1]));
+
+        // set the default number of search results returned on page load
+        let limitSearchNum = limitOptions[3];
+        let q;
+
+        if (limitSearchNum == 'all') {
+            q = query(docRef, orderBy('dateCreated', 'desc'));
+        } else {
+            // if the default number of serach results to load is not all, load the limit selected
+            q = query(docRef, orderBy('dateCreated', 'desc'), limit(limitSearchNum));
+        }
+
         let queryResult = await getDocs(q);
 
         try {
             queryResult.forEach(doc => {
                 // data comes in order based on the query
                 // so we store those in an array in their requested order before we fetch the thumbnails
+                
                 preData = [...preData, doc.data()];
             })
         } catch (err) {
             console.log(`error loading model data: ${err}`);
-
+            
             return
         }
+        
+        // check if the model has been 'pinned' to always show at the top of the list
+        preData.forEach((data, idx) => {
+            if (data.pinned) {
+                preData.splice(idx, 1);
+                preData.unshift(data);
+            }
+        })
 
         getThumbnails();
     })
@@ -125,11 +148,21 @@
 
     function editModelInfo(selectedModelIndex) {
         let modelInfo = dbData[selectedModelIndex];
-        uploadPanelShow.set(true);
-
+        
         uploadModelTitle = modelInfo.modelTitle;
         uploadModelId = modelInfo.modelId;
         uploadModelDescription = modelInfo.description;
+        
+        if (modelInfo.pinned == true) {
+            uploadModelPinned = modelInfo.pinned;
+        } else {
+            uploadModelPinned = false;
+        }
+
+        uploadPanelShow.set(true);
+
+        console.log(uploadModelPinned);
+
         modelPath.set(modelInfo.fileName);
     }
 
@@ -142,10 +175,10 @@
 
         let q; 
 
-        if (limitVal != 'all') {
-            q = query(docRef, orderBy(databaseValue, sortDir), limit(limitVal));
-        } else {
+        if (limitVal == 'all') {
             q = query(docRef, orderBy(databaseValue, sortDir));
+        } else {
+            q = query(docRef, orderBy(databaseValue, sortDir), limit(limitVal));
         }
 
         dbData = [];
@@ -156,6 +189,14 @@
 
             queryResult.forEach(doc => {
                 preData = [...preData, doc.data()];
+            })
+
+            // check if the model has been 'pinned' to always show at the top of the list
+            preData.forEach((data, idx) => {
+                if (data.pinned) {
+                    preData.splice(idx, 1);
+                    preData.unshift(data);
+                }
             })
 
         getThumbnails();
@@ -169,7 +210,7 @@
 {#if $uploadPanelShow}
     {#if $editModelDataOn}
         <div>
-            <UploadModelData uploadModelId={uploadModelId} uploadModelTitle={uploadModelTitle} uploadModelDescription={uploadModelDescription} />
+            <UploadModelData uploadModelId={uploadModelId} uploadModelTitle={uploadModelTitle} uploadModelDescription={uploadModelDescription} uploadModelPinned={uploadModelPinned} />
         </div>
     {:else}
         <div>
@@ -201,8 +242,9 @@
     #container {
         position: absolute;
         z-index: 101;
-        width: 100%;
-        height: 100%;
+        top: 17vh;
+        width: 100vw;
+        height: 80vh;
         overflow: auto;
     }
 
@@ -212,7 +254,6 @@
         height: auto;
         z-index: 101;
         display: grid;
-        top: 14%;
         grid-template-columns: 1fr 1fr 1fr 1fr;
         column-gap: 1%;
         row-gap: 1%;
