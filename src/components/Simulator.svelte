@@ -9,7 +9,7 @@
     import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
     
     import { viewWidth, descriptionBoxShow, decsriptionBoxHeight, modelPath, navBarSize, helpBox,
-            savedControlSphereList, userBookmarks, annotations, modelType, userData, modelId, modelDownloadUrl } from '../stores.js';
+            savedControlSphereList, userBookmarks, annotations, modelType, userData, userIsAdmin, modelId, modelDownloadUrl } from '../stores.js';
 
     import PopupBox from './PopupBox.component.svelte';
     
@@ -27,17 +27,6 @@
     let viewCubeReady = false;
     let loader, dracoLoader;
     let db = getFirestore(app);
-
-    // FOR USER PERMISSIONS
-    let isAdmin;
-
-    if ($userData) {
-        if ($userData.email == 'apiltgh@gmail.com') {
-            isAdmin = true;
-        } else {
-            isAdmin = false;
-        }        
-    }
 
     // FOR ITEM SELECTION
     let raycaster = new THREE.Raycaster();
@@ -1626,7 +1615,7 @@
             viewWidth.set('half');
             keyboardControls(true);
 
-            if (isAdmin) {
+            if ($userIsAdmin) {
                 adminFolder.close()
                 toggleEditing.enable(false);
             }
@@ -1641,7 +1630,7 @@
             clippingPlaneOptions[1].enable(true);
             clippingPlaneOptions[2].enable(true);
             
-            if (isAdmin) {
+            if ($userIsAdmin) {
                 adminFolder.open();
                 toggleEditing.enable(true);
             }
@@ -2100,7 +2089,7 @@
         ];
 
         // keep variables affected by ultrasound mode on/off out of local scope of isAdmin if block
-        if (isAdmin) {
+        if ($userIsAdmin) {
             adminFolder = gui.addFolder('Admin Functions');
 
             toggleEditing = adminFolder.add(adminParams, 'toggle_editing').name('Edit Scene').onChange(v => {

@@ -1,17 +1,24 @@
 <script>
     import { app } from '../firebase.js';
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'firebase/auth';
-    import { userData } from '../stores.js';
+    import { getFirestore, doc, setDoc, getDoc, collection } from 'firebase/firestore/lite';
+    import { userData, userIsAdmin } from '../stores.js';
 
     let auth = getAuth(app);
+    let db = getFirestore(app);
     let provider = new GoogleAuthProvider();
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
             userData.set(user);
+            // check firestore if data exists for user
+            userDbEntry($userData.uid, $userData.email);
+
         } else {
-            userData.set(false);
+            userData.set('');
         }
+
+        userIsAdmin.set(false);
     })
 
     function signin() {
@@ -22,12 +29,32 @@
         signOut(auth);
     }
 
+    async function userDbEntry(uid, email) {
+        let docRef = doc(db, 'users', uid);
+        let docSnap = await getDoc(docRef);
+
+        // create new entry in db with permission level on first login
+        if (docSnap.exists()) {
+            userIsAdmin.set(docSnap.data().isAdmin);
+        } else {
+            let userRef = collection(db, 'users');
+
+            await setDoc(doc(userRef, uid), 
+                {
+                    email: email,
+                    // new users are not admins
+                    isAdmin: false,
+                },    
+            );
+        }
+    }
+
 </script>
 
 {#if $userData}
-    <button class=login-btn on:click|preventDefault={signout}>Sign Out</button>
+    <button class=login-btn on:click|preventDefault={ signout }>Sign Out</button>
 {:else}               
-    <button class=login-btn on:click|preventDefault={signin}>Sign In</button>
+    <button class=login-btn on:click|preventDefault={ signin }>Sign In</button>
 {/if}
 
 <style>

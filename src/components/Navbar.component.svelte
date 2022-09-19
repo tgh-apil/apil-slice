@@ -1,6 +1,6 @@
 <script>
     import LoginButton from './LoginButton.component.svelte';
-    import { currentView, userData, helpBox, descriptionBoxShow, decsriptionBoxHeight, navBarSize, uploadPanelShow, editModelDataOn } from '../stores.js';
+    import { currentView, userData, helpBox, descriptionBoxShow, decsriptionBoxHeight, navBarSize, uploadPanelShow, editModelDataOn, userIsAdmin } from '../stores.js';
 
     function goAtlasHome() {
         navBarSize.set('navbar-full');
@@ -38,7 +38,7 @@
     </div>
     <!-- refactor me -->
     {#if $userData}
-        {#if $userData.email == 'apiltgh@gmail.com'}
+        {#if $userIsAdmin}
             {#if $currentView == 'home'}
                 {#if !$uploadPanelShow}
                     {#if !$editModelDataOn}

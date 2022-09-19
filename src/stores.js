@@ -1,6 +1,7 @@
 import { writable } from 'svelte/store';
 
 export const userData = writable('');
+export const userIsAdmin = writable(false);
 
 // all for the descirption box ui
 export const helpBox = writable(false);
