@@ -7,6 +7,7 @@
     export let modelDescription;
     export let modelThumbnailUrl;
     export let buttonFunction;
+    export let modelPinned;
 
     let descriptionHidden = true;
 
@@ -15,15 +16,19 @@
     if ($editModelDataOn) {
         cardContainerStyle = 'container-main-editing';
     } else {
-        cardContainerStyle = 'container-main';
+        if (modelPinned) {
+            cardContainerStyle = 'container-main-pinned';            
+        } else {
+            cardContainerStyle = 'container-main';
+        }
     }
 
 </script>
 
-<div id={cardContainerStyle} on:click={ buttonFunction } on:mouseenter={() => descriptionHidden = false} on:mouseleave={() => descriptionHidden = true}>
+<div id={ cardContainerStyle } on:click={ buttonFunction } on:mouseenter={() => descriptionHidden = false} on:mouseleave={() => descriptionHidden = true}>
     <img id='thumbnail-img' src={ modelThumbnailUrl } alt='model thumbnail'>
     <div id='container-inner'>
-        <div id='model-description-container-background' hidden={descriptionHidden}>
+        <div id='model-description-container-background' hidden={ descriptionHidden }>
             <div id='model-description-container'>
                 <p id='model-description'>{ modelDescription }</p>
             </div>
@@ -31,7 +36,13 @@
         <div hidden={!descriptionHidden}>
             <div id='info-box'>
                 <div id='model-title-container'>
-                    <h1><b id='model-title'>{ modelTitle }</b></h1>
+                    <h1><b id='model-title'>
+                        {#if modelPinned}
+                            &#10024; { modelTitle }
+                        {:else}
+                            { modelTitle }
+                        {/if}
+                    </b></h1>
                 </div>
                 <div>
                     <div id='model-poster-id-container' >
@@ -55,7 +66,21 @@
         box-sizing: border-box;
         -moz-box-sizing: border-box;
         -webkit-box-sizing: border-box;
-        border: 1em solid rgba(0, 0, 0, 0);
+        border: 0.5em solid rgba(0, 0, 0, 0);
+        -webkit-transition:  border 0.25s ease;
+        -moz-transition:  border 0.25s ease;
+        -o-transition:  border 0.25s ease;
+        -ms-transition: border 0.25s ease;
+        transition: border 0.25s ease;
+    }
+    
+    #container-main-pinned {
+        position: relative;
+        cursor: pointer;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        border: 0.5em solid rgba(0, 0, 0, 0);
         -webkit-transition:  border 0.25s ease;
         -moz-transition:  border 0.25s ease;
         -o-transition:  border 0.25s ease;
@@ -69,7 +94,7 @@
         box-sizing: border-box;
         -moz-box-sizing: border-box;
         -webkit-box-sizing: border-box;
-        border: 1em solid rgba(0, 0, 0, 0);
+        border: 0.5em solid rgba(0, 0, 0, 0);
         -webkit-transition:  border 0.25s ease;
         -moz-transition:  border 0.25s ease;
         -o-transition:  border 0.25s ease;
@@ -78,14 +103,24 @@
     }
 
     #container-main:hover {
-        border: 1em solid var(--border-color, #00acac);
+        border: 0.5em solid var(--border-color, #00acac);
+    }
+
+    #container-main-pinned:hover {
+        border: 0.5em solid var(--border-color, #f9c23c);
     }
 
     #container-main-editing:hover {
-        border: 1em solid var(--border-color, #ff0000);
+        border: 0.5em solid var(--border-color, #ff0000);
     }
 
     #container-main img {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+
+    #container-main-pinned img {
         width: 100%;
         height: 100%;
         display: block;

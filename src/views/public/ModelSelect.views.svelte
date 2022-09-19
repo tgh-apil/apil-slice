@@ -2,7 +2,7 @@
     import { onMount } from 'svelte';
     import { replace } from 'svelte-spa-router';
     import { currentView, modelPath, modelTitle, modelPoster, modelId, modelDescription, storeUrlList, 
-            navBarSize, savedControlSphereList, userBookmarks, annotations, modelType, pinned, uploadPanelShow, editModelDataOn } from '../../stores.js';
+            navBarSize, savedControlSphereList, userBookmarks, annotations, modelType, uploadPanelShow, editModelDataOn } from '../../stores.js';
     import ModelCard from '../../components/ModelCard.component.svelte';
     import UploadModelData from '../../components/UploadModelData.component.svelte';
     import SearchBar from '../../components/SearchBar.component.svelte';
@@ -223,9 +223,9 @@
         <div id="model-select-box">
             {#each dbData as modelData, i}
                 {#if $editModelDataOn}
-                    <ModelCard modelTitle={modelData.modelTitle} modelPoster={modelData.poster} modelId={modelData.modelId} modelDescription={modelData.description} modelThumbnailUrl={modelData.thumbnailUrl} buttonFunction={() => editModelInfo(i)} />
+                    <ModelCard modelTitle={modelData.modelTitle} modelPoster={modelData.poster} modelId={modelData.modelId} modelDescription={modelData.description} modelThumbnailUrl={modelData.thumbnailUrl} modelPinned={modelData.pinned} buttonFunction={() => editModelInfo(i)} />
                 {:else}
-                    <ModelCard modelTitle={modelData.modelTitle} modelPoster={modelData.poster} modelId={modelData.modelId} modelDescription={modelData.description} modelThumbnailUrl={modelData.thumbnailUrl} buttonFunction={() => loadModelInfo(i)} />
+                    <ModelCard modelTitle={modelData.modelTitle} modelPoster={modelData.poster} modelId={modelData.modelId} modelDescription={modelData.description} modelThumbnailUrl={modelData.thumbnailUrl} modelPinned={modelData.pinned} buttonFunction={() => loadModelInfo(i)} />
                 {/if}
             {:else}
                 <div id='model-loading-box'>
